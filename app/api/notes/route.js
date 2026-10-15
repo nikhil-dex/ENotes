@@ -42,15 +42,25 @@ export async function POST(request) {
     }
 
     const db = await getDatabase();
-    // Atomically reserve the next note number. The pipeline also repairs older
-    // subjects whose nextNumber field is missing or invalid, without reusing IDs.
+    // Older data or a previous failed save can leave nextNumber behind the
+    // actual notes. Read the highest existing number, then reserve atomically
+    // above both that value and the stored counter.
+    const latestNote = await db.collection('notes')
+      .find({ subject: slug }, { projection: { number: 1 } })
+      .sort({ number: -1 })
+      .limit(1)
+      .next();
+    const nextAfterExisting = Number.isInteger(latestNote?.number)
+      ? latestNote.number + 1
+      : 1;
+
     const subject = await db.collection('subjects').findOneAndUpdate(
       { _id: slug },
       [{
         $set: {
           nextNumber: {
             $add: [
-              { $max: [{ $ifNull: ['$nextNumber', 1] }, 1] },
+              { $max: [{ $ifNull: ['$nextNumber', 1] }, nextAfterExisting, 1] },
               1,
             ],
           },
@@ -75,7 +85,7 @@ export async function POST(request) {
   } catch (error) {
     console.error('POST /api/notes failed:', { name: error?.name, message: error?.message, code: error?.code });
     if (error?.code === 11000) {
-      return json({ error: 'A note-number conflict occurred. Refresh the page and try saving again.' }, 409);
+      return json({ error: 'The note number conflicted with an existing record. Please try saving once more; the counter has been repaired for future saves.' }, 409);
     }
     return json({ error: 'Could not save this note. Please refresh and try again; if it persists, check the deployment logs.' }, 500);
   }
