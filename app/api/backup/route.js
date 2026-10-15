@@ -115,8 +115,8 @@ export async function POST(request) {
         _id: id,
         subject: note.subject,
         number: note.number,
-        heading: note.heading.trim().replace(/[\\r\\n]+/g, ' '),
-        answer: note.answer.replace(/\\r\\n/g, '\\n'),
+        heading: note.heading.trim().replace(/[\r\n]+/g, ' '),
+        answer: note.answer.replace(/\r\n/g, '\n'),
         saved: typeof note.saved === 'string' ? note.saved : new Date().toISOString(),
         createdAt: note.createdAt ? new Date(note.createdAt) : new Date(),
       };
