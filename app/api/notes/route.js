@@ -42,14 +42,25 @@ export async function POST(request) {
     }
 
     const db = await getDatabase();
+    // Atomically reserve the next note number. The pipeline also repairs older
+    // subjects whose nextNumber field is missing or invalid, without reusing IDs.
     const subject = await db.collection('subjects').findOneAndUpdate(
       { _id: slug },
-      { $inc: { nextNumber: 1 } },
-      { returnDocument: 'before', includeResultMetadata: false },
+      [{
+        $set: {
+          nextNumber: {
+            $add: [
+              { $max: [{ $ifNull: ['$nextNumber', 1] }, 1] },
+              1,
+            ],
+          },
+        },
+      }],
+      { returnDocument: 'after', includeResultMetadata: false },
     );
     if (!subject) return json({ error: 'Choose a valid subject.' }, 404);
 
-    const number = Number.isInteger(subject.nextNumber) && subject.nextNumber > 0 ? subject.nextNumber : 1;
+    const number = subject.nextNumber - 1;
     const note = {
       _id: `${slug}:${number}`,
       subject: slug,
