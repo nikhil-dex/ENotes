@@ -249,7 +249,7 @@ export default function HomePage() {
     <main className="shell">
       <header className="topbar">
         <a className="brand" href="/" aria-label="Notes dashboard home"><span className="brand-mark">N</span><span>Study<span className="brand-light">Notes</span></span></a>
-        <div className="topbar-right"><a className="import-guide-link" href="/import-guide">Import guide</a><button className="theme-button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>{theme === 'dark' ? '☼' : '◐'} <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span></button><span className="status-dot"/><span>{active?.file || 'MongoDB'}</span></div>
+        <div className="topbar-right"><a className="import-guide-link" href="/html-library">HTML files</a><a className="import-guide-link" href="/import-guide">Import guide</a><button className="theme-button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>{theme === 'dark' ? '☼' : '◐'} <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span></button><span className="status-dot"/><span>{active?.file || 'MongoDB'}</span></div>
       </header>
 
       <nav className="subject-nav" aria-label="Note subjects">
