@@ -22,6 +22,7 @@ function withSecurityHeaders(response) {
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   response.headers.set('X-DNS-Prefetch-Control', 'off');
+  response.headers.set('Cache-Control', 'private, no-store, max-age=0');
   return response;
 }
 
