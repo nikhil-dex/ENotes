@@ -1,4 +1,6 @@
 import { createHmac, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto';
+import { createSessionToken, COOKIE_NAME, SESSION_SECONDS } from '../../../../lib/access-session.js';
+import { readLimitedBody } from '../../../../lib/read-limited-body.js';
 import { promisify } from 'node:util';
 import { getDatabase } from '../../../../lib/mongodb.js';
 
@@ -6,8 +8,6 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const scrypt = promisify(scryptCallback);
-const COOKIE_NAME = 'enotes_access';
-const SESSION_SECONDS = 60 * 60;
 
 function json(data, status = 200) {
   return Response.json(data, { status, headers: { 'Cache-Control': 'no-store' } });
@@ -20,7 +20,12 @@ export async function POST(request) {
       return json({ error: 'Access is not configured correctly. Set ENOTES_SESSION_SECRET on the server.' }, 500);
     }
 
-    const body = await request.json();
+    let body;
+    try {
+      body = JSON.parse(await readLimitedBody(request, 2048));
+    } catch (error) {
+      return json({ error: error?.status === 413 ? 'Request body is too large.' : 'Enter a valid access request.' }, error?.status || 400);
+    }
     const accessKey = body?.accessKey;
     if (typeof accessKey !== 'string' || accessKey.length === 0 || accessKey.length > 256) {
       return json({ error: 'Enter the access string.' }, 400);
@@ -79,10 +84,7 @@ export async function POST(request) {
     }
 
     const expiresAt = Math.floor(Date.now() / 1000) + SESSION_SECONDS;
-    const signature = createHmac('sha256', sessionSecret)
-      .update(`enotes-access:${expiresAt}`)
-      .digest('hex');
-    const token = `${expiresAt}.${signature}`;
+    const token = createSessionToken(sessionSecret, expiresAt);
 
     const response = json({ ok: true });
     response.headers.append(
