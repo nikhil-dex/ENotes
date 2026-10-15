@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Excel Data Analyst — Study Notes</title>
+<style>
+  :root{
+    --bg:#0f1115;
+    --bg-soft:#151822;
+    --card:#181c25;
+    --card-border:#262b38;
+    --text:#e6e8ee;
+    --text-muted:#9aa3b5;
+    --accent:#34d399;
+    --accent-2:#38bdf8;
+    --code-bg:#11141b;
+    --code-text:#8be9c1;
+    --tag-bg:#1f2937;
+    --shadow: 0 4px 18px rgba(0,0,0,0.35);
+    --scroll-thumb:#2a2f3d;
+    --core-bg: rgba(248,113,113,.14);
+    --core-fg: #f87171;
+    --core-border: rgba(248,113,113,.4);
+    --freq-bg: rgba(56,189,248,.14);
+    --freq-fg: #38bdf8;
+    --freq-border: rgba(56,189,248,.4);
+    --good-bg: rgba(148,163,184,.14);
+    --good-fg: #94a3b8;
+    --good-border: rgba(148,163,184,.4);
+    --manager-fg: #c4b5fd;
+    --manager-border: rgba(167,139,250,.4);
+    --manager-bg: rgba(167,139,250,.1);
+    --added-fg: #fbbf24;
+    --added-border: rgba(251,191,36,.4);
+    --added-bg: rgba(251,191,36,.1);
+  }
+  html[data-theme="light"]{
+    --bg:#f4f6fb;
+    --bg-soft:#ffffff;
+    --card:#ffffff;
+    --card-border:#e2e6ef;
+    --text:#1d2330;
+    --text-muted:#5b6478;
+    --accent:#059669;
+    --accent-2:#0284c7;
+    --code-bg:#eef1f8;
+    --code-text:#0f7a53;
+    --tag-bg:#e7ebf5;
+    --shadow: 0 4px 18px rgba(30,41,59,0.08);
+    --scroll-thumb:#d3d9e6;
+    --manager-fg: #7c3aed;
+    --manager-border: rgba(124,58,237,.35);
+    --manager-bg: rgba(124,58,237,.08);
+    --added-fg: #b45309;
+    --added-border: rgba(180,83,9,.35);
+    --added-bg: rgba(180,83,9,.08);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family: "Segoe UI", Roboto, Inter, system-ui, sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    transition: background .25s ease, color .25s ease;
+  }
+  ::-webkit-scrollbar{width:10px;height:10px;}
+  ::-webkit-scrollbar-thumb{background:var(--scroll-thumb);border-radius:6px;}
+
+  header{
+    position:sticky;top:0;z-index:50;
+    display:flex;align-items:center;gap:12px;
+    padding:12px 20px;
+    background:var(--bg-soft);
+    border-bottom:1px solid var(--card-border);
+    box-shadow:var(--shadow);
+    flex-wrap:wrap;
+  }
+  header h1{
+    font-size:17px;margin:0;white-space:nowrap;
+    background:linear-gradient(90deg,var(--accent),var(--accent-2));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .searchbox{
+    flex:1;max-width:340px;position:relative;
+  }
+  .searchbox input{
+    width:100%;padding:8px 12px 8px 32px;border-radius:8px;
+    border:1px solid var(--card-border);background:var(--card);
+    color:var(--text);font-size:13px;outline:none;
+  }
+  .searchbox input:focus{border-color:var(--accent);}
+  .searchbox::before{
+    content:"🔍";position:absolute;left:9px;top:7px;font-size:13px;opacity:.6;
+  }
+  #focusToggle{
+    border:1px solid var(--core-border);background:var(--core-bg);color:var(--core-fg);
+    border-radius:8px;padding:7px 12px;cursor:pointer;font-size:12.5px;font-weight:600;white-space:nowrap;
+  }
+  #focusToggle.active{background:var(--core-fg);color:#1a0505;}
+  .progress-wrap{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-muted);white-space:nowrap;}
+  .progress-bar{width:80px;height:6px;background:var(--tag-bg);border-radius:4px;overflow:hidden;}
+  .progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2));width:0%;transition:width .3s ease;}
+  #themeToggle{
+    border:1px solid var(--card-border);background:var(--card);color:var(--text);
+    border-radius:8px;padding:7px 12px;cursor:pointer;font-size:13px;display:flex;gap:6px;align-items:center;
+  }
+  #themeToggle:hover{border-color:var(--accent);}
+
+  .legend{
+    max-width:1300px;margin:14px auto 0;padding:0 30px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--text-muted);
+  }
+  .badge{
+    display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 10px;border-radius:20px;font-weight:700;white-space:nowrap;
+  }
+  .badge.core{background:var(--core-bg);color:var(--core-fg);border:1px solid var(--core-border);}
+  .badge.freq{background:var(--freq-bg);color:var(--freq-fg);border:1px solid var(--freq-border);}
+  .badge.good{background:var(--good-bg);color:var(--good-fg);border:1px solid var(--good-border);}
+  .tag-inline{
+    display:inline-flex;align-items:center;gap:4px;font-size:10.5px;padding:2px 8px;border-radius:20px;font-weight:700;margin-left:8px;vertical-align:middle;
+  }
+  .tag-inline.core{background:var(--core-bg);color:var(--core-fg);border:1px solid var(--core-border);}
+  .tag-inline.freq{background:var(--freq-bg);color:var(--freq-fg);border:1px solid var(--freq-border);}
+  .tag-inline.good{background:var(--good-bg);color:var(--good-fg);border:1px solid var(--good-border);}
+
+  .layout{display:flex;max-width:1300px;margin:0 auto;}
+  nav.sidebar{
+    width:260px;flex-shrink:0;position:sticky;top:57px;
+    height:calc(100vh - 57px);overflow-y:auto;
+    padding:18px 10px 30px;border-right:1px solid var(--card-border);
+  }
+  nav.sidebar a{
+    display:flex;justify-content:space-between;align-items:center;gap:8px;
+    text-decoration:none;color:var(--text-muted);
+    padding:9px 12px;border-radius:8px;font-size:13.5px;margin-bottom:2px;
+    transition:background .15s, color .15s;
+  }
+  nav.sidebar a .label{display:flex;align-items:center;gap:7px;}
+  nav.sidebar a .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  nav.sidebar a .dot.core{background:var(--core-fg);}
+  nav.sidebar a .dot.freq{background:var(--freq-fg);}
+  nav.sidebar a .dot.good{background:var(--good-fg);}
+  nav.sidebar a:hover{background:var(--tag-bg);color:var(--text);}
+  nav.sidebar a.active{background:var(--tag-bg);color:var(--accent);font-weight:600;}
+  nav.sidebar a .chk{
+    width:16px;height:16px;border-radius:4px;border:1px solid var(--card-border);
+    display:inline-flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;
+  }
+  nav.sidebar a.done .chk{background:var(--accent);border-color:var(--accent);color:#08130d;}
+  .sidebar-footer{padding:12px;font-size:11px;color:var(--text-muted);border-top:1px solid var(--card-border);margin-top:10px;}
+
+  main{flex:1;padding:24px 30px 80px;min-width:0;}
+  section.topic{
+    background:var(--card);border:1px solid var(--card-border);
+    border-radius:14px;padding:22px 26px;margin-bottom:26px;box-shadow:var(--shadow);
+    scroll-margin-top:70px;
+  }
+  section.topic.hidden{display:none;}
+  section.topic h2{
+    margin-top:0;font-size:19px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  }
+  section.topic h2 .num{
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));
+    color:#08130d;font-size:13px;font-weight:700;border-radius:8px;
+    width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  section.topic .source-tag{
+    font-size:11px;color:var(--text-muted);background:var(--tag-bg);
+    padding:3px 8px;border-radius:6px;margin-left:auto;font-family:monospace;
+  }
+  .intro{font-size:14px;color:var(--text-muted);background:var(--bg-soft);border-radius:9px;padding:12px 16px;margin:10px 0 4px;}
+  h3.subhead{
+    font-size:14.5px;color:var(--accent-2);margin:22px 0 8px;border-left:3px solid var(--accent-2);padding-left:8px;display:flex;align-items:center;flex-wrap:wrap;
+  }
+  p, li{font-size:14px;line-height:1.65;color:var(--text);}
+  .note{color:var(--text-muted);font-size:13px;}
+  ul{padding-left:20px;margin:8px 0;}
+  li{margin-bottom:4px;}
+  .analogy{
+    background:var(--bg-soft);border:1px dashed var(--accent-2);border-radius:9px;
+    padding:10px 14px;font-size:13.5px;color:var(--text);margin:10px 0;
+  }
+  .analogy b{color:var(--accent-2);}
+
+  .kbd-row{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;}
+  kbd{
+    background:var(--code-bg);border:1px solid var(--card-border);border-bottom-width:2px;
+    padding:4px 8px;border-radius:6px;font-family:Consolas,monospace;font-size:12.5px;color:var(--accent);
+  }
+  .shortcut-item{
+    display:flex;justify-content:space-between;align-items:center;gap:14px;
+    padding:8px 10px;border-radius:8px;font-size:13.5px;
+  }
+  .shortcut-item:nth-child(odd){background:var(--bg-soft);}
+
+  .code-block{position:relative;margin:10px 0;}
+  pre{
+    background:var(--code-bg);border:1px solid var(--card-border);border-radius:9px;
+    padding:12px 44px 12px 14px;overflow-x:auto;margin:0;
+  }
+  code{font-family:Consolas,"Courier New",monospace;font-size:13px;color:var(--code-text);white-space:pre;}
+  .copy-btn{
+    position:absolute;top:8px;right:8px;background:var(--tag-bg);border:1px solid var(--card-border);
+    color:var(--text-muted);font-size:11px;padding:4px 8px;border-radius:6px;cursor:pointer;
+  }
+  .copy-btn:hover{color:var(--accent);border-color:var(--accent);}
+  .copy-btn.copied{color:var(--accent);border-color:var(--accent);}
+
+  table.data-table{border-collapse:collapse;width:100%;margin:8px 0;font-size:12.5px;}
+  table.data-table th, table.data-table td{
+    border:1px solid var(--card-border);padding:6px 9px;text-align:left;white-space:nowrap;
+  }
+  table.data-table th{background:var(--tag-bg);color:var(--accent-2);}
+  table.data-table tr:nth-child(even) td{background:var(--bg-soft);}
+  .table-scroll{overflow-x:auto;border-radius:8px;}
+
+  details.example{
+    margin:12px 0;border:1px dashed var(--card-border);border-radius:9px;padding:2px 14px;background:var(--bg-soft);
+  }
+  details.example summary{
+    cursor:pointer;font-size:13px;color:var(--accent);padding:8px 0;font-weight:600;list-style:none;
+    display:flex;align-items:center;gap:6px;
+  }
+  details.example summary::-webkit-details-marker{display:none;}
+  details.example summary::before{content:"▶";font-size:10px;transition:transform .15s;}
+  details.example[open] summary::before{transform:rotate(90deg);}
+  details.example .example-body{padding-bottom:12px;}
+
+  mark{background:var(--accent);color:#08130d;border-radius:3px;padding:0 2px;}
+
+  .callout{
+    border-left:3px solid var(--accent-2);background:var(--bg-soft);
+    padding:10px 14px;border-radius:0 8px 8px 0;font-size:13px;margin:10px 0;color:var(--text-muted);
+  }
+  .callout.warn{border-left-color:var(--core-fg);}
+  .callout.warn b{color:var(--core-fg);}
+
+  .manager-note{
+    border:1px solid var(--manager-border);background:var(--manager-bg);
+    padding:12px 16px;border-radius:10px;font-size:13.5px;margin:12px 0;color:var(--text);
+  }
+  .manager-note .mn-title{color:var(--manager-fg);font-weight:700;font-size:12.5px;text-transform:uppercase;letter-spacing:.03em;margin-bottom:5px;display:block;}
+  .source-tag.added{background:var(--added-bg);color:var(--added-fg);border:1px solid var(--added-border);}
+
+  .no-results{text-align:center;color:var(--text-muted);padding:60px 0;font-size:14px;}
+
+  @media (max-width: 860px){
+    nav.sidebar{position:fixed;left:-270px;top:57px;background:var(--bg);z-index:40;transition:left .2s;box-shadow:var(--shadow);}
+    nav.sidebar.open{left:0;}
+    #menuToggle{display:inline-flex;}
+    main{padding:18px 14px 60px;}
+    .legend{padding:0 14px;}
+  }
+  #menuToggle{display:none;border:1px solid var(--card-border);background:var(--card);color:var(--text);border-radius:8px;padding:7px 10px;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<header>
+  <button id="menuToggle">☰</button>
+  <h1>📊 Excel for Data Analysts — Notes</h1>
+  <div class="searchbox"><input id="searchInput" type="text" placeholder="Search formulas, shortcuts, topics..."></div>
+  <button id="focusToggle">🔥 Must-Know Only</button>
+  <div class="progress-wrap">
+    <span id="progressLabel">0/6</span>
+    <div class="progress-bar"><div class="progress-bar-fill" id="progressFill"></div></div>
+  </div>
+  <button id="themeToggle"><span id="themeIcon">🌙</span><span id="themeLabel">Dark</span></button>
+</header>
+
+<div class="legend">
+  <span>Priority for Data Analyst / Data Scientist / ML Engineer roles:</span>
+  <span class="badge core">🔥 Must-Know</span>
+  <span class="badge freq">⭐ Frequently Used</span>
+  <span class="badge good">📘 Good to Know</span>
+  <span class="source-tag added">+ Added Topic (not in original files)</span>
+  <span style="margin-left:auto;">Look for <b style="color:var(--manager-fg)">💼 Why Your Manager Cares</b> in every topic — the real business reason to learn it.</span>
+</div>
+
+<div class="layout">
+  <nav class="sidebar" id="sidebar">
+    <a href="#t1" data-topic="t1"><span class="label"><span class="dot good"></span>1. Shortcut Keys</span><span class="chk"></span></a>
+    <a href="#t2" data-topic="t2"><span class="label"><span class="dot core"></span>2. Data Entry & Basic Formulas</span><span class="chk"></span></a>
+    <a href="#t3" data-topic="t3"><span class="label"><span class="dot core"></span>3. VLOOKUP, MATCH & INDEX</span><span class="chk"></span></a>
+    <a href="#t4" data-topic="t4"><span class="label"><span class="dot core"></span>4. Statistical Formulas</span><span class="chk"></span></a>
+    <a href="#t5" data-topic="t5"><span class="label"><span class="dot freq"></span>5. Date Formulas</span><span class="chk"></span></a>
+    <a href="#t6" data-topic="t6"><span class="label"><span class="dot core"></span>6. Pivot Tables</span><span class="chk"></span></a>
+    <a href="#t7" data-topic="t7"><span class="label"><span class="dot core"></span>7. Charts &amp; Data Viz</span><span class="chk"></span></a>
+    <a href="#t8" data-topic="t8"><span class="label"><span class="dot core"></span>8. Power Query</span><span class="chk"></span></a>
+    <a href="#t9" data-topic="t9"><span class="label"><span class="dot core"></span>9. XLOOKUP &amp; Dynamic Arrays</span><span class="chk"></span></a>
+    <a href="#t10" data-topic="t10"><span class="label"><span class="dot core"></span>10. Statistics &amp; Forecasting</span><span class="chk"></span></a>
+    <a href="#t11" data-topic="t11"><span class="label"><span class="dot freq"></span>11. What-If Analysis</span><span class="chk"></span></a>
+    <a href="#t12" data-topic="t12"><span class="label"><span class="dot freq"></span>12. Error Handling</span><span class="chk"></span></a>
+    <a href="#t13" data-topic="t13"><span class="label"><span class="dot good"></span>13. Macros &amp; VBA Basics</span><span class="chk"></span></a>
+    <div class="sidebar-footer">
+      Source: 1_set.txt – 6_SET.TXT<br>+ 1_set.xlsx, 2_SET.xlsx, 3_set.xlsx<br>Topics 7–13 added — not from your original files, but commonly required for DA/DS/ML roles.<br><br>
+      Colored dots show DA/DS priority. Use "🔥 Must-Know Only" up top to hide the lower-priority topics.
+    </div>
+  </nav>
+
+  <main id="main">
+
+    <!-- TOPIC 1 -->
+    <section class="topic" id="t1" data-priority="good">
+      <h2><span class="num">1</span> Shortcut Keys <span class="badge good">📘 Good to Know</span><span class="source-tag">1_set.txt</span></h2>
+      <p class="intro">These make you faster in Excel, but they aren't an analytical skill by themselves. Learn them gradually — they'll save real time once you're working in 1000+ row sheets daily.</p>
+
+      <div class="manager-note">
+        <span class="mn-title">💼 Why your manager cares</span>
+        Honestly — they usually don't, directly. But when you're screen-sharing in a live meeting and it takes you 20 seconds to scroll to the bottom of a sheet, it looks slow. The real goal here is simple: spend your time thinking about the data, not clicking around it.
+      </div>
+
+      <h3 class="subhead">Navigation</h3>
+      <div class="shortcut-item"><span>Go to the very last column (XFD1)</span><span class="kbd-row"><kbd>Ctrl</kbd>+<kbd>→</kbd></span></div>
+      <div class="shortcut-item"><span>Go back to the first column</span><span class="kbd-row"><kbd>Ctrl</kbd>+<kbd>←</kbd></span></div>
+      <div class="shortcut-item"><span>Go to the last used row</span><span class="kbd-row"><kbd>Ctrl</kbd>+<kbd>↓</kbd></span></div>
+      <div class="shortcut-item"><span>Go to the first row</span><span class="kbd-row"><kbd>Ctrl</kbd>+<kbd>↑</kbd></span></div>
+      <div class="shortcut-item"><span>Jump to the last row &amp; last column from any cell (or 1,1 → n,n)</span><span class="kbd-row"><kbd>Ctrl</kbd>+<kbd>↓</kbd>+<kbd>→</kbd></span></div>
+      <div class="shortcut-item"><span>Jump back to cell A1 from any position (n,n → 1,1)</span><span class="kbd-row"><kbd>Ctrl</kbd>+<kbd>↑</kbd>+<kbd>←</kbd></span></div>
+
+      <h3 class="subhead">Sheets &amp; Workbooks</h3>
+      <div class="shortcut-item"><span>Insert a new sheet</span><span class="kbd-row"><kbd>Shift</kbd>+<kbd>F11</kbd></span></div>
+      <div class="shortcut-item"><span>Move between sheets</span><span class="kbd-row"><kbd>Ctrl</kbd>+<kbd>PgUp</kbd> / <kbd>PgDn</kbd></span></div>
+      <div class="shortcut-item"><span>Close workbook</span><span class="kbd-row"><kbd>Ctrl</kbd>+<kbd>W</kbd></span></div>
+      <div class="shortcut-item"><span>Open a new blank workbook</span><span class="kbd-row"><kbd>Ctrl</kbd>+<kbd>N</kbd></span></div>
+      <div class="shortcut-item"><span>Open an existing file</span><span class="kbd-row"><kbd>Ctrl</kbd>+<kbd>O</kbd></span></div>
+
+      <h3 class="subhead">Formula Bar (fx)</h3>
+      <p>Type any calculation directly into a cell — it evaluates immediately.</p>
+      <div class="code-block"><pre><code>=50+30   &#8594; cell displays 80</code></pre></div>
+
+      <h3 class="subhead">Formula vs. Function</h3>
+      <ul>
+        <li><strong>Formula</strong> — a custom, one-off calculation you type yourself, e.g. <code>=50+30</code>.</li>
+        <li><strong>Function</strong> — a ready-made, named calculation Excel already provides, e.g. <code>SUM</code>, <code>AVERAGE</code>. You just plug in the cells.</li>
+      </ul>
+
+      <details class="example">
+        <summary>Example: 1_set.xlsx (formula bar demo)</summary>
+        <div class="example-body table-scroll">
+          <table class="data-table">
+            <tr><th>Cell</th><th>Value / Formula</th><th>Result</th></tr>
+            <tr><td>C4</td><td>50</td><td>50</td></tr>
+            <tr><td>C5</td><td>30</td><td>30</td></tr>
+            <tr><td>C6</td><td>=C4+C5</td><td>80</td></tr>
+            <tr><td>E4</td><td>=SUM(C4:C5)</td><td>80</td></tr>
+            <tr><td>E5</td><td>=AVERAGE(C4:C5)</td><td>40</td></tr>
+          </table>
+        </div>
+      </details>
+    </section>
+
+    <!-- TOPIC 2 -->
+    <section class="topic" id="t2" data-priority="core">
+      <h2><span class="num">2</span> Data Entry &amp; Basic Formulas <span class="badge core">🔥 Must-Know</span><span class="source-tag">2_set.txt</span></h2>
+      <p class="intro">Real-world data is messy — extra spaces, wrong capitalization, blank rows, values glued together. Cleaning it up is one of the most common jobs a data analyst does, often taking more time than the actual analysis. Master this section first.</p>
+
+      <div class="manager-note">
+        <span class="mn-title">💼 Why your manager cares</span>
+        Manager says: <em>"This export looks messy, can you clean it up before the report goes out?"</em> The goal: turn raw data pulled from a system, another team, or a form into something reliable enough to build formulas and reports on top of. This is the invisible first step behind almost every deliverable you'll ever hand over.
+      </div>
+
+      <h3 class="subhead">Insert / Delete Rows &amp; Columns</h3>
+      <ul>
+        <li>Select the column <em>after</em> where the new one should go, then press <kbd>Ctrl</kbd>+<kbd>+</kbd> to insert a blank column before it.</li>
+        <li><kbd>Ctrl</kbd>+<kbd>-</kbd> deletes the selected column.</li>
+        <li>Same idea works for rows.</li>
+      </ul>
+
+      <h3 class="subhead">Selection Shortcuts <span class="note">(selects only the data, not the whole sheet)</span></h3>
+      <div class="kbd-row">
+        <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>→</kbd> select across all columns of data
+      </div>
+      <div class="kbd-row">
+        <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>↓</kbd> select down all rows of data
+      </div>
+      <div class="kbd-row">
+        <kbd>Ctrl</kbd>+<kbd>A</kbd> select the whole data block at once
+      </div>
+
+      <h3 class="subhead">Cell Formatting</h3>
+      <p>Change how a date/number is displayed: <kbd>Ctrl</kbd>+<kbd>1</kbd> opens Format Cells.</p>
+
+      <h3 class="subhead">Relative vs. Absolute Reference <span class="tag-inline core">🔥 Must-Know</span></h3>
+      <div class="analogy">
+        <b>Think of it like giving directions:</b> a <em>relative</em> reference is "turn left at the next corner" — it shifts depending on where you start. An <em>absolute</em> reference (locked with <code>$</code>) is a GPS coordinate — it always points to the exact same cell, no matter where you copy the formula.
+      </div>
+      <div class="code-block"><pre><code>=SUM(H5:J5)+$H$16</code></pre></div>
+      <div class="table-scroll">
+        <table class="data-table">
+          <tr><th>Formula in row</th><th>What it becomes when copied down</th><th>Why</th></tr>
+          <tr><td>Row 5</td><td>=SUM(H5:J5)+$H$16</td><td>H5:J5 is relative — matches its own row</td></tr>
+          <tr><td>Row 6</td><td>=SUM(H6:J6)+$H$16</td><td>H6:J6 shifted down, but $H$16 stayed locked</td></tr>
+          <tr><td>Row 7</td><td>=SUM(H7:J7)+$H$16</td><td>Same pattern — $ signs freeze the row/column</td></tr>
+        </table>
+      </div>
+      <p class="note">Conditional formatting was also introduced here — it highlights cells automatically based on rules (e.g. color all values below target red). Great for spotting outliers at a glance.</p>
+
+      <h3 class="subhead">Data Cleaning for Analysis <span class="tag-inline core">🔥 Must-Know</span></h3>
+      <p>Messy text breaks lookups and filters silently — <code>"Delhi"</code> and <code>"Delhi "</code> (extra space) look identical to a human but are different to Excel.</p>
+      <ul>
+        <li>Remove blank rows: <kbd>Ctrl</kbd>+<kbd>G</kbd> (Go To Special) → select Blanks → <kbd>Ctrl</kbd>+<kbd>-</kbd> to delete them.</li>
+      </ul>
+      <div class="code-block"><pre><code>=LEN(text)     &#8594; counts characters (helps you spot hidden extra spaces)
+=TRIM(text)    &#8594; strips leading/trailing spaces
+=SUBSTITUTE(A2,CHAR(160),"")   &#8594; removes an "unbreakable" space (a space that looks
+                                   normal but is a different character, code 160)</code></pre></div>
+      <p>Fixing capitalization:</p>
+      <div class="code-block"><pre><code>=PROPER(text)   &#8594; Capitalizes Each Word
+=UPPER(text)    &#8594; ALL CAPS
+=LOWER(text)    &#8594; all lowercase</code></pre></div>
+      <details class="example">
+        <summary>Example: cleaning a messy name</summary>
+        <div class="example-body table-scroll">
+          <table class="data-table">
+            <tr><th>Raw value (A2)</th><th>Formula</th><th>Result</th></tr>
+            <tr><td>"&nbsp;&nbsp;john DOE&nbsp;&nbsp;"</td><td>=TRIM(A2)</td><td>"john DOE"</td></tr>
+            <tr><td>"&nbsp;&nbsp;john DOE&nbsp;&nbsp;"</td><td>=PROPER(TRIM(A2))</td><td>"John Doe"</td></tr>
+          </table>
+        </div>
+      </details>
+
+      <h3 class="subhead">Ternary-style IF <span class="tag-inline core">🔥 Must-Know</span></h3>
+      <p>A quick way to say "if this, do A, otherwise do B" in one cell.</p>
+      <div class="code-block"><pre><code>=IF(E2&lt;0,0,E2)</code></pre></div>
+      <div class="callout">
+        Plain English: IF E2 is less than 0 &#8594; show 0, OTHERWISE &#8594; show E2 as-is.<br>
+        Example use: sales returns sometimes get entered as negative numbers by mistake — this formula caps them at 0 instead of letting negatives distort a total.<br>
+        E2 = -50 &#8594; result 0 &nbsp;|&nbsp; E2 = 120 &#8594; result 120
+      </div>
+
+      <h3 class="subhead">Splitting Data — Flash Fill &amp; FIND/LEFT/RIGHT <span class="tag-inline core">🔥 Must-Know</span></h3>
+      <p>Example value: <code>DELHI-110059</code>. Type the split-out part into the next column by hand once, then press <kbd>Ctrl</kbd>+<kbd>E</kbd> — Excel detects the pattern and auto-fills the rest of the column.</p>
+      <p>Or split it with a formula, which is more reliable for large or changing datasets:</p>
+      <div class="code-block"><pre><code>=FIND("-",A2,1)                     &#8594; position of the hyphen (here: 6)
+=LEFT(A2,FIND("-",A2,1)-1)          &#8594; "DELHI"
+=RIGHT(A2,LEN(A2)-FIND("-",A2,1))   &#8594; "110059"</code></pre></div>
+      <details class="example">
+        <summary>Example: splitting an email into username + domain</summary>
+        <div class="example-body">
+          <p>Value: <code>aarav.sharma@company.com</code></p>
+          <div class="code-block"><pre><code>=LEFT(A2,FIND("@",A2)-1)          &#8594; "aarav.sharma"
+=RIGHT(A2,LEN(A2)-FIND("@",A2))   &#8594; "company.com"</code></pre></div>
+        </div>
+      </details>
+
+      <h3 class="subhead">Data Validation <span class="tag-inline freq">⭐ Frequently Used</span></h3>
+      <p>Menu path: <kbd>Alt</kbd> → <kbd>A</kbd> → <kbd>V</kbd> → <kbd>V</kbd></p>
+      <p class="note">Restricts what can be typed into a cell (e.g. a dropdown of valid states). This stops messy variants like "Maharashtra" / "maharashtra " / "Maharastra" from ever entering the sheet — which is exactly what would otherwise break SUMIF, COUNTIF and VLOOKUP later.</p>
+
+      <h3 class="subhead">Logical Functions — IF, IFS, AND, OR <span class="tag-inline core">🔥 Must-Know</span></h3>
+      <div class="code-block"><pre><code>=IFS(D2&gt;75000,D2*0.2, D2&gt;50000,D2*0.15, D2&lt;=50000,D2*0.1)</code></pre></div>
+      <p class="note">Plain English: check conditions top to bottom, and use the calculation next to the <em>first</em> one that's true — like a tidier stack of nested IFs.</p>
+      <details class="example">
+        <summary>Example: commission tiers using the IFS formula above</summary>
+        <div class="example-body table-scroll">
+          <table class="data-table">
+            <tr><th>Sales (D2)</th><th>Condition matched</th><th>Commission</th></tr>
+            <tr><td>90,000</td><td>D2 &gt; 75000 &#8594; 20%</td><td>18,000</td></tr>
+            <tr><td>60,000</td><td>D2 &gt; 50000 &#8594; 15%</td><td>9,000</td></tr>
+            <tr><td>40,000</td><td>D2 &lt;= 50000 &#8594; 10%</td><td>4,000</td></tr>
+          </table>
+        </div>
+      </details>
+      <p><strong>AND</strong> = every condition must be true. <strong>OR</strong> = at least one condition must be true.</p>
+      <div class="code-block"><pre><code>=IF(AND(B2=G$4,C2&gt;=5),"Yes","No")   &#8594; "Yes" only if BOTH match
+=IF(OR(B2=G$4,C2&gt;=5),"Yes","No")    &#8594; "Yes" if EITHER matches</code></pre></div>
+
+      <h3 class="subhead">Sorting <span class="tag-inline freq">⭐ Frequently Used</span></h3>
+      <p>Menu: <kbd>Alt</kbd> → <kbd>A</kbd> → <kbd>S</kbd> → <kbd>S</kbd>, or by formula (spills results automatically, source data untouched):</p>
+      <div class="code-block"><pre><code>=SORT(A2:J1001,2,-1)   &#8594; sort the range by column 2, descending (-1)</code></pre></div>
+
+      <h3 class="subhead">Filtering <span class="tag-inline freq">⭐ Frequently Used</span></h3>
+      <p>Menu: <kbd>Alt</kbd> → <kbd>A</kbd> → <kbd>T</kbd>, or by formula:</p>
+      <div class="code-block"><pre><code>=FILTER(A2:J1001,D2:D1001="Maharashtra")   &#8594; only rows where column D = "Maharashtra"</code></pre></div>
+      <p class="note">Tip: pair a Data Validation dropdown cell with SORT/FILTER formulas so a user can just pick a state/category from a list and the report updates instantly.</p>
+
+      <h3 class="subhead">TAKE — Top N Rows <span class="tag-inline good">📘 Good to Know (newer Excel/365 function)</span></h3>
+      <div class="code-block"><pre><code>=TAKE(A2:J1001,7)   &#8594; keeps just the first 7 rows</code></pre></div>
+
+      <h3 class="subhead">Combining TAKE + SORT + FILTER <span class="tag-inline core">🔥 Must-Know for dynamic "Top N" reports</span></h3>
+      <p><strong>Question:</strong> "Show the top 5 customer transactions from Maharashtra."</p>
+      <div class="code-block"><pre><code>=TAKE(SORT(FILTER(A2:J1001,D2:D1001=M2),N2,-1),O2)</code></pre></div>
+      <p class="note">Read it inside-out: <code>FILTER()</code> keeps only Maharashtra rows &#8594; <code>SORT()</code> arranges them biggest-first &#8594; <code>TAKE()</code> keeps only the top 5. This one-line pattern (<code>TAKE( SORT( FILTER() ) )</code>) replaces what used to need a pivot table + manual sort, and it updates live if the source data changes.</p>
+      <p><code>COLUMN()</code> simply returns the current column's number — handy inside bigger dynamic formulas.</p>
+
+      <details class="example">
+        <summary>Example: 2_SET.xlsx (sample employee data)</summary>
+        <div class="example-body table-scroll">
+          <table class="data-table">
+            <tr><th>SR NO</th><th>NAME</th><th>SALARY</th><th>AGE</th><th>CITY</th><th>CONTACT NO</th></tr>
+            <tr><td>1</td><td>NIKHIL</td><td>20000</td><td>20</td><td>DELHI</td><td>9876543210</td></tr>
+            <tr><td>2</td><td>ABHINAV</td><td>20000</td><td>20</td><td>JAMMU</td><td>9876543211</td></tr>
+            <tr><td>3</td><td>AAYUSH</td><td>20000</td><td>20</td><td>UP</td><td>9876543212</td></tr>
+            <tr><td>4</td><td>SATYAM</td><td>20000</td><td>20</td><td>BIHAR</td><td>9876543213</td></tr>
+            <tr><td>5</td><td>NITIN</td><td>20000</td><td>20</td><td>UP</td><td>9876543214</td></tr>
+            <tr><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td></tr>
+          </table>
+        </div>
+      </details>
+    </section>
+
+    <!-- TOPIC 3 -->
+    <section class="topic" id="t3" data-priority="core">
+      <h2><span class="num">3</span> VLOOKUP, MATCH &amp; INDEX <span class="badge core">🔥 Must-Know</span><span class="source-tag">3_set.txt</span></h2>
+      <p class="intro">One of the most frequently used — and most frequently interviewed — Excel skills for data roles. If you only deeply learn one topic on this page, make it this one.</p>
+
+      <div class="manager-note">
+        <span class="mn-title">💼 Why your manager cares</span>
+        Manager says: <em>"Can you add each customer's region next to their order?"</em> or <em>"Match up the salary column from HR's file with our project list."</em> The goal: combine information that lives in two different sheets/tables using a shared ID — this is basically doing a manual database JOIN inside Excel, and it's asked for constantly.
+      </div>
+
+      <h3 class="subhead">VLOOKUP — Vertical Lookup</h3>
+      <div class="analogy"><b>Think of a phone book:</b> you know the person's name (lookup value), and you flip to their row to read off their phone number (a value sitting in another column of that same row). VLOOKUP does exactly this, automatically.</div>
+      <div class="code-block"><pre><code>=VLOOKUP(lookup_value, table_array, col_index_num, range_lookup)</code></pre></div>
+      <ul>
+        <li><strong>1. lookup_value</strong> — what you're searching for, e.g. an employee ID.</li>
+        <li><strong>2. table_array</strong> — the whole table to search in. The value you're searching for must be in its <strong>left-most column</strong>.</li>
+        <li><strong>3. col_index_num</strong> — which column to return, counted from 1 starting at the left edge of table_array.</li>
+        <li><strong>4. range_lookup</strong> — <code>TRUE</code>/<code>1</code> = closest match, <code>FALSE</code>/<code>0</code> = exact match only (use this almost always).</li>
+      </ul>
+      <div class="callout">If using <code>TRUE</code> (approximate match), the table must be sorted ascending by the lookup column, or you'll get wrong results silently — no error shown.</div>
+
+      <details class="example" open>
+        <summary>Worked example — using the Employees table (3_set.xlsx)</summary>
+        <div class="example-body">
+          <p>Find the salary of employee <code>EMP005</code>:</p>
+          <div class="code-block"><pre><code>=VLOOKUP("EMP005", A2:D21, 4, FALSE)   &#8594; 85000</code></pre></div>
+          <p class="note">Column 1 = Employee_ID, 2 = Name, 3 = Department, 4 = Salary — so <code>col_index_num = 4</code> returns the salary.</p>
+        </div>
+      </details>
+
+      <div class="callout warn">
+        <b>Common error — #N/A:</b> means Excel could not find an exact match. Usual causes: a typo, an extra space (run <code>TRIM()</code> first), the lookup value is a number stored as text (or vice versa), or you searched for something not in the left-most column.
+      </div>
+
+      <h3 class="subhead">MATCH — Find a Position, Not a Value</h3>
+      <p><code>MATCH</code> tells you <em>where</em> something is, instead of what value is next to it.</p>
+      <div class="code-block"><pre><code>=MATCH(H4,A1:E1,0)   &#8594; returns the column number where H4's value is found (0 = exact match)</code></pre></div>
+
+      <h3 class="subhead">INDEX — Value by Row &amp; Column Number</h3>
+      <div class="code-block"><pre><code>=INDEX(A1:J9,C19,D19)   &#8594; the value sitting at row C19, column D19 inside A1:J9</code></pre></div>
+
+      <details class="example">
+        <summary>Worked example — INDEX + MATCH together</summary>
+        <div class="example-body">
+          <p>Find the department of employee <code>EMP010</code> (Department is column C):</p>
+          <div class="code-block"><pre><code>=INDEX(C2:C21, MATCH("EMP010", A2:A21, 0))   &#8594; "Marketing"</code></pre></div>
+          <p class="note"><code>MATCH</code> finds EMP010 is the 9th row in the ID list; <code>INDEX</code> then returns the 9th value in the Department column.</p>
+        </div>
+      </details>
+
+      <h3 class="subhead">VLOOKUP + MATCH — Dynamic Column Lookup</h3>
+      <p>Nesting <code>MATCH</code> inside <code>VLOOKUP</code> means the column number is found automatically instead of typed as a fixed number — so it still works if columns get reordered:</p>
+      <div class="code-block"><pre><code>=VLOOKUP($I$3,our_table,MATCH(H4,$A$1:$E$1,0),0)</code></pre></div>
+
+      <div class="callout">
+        <b>Why data analysts often prefer INDEX+MATCH (or XLOOKUP) over plain VLOOKUP:</b><br>
+        • VLOOKUP can only search left-to-right — the lookup column must be the left-most one in the range.<br>
+        • VLOOKUP breaks (returns wrong values) if someone inserts a new column inside the table, because col_index_num no longer points where you think.<br>
+        • INDEX+MATCH can look in any direction and survives inserted columns.<br>
+        • <code>XLOOKUP</code> (newer Excel/365 function) does everything VLOOKUP and INDEX+MATCH do, more simply: <code>=XLOOKUP(lookup_value, lookup_array, return_array)</code> — worth learning once you're comfortable with VLOOKUP.
+      </div>
+    </section>
+
+    <!-- TOPIC 4 -->
+    <section class="topic" id="t4" data-priority="core">
+      <h2><span class="num">4</span> Statistical Formulas <span class="badge core">🔥 Must-Know</span><span class="source-tag">4_SET.TXT · Ch.7</span></h2>
+      <p class="intro">These are the everyday formulas behind quick KPIs and summary numbers — "total sales in Delhi," "how many orders last month," etc. Analysts write these constantly, often faster than opening a pivot table for a one-off number.</p>
+
+      <div class="manager-note">
+        <span class="mn-title">💼 Why your manager cares</span>
+        Manager says: <em>"What's our total sales in the North region?"</em> or <em>"How many customers did we lose last month?"</em> The goal: give a fast, precise, one-off answer to a specific question without having to build a whole pivot table — perfect for when someone asks a quick number in a meeting or over chat.
+      </div>
+
+      <h3 class="subhead">The IF-Family of Aggregations — Plain Syntax</h3>
+      <div class="code-block"><pre><code>=COUNTIF(range, criteria)                          &#8594; count cells matching ONE condition
+=COUNTIFS(range1,crit1, range2,crit2, ...)          &#8594; count matching MULTIPLE conditions
+
+=SUMIF(range, criteria, sum_range)                  &#8594; add up numbers matching ONE condition
+=SUMIFS(sum_range, range1,crit1, range2,crit2, ...) &#8594; add up numbers matching MULTIPLE conditions
+
+=AVERAGEIF(range, criteria, avg_range)              &#8594; average matching ONE condition
+=AVERAGEIFS(avg_range, range1,crit1, ...)           &#8594; average matching MULTIPLE conditions
+
+=MAXIFS(max_range, range1,crit1, ...)               &#8594; largest value matching conditions
+=MINIFS(min_range, range1,crit1, ...)               &#8594; smallest value matching conditions</code></pre></div>
+      <div class="callout warn">
+        <b>The #1 mix-up beginners make:</b> in <code>SUMIF</code>, <code>sum_range</code> comes <u>last</u>. In <code>SUMIFS</code> (and every other "...IFS" function), the range to summarize comes <u>first</u>. Getting this backwards is the most common reason these formulas silently return 0 or an error.
+      </div>
+
+      <details class="example" open>
+        <summary>Worked example — small sales dataset</summary>
+        <div class="example-body table-scroll">
+          <table class="data-table">
+            <tr><th>Row</th><th>State</th><th>Product</th><th>Qty</th></tr>
+            <tr><td>2</td><td>Maharashtra</td><td>Laptop</td><td>5</td></tr>
+            <tr><td>3</td><td>Maharashtra</td><td>Mouse</td><td>3</td></tr>
+            <tr><td>4</td><td>Gujarat</td><td>Laptop</td><td>2</td></tr>
+            <tr><td>5</td><td>Maharashtra</td><td>Laptop</td><td>4</td></tr>
+          </table>
+          <div class="code-block"><pre><code>=COUNTIF(B2:B5,"Maharashtra")               &#8594; 3   (3 rows match)
+=SUMIF(B2:B5,"Maharashtra",D2:D5)           &#8594; 12  (5+3+4)
+=SUMIFS(D2:D5,B2:B5,"Maharashtra",C2:C5,"Laptop")  &#8594; 9   (5+4, Maharashtra AND Laptop only)</code></pre></div>
+        </div>
+      </details>
+
+      <h3 class="subhead">Q1 — Total transactions by each state</h3>
+      <p class="note">"Total transactions" here means the <strong>count</strong> of rows, not the sum of price.</p>
+      <div class="code-block"><pre><code>=COUNTIF(state_range, state_name)</code></pre></div>
+
+      <h3 class="subhead">Q2 — Total transactions by state AND product category</h3>
+      <div class="code-block"><pre><code>=COUNTIFS($D$1:$D$1001,$L11,$F$1:$F$1001,M$10)</code></pre></div>
+
+      <h3 class="subhead">Q3 — Total quantity sold by region</h3>
+      <div class="code-block"><pre><code>=SUMIF($E:$E,$L21,$H:$H)</code></pre></div>
+
+      <h3 class="subhead">Q4 — Total quantity sold by region AND product name</h3>
+      <div class="code-block"><pre><code>=SUMIFS($H:$H,$G:$G,$L28,$E:$E,M$27)</code></pre></div>
+
+      <p class="note">Q5, Q6 &amp; Q7 were completed as practice exercises in class (no formulas recorded in the source notes).</p>
+    </section>
+
+    <!-- TOPIC 5 -->
+    <section class="topic" id="t5" data-priority="frequent">
+      <h2><span class="num">5</span> Date Formulas <span class="badge freq">⭐ Frequently Used</span><span class="source-tag">5_set.txt</span></h2>
+      <p class="intro">Dates show up in almost every dataset — signup dates, order dates, deadlines. Analysts use these to build reporting periods, calculate tenure/age, and check working days.</p>
+
+      <div class="manager-note">
+        <span class="mn-title">💼 Why your manager cares</span>
+        Manager says: <em>"How long has this employee been with us?"</em> or <em>"Just show me this month's numbers."</em> The goal: work with time correctly — ages, tenure, deadlines, reporting windows — since almost every business report is sliced by some time period, and date bugs (off-by-one days, wrong month) are an easy way to lose credibility.
+      </div>
+
+      <div class="kbd-row">
+        <kbd>DAY</kbd><kbd>MONTH</kbd><kbd>YEAR</kbd><kbd>DATE</kbd><kbd>TEXT</kbd><kbd>EOMONTH</kbd><kbd>DATEDIF</kbd><kbd>NETWORKDAYS.INTL</kbd>
+      </div>
+
+      <h3 class="subhead">Rebuild / Fix a Date</h3>
+      <p>Useful when a date was imported as text or in a broken format — this rebuilds it as a real Excel date.</p>
+      <div class="code-block"><pre><code>=DATE(YEAR(B2),MONTH(B2),DAY(B2))</code></pre></div>
+
+      <h3 class="subhead">Difference Between Two Dates</h3>
+      <div class="code-block"><pre><code>=D2-C2   &#8594; number of days between the two dates</code></pre></div>
+
+      <h3 class="subhead">Today's Date</h3>
+      <div class="code-block"><pre><code>=TODAY()</code></pre></div>
+
+      <h3 class="subhead">Age From Date of Birth <span class="tag-inline freq">⭐ Frequently Used</span></h3>
+      <div class="code-block"><pre><code>=DATEDIF(D2,TODAY(),"Y")</code></pre></div>
+      <p class="note">Example: if D2 = 15-Mar-1995 and today is 06-Jul-2026, this returns <strong>31</strong> (full completed years).</p>
+      <p>Full Y/M/D breakdown (concatenating text with <code>&amp;</code>):</p>
+      <div class="code-block"><pre><code>=DATEDIF(D2,TODAY(),"Y")&amp;"Years "&amp;DATEDIF(D2,TODAY(),"YM")&amp;" Months "&amp;DATEDIF(D2,TODAY(),"MD")&amp;"Days"</code></pre></div>
+      <p class="note">"YM" = leftover whole months after the years, "MD" = leftover whole days after that — gives a clean "31 Years 3 Months 21 Days" instead of one big number.</p>
+
+      <h3 class="subhead">Format a Date with TEXT()</h3>
+      <div class="code-block"><pre><code>=TEXT(D11,"DD-MMM-YYYY")
+
+6/25/2026  &#8594;  25-Jun-2026</code></pre></div>
+      <p class="note">Handy for reports/exports where a specific date format is expected (e.g. matching a client's spreadsheet format).</p>
+
+      <h3 class="subhead">EOMONTH — End of Month</h3>
+      <p>Returns the last date of a month, N months from a starting date. Great for building month-end reporting cutoffs automatically.</p>
+      <div class="code-block"><pre><code>=EOMONTH(D1,2)
+
+D1 = 15-Jan-2026  &#8594;  31-Mar-2026   (end of month, 2 months ahead)</code></pre></div>
+
+      <h3 class="subhead">NETWORKDAYS.INTL — Working Days</h3>
+      <p>Counts working days between two dates. "INTL" (International) lets you customize which days count as weekend and supply a holiday list — useful because not every country/company treats Sat+Sun as the only days off.</p>
+      <div class="code-block"><pre><code>=NETWORKDAYS.INTL(start_date, end_date, weekend_code, holidays_range)
+=NETWORKDAYS.INTL(A2,A32,11,E2:E3)</code></pre></div>
+    </section>
+
+    <!-- TOPIC 6 -->
+    <section class="topic" id="t6" data-priority="core">
+      <h2><span class="num">6</span> Pivot Tables <span class="badge core">🔥 Must-Know</span><span class="source-tag">6_SET.TXT</span></h2>
+      <p class="intro">Arguably the single most-used reporting tool in a data analyst's toolkit — it turns thousands of raw rows into a clean summary table in seconds, with no formulas at all. The original class notes here were very brief, so this section has been expanded with the core workflow every analyst needs.</p>
+
+      <div class="manager-note">
+        <span class="mn-title">💼 Why your manager cares</span>
+        Manager says: <em>"Give me a summary — sales by region and by month"</em> or <em>"Break this down by product category."</em> The goal: turn a giant flat spreadsheet into a clean, digestible summary a non-technical person can actually read in ten seconds. This is the #1 tool for turning raw data into "a report."
+      </div>
+
+      <h3 class="subhead">What It Is</h3>
+      <p>A drag-and-drop feature that groups and summarizes your data. Instead of writing a SUMIF for every state, or a COUNTIF for every category, you drag the field names into four boxes and Excel builds the whole summary table for you.</p>
+
+      <h3 class="subhead">The Four Areas</h3>
+      <ul>
+        <li><strong>Rows</strong> — categories to list down the side (e.g. Region, Product).</li>
+        <li><strong>Columns</strong> — a second category spread across the top (e.g. Year), so you get a grid.</li>
+        <li><strong>Values</strong> — the numbers to summarize, and how (Sum, Count, Average, Max, Min).</li>
+        <li><strong>Filters</strong> — an extra field used to slice the whole table (e.g. show only 2026 data).</li>
+      </ul>
+
+      <details class="example" open>
+        <summary>Worked example — replacing several SUMIF formulas with one pivot table</summary>
+        <div class="example-body">
+          <p>Using the same sales data as the Statistical Formulas section (State, Product, Qty):</p>
+          <ol>
+            <li>Click anywhere in the data, then <strong>Insert → PivotTable</strong>.</li>
+            <li>Drag <strong>State</strong> into <em>Rows</em>.</li>
+            <li>Drag <strong>Qty</strong> into <em>Values</em> (defaults to Sum).</li>
+          </ol>
+          <p>Result — one row per state with its total quantity, instantly, with no <code>SUMIF</code> formula written at all:</p>
+          <div class="table-scroll">
+            <table class="data-table">
+              <tr><th>State</th><th>Sum of Qty</th></tr>
+              <tr><td>Maharashtra</td><td>12</td></tr>
+              <tr><td>Gujarat</td><td>2</td></tr>
+            </table>
+          </div>
+          <p class="note">Drag <strong>Product</strong> into <em>Columns</em> as well, and you instantly get a State × Product grid — the same result as the "region AND product" SUMIFS/COUNTIFS formulas from Topic 4, without typing a formula.</p>
+        </div>
+      </details>
+
+      <h3 class="subhead">Changing Sum to Count / Average</h3>
+      <p>Right-click any number inside the pivot table → <strong>Value Field Settings</strong> → choose Sum, Count, Average, Max, or Min.</p>
+
+      <h3 class="subhead">Grouping Dates <span class="tag-inline core">🔥 Must-Know for time-series reporting</span></h3>
+      <p>If a date field is in <em>Rows</em>, right-click any date → <strong>Group</strong> → choose Months / Quarters / Years. This turns a column of 1,000 individual dates into a clean Month-by-Month or Quarter-by-Quarter summary instantly — one of the fastest ways to build a trend report.</p>
+
+      <h3 class="subhead">Refreshing Data</h3>
+      <div class="callout warn">
+        <b>Important:</b> a pivot table does NOT update automatically when the source data changes. After adding/editing rows, right-click the pivot table → <strong>Refresh</strong> (or press <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>F5</kbd>) to pull in the latest data.
+      </div>
+
+      <h3 class="subhead">Slicers &amp; Pivot Charts</h3>
+      <ul>
+        <li><strong>Slicers</strong> — clickable filter buttons (a friendlier alternative to the Filters box) that let anyone filter the report visually.</li>
+        <li><strong>PivotChart</strong> — one click turns the same pivot table into a chart that stays in sync with it automatically.</li>
+      </ul>
+    </section>
+
+    <!-- TOPIC 7 -->
+    <section class="topic" id="t7" data-priority="core">
+      <h2><span class="num">7</span> Charts &amp; Data Visualization <span class="badge core">🔥 Must-Know</span><span class="source-tag added">+ Added Topic</span></h2>
+      <p class="intro">Numbers in a table prove a point; a chart is what people actually remember and act on. Turning analysis into a clear visual is one of the most direct ways your work reaches decision-makers.</p>
+
+      <div class="manager-note">
+        <span class="mn-title">💼 Why your manager cares</span>
+        Manager says: <em>"Can you turn this into something I can put in the slide deck?"</em> The goal: communicate a trend or comparison visually — a chart gets understood (and remembered) by non-technical stakeholders in seconds, where a table of numbers would take them minutes.
+      </div>
+
+      <h3 class="subhead">Choosing the Right Chart</h3>
+      <ul>
+        <li><strong>Line chart</strong> — a trend over time (e.g. sales by month).</li>
+        <li><strong>Bar / Column chart</strong> — comparing categories side by side (e.g. sales by region).</li>
+        <li><strong>Pie chart</strong> — share of a whole. Use sparingly — keep it to about 5 slices or it becomes unreadable.</li>
+        <li><strong>Scatter plot</strong> — the relationship between two numeric variables (e.g. price vs. quantity sold). Heavily used in data science to visually spot correlation before running any formula.</li>
+        <li><strong>Combo chart</strong> — two different measures together (e.g. revenue as bars + growth % as a line on a second axis).</li>
+      </ul>
+
+      <h3 class="subhead">Building One</h3>
+      <p>Select your data → <strong>Insert</strong> tab → pick a chart type from the Charts group. Then add a clear title, label the axes, and remove clutter (unnecessary gridlines, an unneeded legend) — a clean chart reads faster than a busy one.</p>
+
+      <h3 class="subhead">Sparklines <span class="tag-inline good">📘 Good to Know</span></h3>
+      <p>Tiny in-cell charts (<strong>Insert → Sparklines</strong>) that fit inside a single cell — useful for showing a mini-trend next to every row in a dashboard without taking up space.</p>
+
+      <div class="callout">Pair this with Topic 6 — building a <strong>PivotChart</strong> from a pivot table gives you a chart that updates automatically whenever the underlying pivot table refreshes.</div>
+
+      <details class="example">
+        <summary>Example: spotting a trend</summary>
+        <div class="example-body table-scroll">
+          <table class="data-table">
+            <tr><th>Month</th><th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th><th>May</th><th>Jun</th></tr>
+            <tr><td>Sales</td><td>120</td><td>135</td><td>128</td><td>90</td><td>95</td><td>110</td></tr>
+          </table>
+          <p class="note">A line chart of this row instantly shows the Q2 dip (Apr–May) that's much harder to notice by scanning raw numbers — exactly the kind of insight a manager wants flagged, not buried in a table.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- TOPIC 8 -->
+    <section class="topic" id="t8" data-priority="core">
+      <h2><span class="num">8</span> Power Query — Get &amp; Transform Data <span class="badge core">🔥 Must-Know</span><span class="source-tag added">+ Added Topic</span></h2>
+      <p class="intro">Once your data starts coming from multiple files, folders, or systems, cleaning it by hand every single time doesn't scale. Power Query is the modern data analyst's answer to that — and it's one of the biggest productivity jumps you can make.</p>
+
+      <div class="manager-note">
+        <span class="mn-title">💼 Why your manager cares</span>
+        Manager says: <em>"We now pull this data from three different systems — can you combine them into one report every week?"</em> The goal: automate the painful, repetitive part of the job (pulling, cleaning, and merging data from multiple sources) so you're not manually redoing the same cleanup steps every single week.
+      </div>
+
+      <div class="analogy"><b>Think of it like a recorded recipe:</b> you show Excel once how to clean and reshape the data — remove a column, fix a data type, split a field. Power Query remembers every step. Next week's file just gets poured through the same recipe with one click.</div>
+
+      <h3 class="subhead">Where to Find It</h3>
+      <p><strong>Data</strong> tab → <strong>Get Data</strong> / <strong>Get &amp; Transform</strong> — import from an Excel/CSV file, a whole folder of files, a database, or a web page.</p>
+
+      <h3 class="subhead">Key Operations</h3>
+      <ul>
+        <li><strong>Remove Duplicates / Remove Errors</strong> — clean bad rows in one click.</li>
+        <li><strong>Change Type</strong> — force a column to be a proper number/date/text so later formulas don't break.</li>
+        <li><strong>Split Column</strong> — the point-and-click version of the FIND/LEFT/RIGHT trick from Topic 2.</li>
+        <li><strong>Merge Queries</strong> — combine two tables side-by-side using a matching column, like a VLOOKUP that merges the entire table at once (this is literally a JOIN).</li>
+        <li><strong>Append Queries</strong> — stack multiple files with the same columns into one long table (e.g. combining 12 monthly export files into one year of data).</li>
+      </ul>
+
+      <h3 class="subhead">Why It Beats Manual Cleaning</h3>
+      <p>Every click you make is recorded as a named step in the <strong>Applied Steps</strong> panel — so your cleaning process is documented, repeatable, and auditable. When new data arrives in the exact same format, you just hit <strong>Refresh</strong> instead of repeating 15 manual steps.</p>
+    </section>
+
+    <!-- TOPIC 9 -->
+    <section class="topic" id="t9" data-priority="core">
+      <h2><span class="num">9</span> XLOOKUP &amp; Dynamic Arrays <span class="badge core">🔥 Must-Know</span><span class="source-tag added">+ Added Topic</span></h2>
+      <p class="intro">Newer Excel/365 functions that solve the same problems as VLOOKUP/SORT/FILTER, but more simply and with fewer ways to break. Worth learning right after you're comfortable with Topic 3.</p>
+
+      <div class="manager-note">
+        <span class="mn-title">💼 Why your manager cares</span>
+        Manager says: <em>"Give me a list of all our unique customers"</em> or <em>"Find this value even though the list isn't sorted."</em> The goal: more flexible, less error-prone lookups and lists that adapt automatically as the data grows — important once you're working with live, constantly-changing datasets instead of a one-time snapshot.
+      </div>
+
+      <h3 class="subhead">XLOOKUP — the Modern VLOOKUP</h3>
+      <div class="code-block"><pre><code>=XLOOKUP(lookup_value, lookup_array, return_array, [if_not_found])</code></pre></div>
+      <ul>
+        <li>No column counting — you point straight at the column you want returned.</li>
+        <li>Searches left <em>or</em> right (VLOOKUP only searches right of the lookup column).</li>
+        <li>Built-in "not found" message instead of a bare <code>#N/A</code>.</li>
+      </ul>
+      <div class="code-block"><pre><code>=XLOOKUP("EMP005", A2:A21, D2:D21, "Not Found")   &#8594; 85000</code></pre></div>
+
+      <h3 class="subhead">UNIQUE — Instant Distinct List</h3>
+      <div class="code-block"><pre><code>=UNIQUE(D2:D1001)   &#8594; spills a list of every distinct state, automatically</code></pre></div>
+      <p class="note">No more manual "Remove Duplicates" — this formula recalculates the unique list live whenever the source data changes.</p>
+
+      <h3 class="subhead">SORTBY — Sort One List by Another</h3>
+      <div class="code-block"><pre><code>=SORTBY(name_range, sales_range, -1)   &#8594; names sorted by sales, highest first</code></pre></div>
+
+      <h3 class="subhead">SEQUENCE — Auto-Generate Numbers</h3>
+      <div class="code-block"><pre><code>=SEQUENCE(10)          &#8594; 1,2,3...10 down a column
+=SEQUENCE(1,12)        &#8594; 1,2,3...12 across a row (e.g. month numbers)</code></pre></div>
+
+      <div class="callout warn">
+        These are "spill" formulas — one formula automatically fills every cell it needs. If you see <b>#SPILL!</b>, something (usually a stray value) is sitting in a cell the result needs to expand into — clear that cell and it resolves.
+      </div>
+    </section>
+
+    <!-- TOPIC 10 -->
+    <section class="topic" id="t10" data-priority="core">
+      <h2><span class="num">10</span> Basic Statistics, Correlation &amp; Forecasting <span class="badge core">🔥 Must-Know</span><span class="source-tag added">+ Added Topic</span></h2>
+      <p class="intro">This is the bridge between reporting what happened (data analyst) and explaining why it happened or predicting what happens next (data science / ML). Even before opening Python or R, most of these questions can be sanity-checked directly in Excel.</p>
+
+      <div class="manager-note">
+        <span class="mn-title">💼 Why your manager cares</span>
+        Manager says: <em>"Is there a relationship between marketing spend and sales?"</em> or <em>"What do you expect next quarter's numbers to look like?"</em> The goal: move past just describing what happened, into explaining relationships between variables and predicting what's likely to happen next.
+      </div>
+
+      <h3 class="subhead">Describing a Dataset</h3>
+      <div class="code-block"><pre><code>=AVERAGE(range)         &#8594; the typical value
+=MEDIAN(range)          &#8594; the middle value (less skewed by extreme outliers than AVERAGE)
+=STDEV.S(range)         &#8594; how spread out the values are (sample data)
+=QUARTILE.INC(range,1)  &#8594; the 25th percentile ("bottom quarter" cutoff)
+=PERCENTILE.INC(range,0.9)  &#8594; the value below which 90% of the data falls</code></pre></div>
+      <p class="note">Example: "90th percentile response time" is a common ops/DS metric — it tells you the near-worst-case, not just the average.</p>
+
+      <h3 class="subhead">Correlation — Do Two Things Move Together?</h3>
+      <div class="code-block"><pre><code>=CORREL(range1, range2)   &#8594; a number from -1 to +1</code></pre></div>
+      <p class="note">+1 = move perfectly together, -1 = move perfectly opposite, 0 = no relationship. Example: <code>=CORREL(ad_spend_range, sales_range)</code> returning 0.82 suggests a strong positive relationship between ad spend and sales — but remember, correlation is not proof of causation.</p>
+
+      <h3 class="subhead">Simple Forecasting</h3>
+      <div class="code-block"><pre><code>=FORECAST.LINEAR(new_x, known_ys, known_xs)   &#8594; predicts a future value assuming the past trend continues in a straight line
+=TREND(known_ys, known_xs, new_xs)            &#8594; same idea, can return multiple predicted points at once</code></pre></div>
+      <p class="note">Excel's <strong>Data → Forecast Sheet</strong> button automates this entirely — pick a date column and a value column, and it draws a forecast chart with confidence intervals for you.</p>
+
+      <h3 class="subhead">Analysis ToolPak <span class="tag-inline good">📘 Good to Know</span></h3>
+      <p>Enable via File → Options → Add-ins (if not already visible under <strong>Data → Data Analysis</strong>). Gives you point-and-click Regression, Descriptive Statistics, and more without writing a single formula — a useful stepping stone before moving into dedicated tools like Python, R, or scikit-learn.</p>
+    </section>
+
+    <!-- TOPIC 11 -->
+    <section class="topic" id="t11" data-priority="frequent">
+      <h2><span class="num">11</span> What-If Analysis <span class="badge freq">⭐ Frequently Used</span><span class="source-tag added">+ Added Topic</span></h2>
+      <p class="intro">Tools for working backwards from a target, or testing several assumptions quickly, without manually recalculating a whole model by hand each time.</p>
+
+      <div class="manager-note">
+        <span class="mn-title">💼 Why your manager cares</span>
+        Manager says: <em>"What sales volume do we need to break even?"</em> or <em>"What happens to profit if costs go up 10%?"</em> The goal: answer "what needs to be true" or "what if this changes" questions fast, during planning and budgeting conversations.
+      </div>
+
+      <h3 class="subhead">Goal Seek</h3>
+      <p><strong>Data → What-If Analysis → Goal Seek.</strong> Answers: "what input do I need to hit this target output?"</p>
+      <div class="callout">Example: you know your fixed costs and profit margin per unit. Goal Seek finds exactly how many units you need to sell to hit a $50,000 profit target — instead of guessing numbers and recalculating by hand.</div>
+
+      <h3 class="subhead">Data Tables</h3>
+      <p>Shows how one formula's result changes across a whole range of input values automatically — e.g. a table of profit at ten different price points, generated in one step.</p>
+
+      <h3 class="subhead">Scenario Manager</h3>
+      <p>Save a few named sets of assumptions — <strong>Best Case / Likely Case / Worst Case</strong> — and switch between them to instantly see how the outputs change, without overwriting your original numbers.</p>
+    </section>
+
+    <!-- TOPIC 12 -->
+    <section class="topic" id="t12" data-priority="frequent">
+      <h2><span class="num">12</span> Error Handling <span class="badge freq">⭐ Frequently Used</span><span class="source-tag added">+ Added Topic</span></h2>
+      <p class="intro">Formulas fail sometimes — a lookup value that doesn't exist, a division by zero. How you handle that failure is the difference between a clean, trustworthy sheet and one covered in red error text.</p>
+
+      <div class="manager-note">
+        <span class="mn-title">💼 Why your manager cares</span>
+        A dashboard full of <code>#N/A</code> and <code>#DIV/0!</code> looks broken and unprofessional, even if the rest of the numbers are correct — it quietly undermines trust in your work. The goal: make formulas fail gracefully, especially in anything shared outside your own sheet.
+      </div>
+
+      <div class="code-block"><pre><code>=IFERROR(formula, value_if_error)   &#8594; catches ANY error and shows something clean instead
+=IFNA(formula, value_if_na)         &#8594; catches ONLY #N/A (e.g. a missed VLOOKUP/MATCH), leaving
+                                        other real errors like #DIV/0! visible so you notice them</code></pre></div>
+      <details class="example">
+        <summary>Example: a clean lookup instead of a scary error</summary>
+        <div class="example-body">
+          <div class="code-block"><pre><code>=IFERROR(VLOOKUP(A2,Table,4,FALSE),"Not Found")</code></pre></div>
+          <p class="note">If <code>A2</code> isn't in the table, the cell shows "Not Found" instead of <code>#N/A</code> — much easier for a manager or teammate to understand at a glance.</p>
+        </div>
+      </details>
+      <p>Also useful for checking a cell before acting on it: <code>=ISBLANK(cell)</code>, <code>=ISNUMBER(cell)</code>, <code>=ISTEXT(cell)</code>.</p>
+    </section>
+
+    <!-- TOPIC 13 -->
+    <section class="topic" id="t13" data-priority="good">
+      <h2><span class="num">13</span> Macros &amp; VBA Basics <span class="badge good">📘 Good to Know</span><span class="source-tag added">+ Added Topic</span></h2>
+      <p class="intro">Automation for repetitive multi-step tasks. Not required to start as a data analyst, but a strong time-saver once you notice yourself doing the exact same steps over and over.</p>
+
+      <div class="manager-note">
+        <span class="mn-title">💼 Why your manager cares</span>
+        Manager says: <em>"You do this same 10-step formatting process every Monday — can we speed that up?"</em> The goal: automate repetitive manual work so you spend time on higher-value analysis instead of repetitive clicking.
+      </div>
+
+      <h3 class="subhead">Recording a Macro</h3>
+      <p><strong>View</strong> tab → <strong>Macros</strong> → <strong>Record Macro</strong> → perform the manual steps once → stop recording. Excel writes the VBA code behind the scenes for you — no coding required to get started.</p>
+
+      <h3 class="subhead">Running It Again</h3>
+      <p><kbd>Alt</kbd>+<kbd>F8</kbd> → select the macro → Run. You can also assign it to a button on the sheet for one-click use.</p>
+
+      <div class="callout">When is it worth it? Any task with the exact same steps every day/week — e.g. reformatting a weekly export the same way each time. Full VBA programming is a deeper skill on its own; recording macros covers most analyst automation needs without writing code from scratch.</div>
+    </section>
+
+    <div class="no-results" id="noResults" style="display:none;">No matching notes found.</div>
+  </main>
+</div>
+
+<script>
+(function(){
+  const html = document.documentElement;
+  const themeToggle = document.getElementById('themeToggle');
+  const themeIcon = document.getElementById('themeIcon');
+  const themeLabel = document.getElementById('themeLabel');
+
+  function applyTheme(t){
+    html.setAttribute('data-theme', t);
+    themeIcon.textContent = t === 'dark' ? '🌙' : '☀️';
+    themeLabel.textContent = t === 'dark' ? 'Dark' : 'Light';
+    localStorage.setItem('excelNotesTheme', t);
+  }
+  applyTheme(localStorage.getItem('excelNotesTheme') || 'dark');
+  themeToggle.addEventListener('click', function(){
+    applyTheme(html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  });
+
+  // Mobile sidebar toggle
+  const sidebar = document.getElementById('sidebar');
+  document.getElementById('menuToggle').addEventListener('click', function(){
+    sidebar.classList.toggle('open');
+  });
+  sidebar.querySelectorAll('a').forEach(a => a.addEventListener('click', () => sidebar.classList.remove('open')));
+
+  // Progress tracking (click the little checkbox chip to mark a topic done)
+  const links = Array.from(document.querySelectorAll('nav.sidebar a'));
+  const total = links.length;
+  const progressFill = document.getElementById('progressFill');
+  const progressLabel = document.getElementById('progressLabel');
+  const STORE_KEY = 'excelNotesProgress';
+  let progress = {};
+  try { progress = JSON.parse(localStorage.getItem(STORE_KEY) || '{}'); } catch(e){ progress = {}; }
+
+  function renderProgress(){
+    let done = 0;
+    links.forEach(a => {
+      const id = a.dataset.topic;
+      const chk = a.querySelector('.chk');
+      if (progress[id]) { a.classList.add('done'); chk.textContent = '✓'; done++; }
+      else { a.classList.remove('done'); chk.textContent = ''; }
+    });
+    progressFill.style.width = (done/total*100) + '%';
+    progressLabel.textContent = done + '/' + total;
+  }
+  links.forEach(a => {
+    a.querySelector('.chk').addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      const id = a.dataset.topic;
+      progress[id] = !progress[id];
+      localStorage.setItem(STORE_KEY, JSON.stringify(progress));
+      renderProgress();
+    });
+  });
+  renderProgress();
+
+  // Scroll-spy active link
+  const sections = Array.from(document.querySelectorAll('section.topic'));
+  const spy = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const link = document.querySelector('nav.sidebar a[data-topic="'+entry.target.id+'"]');
+      if (!link) return;
+      if (entry.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  sections.forEach(s => spy.observe(s));
+
+  // Copy-to-clipboard for code blocks
+  document.querySelectorAll('pre').forEach(pre => {
+    if (pre.parentNode.classList.contains('code-block')) return;
+    const btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.textContent = 'Copy';
+    btn.addEventListener('click', () => {
+      const text = pre.querySelector('code').innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1200);
+      });
+    });
+    const wrap = document.createElement('div');
+    wrap.className = 'code-block';
+    pre.parentNode.insertBefore(wrap, pre);
+    wrap.appendChild(pre);
+    wrap.appendChild(btn);
+  });
+
+  // Search + Focus-mode filtering (combined)
+  const searchInput = document.getElementById('searchInput');
+  const noResults = document.getElementById('noResults');
+  const focusToggle = document.getElementById('focusToggle');
+  let focusOnly = false;
+  let debounceTimer;
+
+  function clearHighlights(root){
+    root.querySelectorAll('mark').forEach(m => {
+      const parent = m.parentNode;
+      parent.replaceChild(document.createTextNode(m.textContent), m);
+      parent.normalize();
+    });
+  }
+
+  function highlight(node, query){
+    if (node.nodeType === 3) {
+      const idx = node.textContent.toLowerCase().indexOf(query);
+      if (idx === -1) return false;
+      const span = document.createElement('span');
+      const before = node.textContent.slice(0, idx);
+      const match = node.textContent.slice(idx, idx + query.length);
+      const after = node.textContent.slice(idx + query.length);
+      span.appendChild(document.createTextNode(before));
+      const markEl = document.createElement('mark');
+      markEl.textContent = match;
+      span.appendChild(markEl);
+      span.appendChild(document.createTextNode(after));
+      node.parentNode.replaceChild(span, node);
+      return true;
+    }
+    if (node.nodeType === 1 && node.tagName !== 'SCRIPT' && node.tagName !== 'STYLE') {
+      let found = false;
+      Array.from(node.childNodes).forEach(child => { if (highlight(child, query)) found = true; });
+      return found;
+    }
+    return false;
+  }
+
+  function applyFilters(){
+    const q = searchInput.value.trim().toLowerCase();
+    let anyVisible = false;
+    sections.forEach(sec => {
+      clearHighlights(sec);
+      const matchesSearch = !q || sec.textContent.toLowerCase().includes(q);
+      const matchesFocus = !focusOnly || sec.dataset.priority === 'core';
+      const visible = matchesSearch && matchesFocus;
+      sec.classList.toggle('hidden', !visible);
+      if (visible) {
+        anyVisible = true;
+        if (q) Array.from(sec.querySelectorAll('h2, h3, p, li, code, .callout, .note, th, td')).forEach(el => highlight(el, q));
+      }
+    });
+    noResults.style.display = anyVisible ? 'none' : 'block';
+  }
+
+  searchInput.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(applyFilters, 120);
+  });
+
+  focusToggle.addEventListener('click', () => {
+    focusOnly = !focusOnly;
+    focusToggle.classList.toggle('active', focusOnly);
+    focusToggle.textContent = focusOnly ? '🔥 Showing Must-Know' : '🔥 Must-Know Only';
+    applyFilters();
+  });
+})();
+</script>
+</body>
+</html>

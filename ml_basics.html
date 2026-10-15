@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Machine Learning Notes — Amazon ML Summer School</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #181c27;
+    --surface2: #1e2333;
+    --border: #2a3045;
+    --accent: #6c8aff;
+    --accent2: #4ecdc4;
+    --accent3: #ff6b9d;
+    --accent4: #ffd166;
+    --accent5: #06d6a0;
+    --text: #e8eaf6;
+    --text2: #9ba3c5;
+    --text3: #5c6489;
+    --code-bg: #111520;
+    --tag-blue: rgba(108,138,255,0.15);
+    --tag-teal: rgba(78,205,196,0.15);
+    --tag-pink: rgba(255,107,157,0.15);
+    --tag-yellow: rgba(255,209,102,0.15);
+    --tag-green: rgba(6,214,160,0.15);
+    --r: 10px;
+    --r-sm: 6px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 15px; line-height: 1.7; display: flex; min-height: 100vh; }
+
+  /* SIDEBAR */
+  #sidebar {
+    width: 240px; min-width: 240px; background: var(--surface); border-right: 1px solid var(--border);
+    position: fixed; top: 0; left: 0; height: 100vh; overflow-y: auto; z-index: 100; padding: 0 0 2rem;
+  }
+  #sidebar::-webkit-scrollbar { width: 4px; }
+  #sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .sidebar-header { padding: 1.2rem 1.2rem 0.8rem; border-bottom: 1px solid var(--border); }
+  .sidebar-header h1 { font-size: 13px; font-weight: 700; color: var(--accent); letter-spacing: .08em; text-transform: uppercase; }
+  .sidebar-header p { font-size: 11px; color: var(--text3); margin-top: 3px; }
+  .progress-wrap { padding: .8rem 1.2rem; border-bottom: 1px solid var(--border); }
+  .progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; transition: width .4s; width: 0%; }
+  .progress-label { font-size: 11px; color: var(--text3); margin-top: 5px; }
+  .nav-item { display: flex; align-items: center; gap: 8px; padding: 7px 1.2rem; font-size: 12.5px; color: var(--text2); cursor: pointer; transition: all .15s; border-left: 2px solid transparent; text-decoration: none; }
+  .nav-item:hover { color: var(--text); background: rgba(108,138,255,.07); }
+  .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(108,138,255,.08); }
+  .nav-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); flex-shrink: 0; transition: background .2s; }
+  .nav-item.done .nav-dot { background: var(--accent5); }
+  .nav-item.active .nav-dot { background: var(--accent); }
+  .nav-group { padding: .5rem 1.2rem .2rem; font-size: 10px; color: var(--text3); letter-spacing: .1em; text-transform: uppercase; margin-top: .5rem; }
+
+  /* MAIN */
+  #main { margin-left: 240px; flex: 1; max-width: 900px; padding: 2.5rem 2.5rem 6rem; }
+  .page-hero { margin-bottom: 3rem; }
+  .page-hero .eyebrow { font-size: 11px; color: var(--accent); letter-spacing: .12em; text-transform: uppercase; font-weight: 600; margin-bottom: .5rem; }
+  .page-hero h2 { font-size: 2rem; font-weight: 700; color: var(--text); line-height: 1.2; }
+  .page-hero p { color: var(--text2); margin-top: .6rem; font-size: 14px; }
+
+  /* TOPIC SECTION */
+  .topic { margin-bottom: 2.5rem; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+  .topic-header { display: flex; align-items: center; gap: 12px; padding: 1rem 1.2rem; background: var(--surface); cursor: pointer; user-select: none; }
+  .topic-header:hover { background: var(--surface2); }
+  .topic-num { font-size: 11px; font-weight: 700; color: var(--text3); min-width: 28px; }
+  .topic-title { font-size: 16px; font-weight: 600; color: var(--text); flex: 1; }
+  .topic-tag { font-size: 10.5px; padding: 2px 9px; border-radius: 20px; font-weight: 500; }
+  .tag-blue { background: var(--tag-blue); color: var(--accent); }
+  .tag-teal { background: var(--tag-teal); color: var(--accent2); }
+  .tag-pink { background: var(--tag-pink); color: var(--accent3); }
+  .tag-yellow { background: var(--tag-yellow); color: var(--accent4); }
+  .tag-green { background: var(--tag-green); color: var(--accent5); }
+  .topic-chevron { font-size: 14px; color: var(--text3); transition: transform .2s; }
+  .topic.open .topic-chevron { transform: rotate(180deg); }
+  .topic-body { display: none; padding: 1.2rem 1.4rem 1.4rem; border-top: 1px solid var(--border); background: var(--bg); }
+  .topic.open .topic-body { display: block; }
+
+  /* CONTENT ELEMENTS */
+  .note-text { color: var(--text2); font-size: 14px; line-height: 1.8; margin-bottom: 1rem; }
+  .note-text b { color: var(--text); font-weight: 600; }
+  .note-text em { color: var(--accent4); font-style: normal; }
+  .highlight-box { border-radius: var(--r-sm); padding: .85rem 1rem; margin: .8rem 0; font-size: 13.5px; line-height: 1.7; }
+  .hb-blue { background: var(--tag-blue); border-left: 3px solid var(--accent); color: var(--text); }
+  .hb-teal { background: var(--tag-teal); border-left: 3px solid var(--accent2); color: var(--text); }
+  .hb-pink { background: var(--tag-pink); border-left: 3px solid var(--accent3); color: var(--text); }
+  .hb-yellow { background: var(--tag-yellow); border-left: 3px solid var(--accent4); color: var(--text); }
+  .hb-green { background: var(--tag-green); border-left: 3px solid var(--accent5); color: var(--text); }
+  .hb-label { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; font-weight: 700; margin-bottom: 4px; }
+  code { background: var(--code-bg); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; font-family: 'Consolas', monospace; font-size: 12.5px; color: var(--accent2); }
+  .formula { background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--r-sm); padding: .7rem 1rem; font-family: 'Consolas', monospace; font-size: 13px; color: var(--accent4); margin: .6rem 0; letter-spacing: .03em; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: .8rem 0; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: .8rem 0; }
+  .col-card { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--r-sm); padding: .8rem .9rem; }
+  .col-card h4 { font-size: 12.5px; font-weight: 600; margin-bottom: 5px; }
+  .col-card p { font-size: 12.5px; color: var(--text2); line-height: 1.6; }
+  .col-card ul { font-size: 12.5px; color: var(--text2); padding-left: 1.1rem; line-height: 1.8; }
+  h3.sub { font-size: 13px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .07em; margin: 1.2rem 0 .5rem; }
+  .divider { height: 1px; background: var(--border); margin: 1.1rem 0; }
+
+  /* VISUAL COMPONENTS */
+  .diagram { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 1rem; margin: .8rem 0; }
+  .flow-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: .5rem 0; }
+  .flow-box { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 5px 12px; font-size: 12.5px; font-weight: 500; }
+  .flow-arrow { color: var(--text3); font-size: 14px; }
+  .flow-box.accent { border-color: var(--accent); color: var(--accent); }
+  .flow-box.teal { border-color: var(--accent2); color: var(--accent2); }
+  .flow-box.pink { border-color: var(--accent3); color: var(--accent3); }
+  .flow-box.yellow { border-color: var(--accent4); color: var(--accent4); }
+  .flow-box.green { border-color: var(--accent5); color: var(--accent5); }
+
+  /* CONFUSION MATRIX */
+  .matrix-wrap { display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; margin: .8rem 0; }
+  .matrix-table { border-collapse: collapse; font-size: 13px; }
+  .matrix-table td, .matrix-table th { border: 1px solid var(--border); padding: 8px 14px; text-align: center; }
+  .matrix-table th { background: var(--surface2); color: var(--text2); font-size: 11.5px; font-weight: 600; }
+  .cell-tp { background: rgba(6,214,160,.18); color: var(--accent5); font-weight: 700; }
+  .cell-tn { background: rgba(6,214,160,.18); color: var(--accent5); font-weight: 700; }
+  .cell-fp { background: rgba(255,107,157,.18); color: var(--accent3); font-weight: 700; }
+  .cell-fn { background: rgba(255,107,157,.18); color: var(--accent3); font-weight: 700; }
+  .matrix-legend { font-size: 12.5px; color: var(--text2); line-height: 2; }
+  .matrix-legend b { color: var(--text); }
+
+  /* INTERACTIVE QUIZ */
+  .quiz-btn-row { display: flex; gap: 8px; margin-top: .8rem; flex-wrap: wrap; }
+  .quiz-opt { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 6px 14px; font-size: 13px; cursor: pointer; color: var(--text2); transition: all .15s; }
+  .quiz-opt:hover { border-color: var(--accent); color: var(--accent); }
+  .quiz-opt.correct { border-color: var(--accent5); background: rgba(6,214,160,.12); color: var(--accent5); }
+  .quiz-opt.wrong { border-color: var(--accent3); background: rgba(255,107,157,.12); color: var(--accent3); }
+  .quiz-feedback { font-size: 13px; margin-top: .6rem; padding: .5rem .8rem; border-radius: 6px; display: none; }
+  .quiz-feedback.show { display: block; }
+  .quiz-feedback.good { background: rgba(6,214,160,.1); color: var(--accent5); border-left: 3px solid var(--accent5); }
+  .quiz-feedback.bad { background: rgba(255,107,157,.1); color: var(--accent3); border-left: 3px solid var(--accent3); }
+
+  /* DONE BUTTON */
+  .mark-done { display: flex; align-items: center; gap: 8px; margin-top: 1.2rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+  .done-btn { background: transparent; border: 1px solid var(--border); border-radius: 20px; padding: 5px 16px; font-size: 12px; color: var(--text2); cursor: pointer; transition: all .2s; }
+  .done-btn:hover { border-color: var(--accent5); color: var(--accent5); }
+  .done-btn.marked { background: rgba(6,214,160,.12); border-color: var(--accent5); color: var(--accent5); }
+
+  /* SCATTER VISUAL */
+  canvas.plot { border-radius: var(--r-sm); display: block; margin: .5rem auto; }
+
+  /* ALGO COMPARISON */
+  .algo-row { display: grid; grid-template-columns: 120px 1fr 90px 90px; gap: 8px; align-items: center; padding: 7px 10px; border-radius: 6px; font-size: 12.5px; background: var(--surface2); margin-bottom: 6px; }
+  .algo-row.header { background: var(--surface); color: var(--text3); font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
+  .algo-name { font-weight: 600; color: var(--text); }
+  .algo-desc { color: var(--text2); }
+  .badge-sm { font-size: 10.5px; padding: 2px 8px; border-radius: 10px; text-align: center; font-weight: 500; }
+
+  @media (max-width: 768px) {
+    #sidebar { transform: translateX(-100%); }
+    #main { margin-left: 0; padding: 1.2rem; }
+    .two-col, .three-col { grid-template-columns: 1fr; }
+    .algo-row { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <h1>ML Notes</h1>
+    <p>Amazon ML Summer School</p>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-bar"><div class="progress-fill" id="prog-fill"></div></div>
+    <div class="progress-label" id="prog-label">0 / 17 topics done</div>
+  </div>
+  <div class="nav-group">Fundamentals</div>
+  <a class="nav-item" href="#t1" data-id="t1"><div class="nav-dot"></div>Supervised vs Unsupervised</a>
+  <a class="nav-item" href="#t2" data-id="t2"><div class="nav-dot"></div>Classification vs Regression</a>
+  <div class="nav-group">Algorithms</div>
+  <a class="nav-item" href="#t3" data-id="t3"><div class="nav-dot"></div>Linear Regression</a>
+  <a class="nav-item" href="#t4" data-id="t4"><div class="nav-dot"></div>Logistic Regression</a>
+  <a class="nav-item" href="#t5" data-id="t5"><div class="nav-dot"></div>Decision Tree</a>
+  <a class="nav-item" href="#t6" data-id="t6"><div class="nav-dot"></div>Random Forest</a>
+  <a class="nav-item" href="#t7" data-id="t7"><div class="nav-dot"></div>KNN</a>
+  <a class="nav-item" href="#t8" data-id="t8"><div class="nav-dot"></div>Naive Bayes</a>
+  <a class="nav-item" href="#t9" data-id="t9"><div class="nav-dot"></div>K-Means Clustering</a>
+  <div class="nav-group">Model Quality</div>
+  <a class="nav-item" href="#t10" data-id="t10"><div class="nav-dot"></div>Overfitting vs Underfitting</a>
+  <a class="nav-item" href="#t11" data-id="t11"><div class="nav-dot"></div>Bias-Variance Tradeoff</a>
+  <a class="nav-item" href="#t12" data-id="t12"><div class="nav-dot"></div>Train/Test Split</a>
+  <a class="nav-item" href="#t13" data-id="t13"><div class="nav-dot"></div>Cross Validation</a>
+  <div class="nav-group">Evaluation</div>
+  <a class="nav-item" href="#t14" data-id="t14"><div class="nav-dot"></div>Confusion Matrix</a>
+  <a class="nav-item" href="#t15" data-id="t15"><div class="nav-dot"></div>Accuracy, Precision, Recall, F1</a>
+  <div class="nav-group">Preprocessing</div>
+  <a class="nav-item" href="#t16" data-id="t16"><div class="nav-dot"></div>Feature Scaling</a>
+  <a class="nav-item" href="#t17" data-id="t17"><div class="nav-dot"></div>One-Hot vs Label Encoding</a>
+</nav>
+
+<!-- MAIN -->
+<main id="main">
+  <div class="page-hero">
+    <div class="eyebrow">⭐⭐⭐⭐⭐ &nbsp; Priority 1 &nbsp;·&nbsp; 4 hours</div>
+    <h2>Machine Learning</h2>
+    <p>Click any topic to expand. Mark done as you go — progress is tracked in the sidebar.</p>
+  </div>
+
+  <!-- T1 -->
+  <div class="topic" id="t1">
+    <div class="topic-header" onclick="toggleTopic('t1')">
+      <span class="topic-num">01</span>
+      <span class="topic-title">Supervised vs Unsupervised Learning</span>
+      <span class="topic-tag tag-blue">Fundamental</span>
+      <span class="topic-chevron">▼</span>
+    </div>
+    <div class="topic-body">
+      <p class="note-text">Think of it like this — <b>supervised</b> = learning with an answer key. <b>Unsupervised</b> = figuring out patterns on your own with no answers given.</p>
+      <div class="two-col">
+        <div class="col-card" style="border-color: var(--accent);">
+          <h4 style="color:var(--accent)">📌 Supervised Learning</h4>
+          <p>You give the model labelled data — input + correct output. It learns the mapping.</p>
+          <ul style="margin-top:6px">
+            <li>Has training labels (y values)</li>
+            <li>Goal: predict output for new input</li>
+            <li>Examples: spam detection, price prediction, cancer diagnosis</li>
+          </ul>
+        </div>
+        <div class="col-card" style="border-color: var(--accent2);">
+          <h4 style="color:var(--accent2)">📌 Unsupervised Learning</h4>
+          <p>No labels. The model finds hidden structure by itself.</p>
+          <ul style="margin-top:6px">
+            <li>No training labels</li>
+            <li>Goal: discover groups, patterns, or compress data</li>
+            <li>Examples: customer segmentation, topic modelling, anomaly detection</li>
+          </ul>
+        </div>
+      </div>
+      <div class="highlight-box hb-yellow">
+        <div class="hb-label" style="color:var(--accent4)">🎯 Exam Trap</div>
+        Logistic Regression is a <b>supervised</b> algorithm despite having "regression" in the name. K-Means is <b>unsupervised</b> even though it finds "groups" — it gets no labels.
+      </div>
+      <div class="quiz-section">
+        <h3 class="sub">Quick Check</h3>
+        <p class="note-text">A company wants to group its customers into segments without any predefined categories. Which type of learning should they use?</p>
+        <div class="quiz-btn-row">
+          <button class="quiz-opt" onclick="quiz(this,'wrong','t1q1')">Supervised</button>
+          <button class="quiz-opt" onclick="quiz(this,'correct','t1q1')">Unsupervised</button>
+          <button class="quiz-opt" onclick="quiz(this,'wrong','t1q1')">Reinforcement</button>
+        </div>
+        <div class="quiz-feedback" id="t1q1"></div>
+      </div>
+      <div class="mark-done"><button class="done-btn" onclick="markDone('t1',this)">Mark as done ✓</button></div>
+    </div>
+  </div>
+
+  <!-- T2 -->
+  <div class="topic" id="t2">
+    <div class="topic-header" onclick="toggleTopic('t2')">
+      <span class="topic-num">02</span>
+      <span class="topic-title">Classification vs Regression</span>
+      <span class="topic-tag tag-blue">Fundamental</span>
+      <span class="topic-chevron">▼</span>
+    </div>
+    <div class="topic-body">
+      <p class="note-text">Both are supervised. The difference is the <b>type of output</b>.</p>
+      <div class="two-col">
+        <div class="col-card" style="border-color:var(--accent3)">
+          <h4 style="color:var(--accent3)">Classification → Category</h4>
+          <p>Output is a class label — one of a fixed set of options.</p>
+          <ul style="margin-top:5px">
+            <li>Is this email spam or not?</li>
+            <li>Is this tumor malignant or benign?</li>
+            <li>Which digit (0–9) is this image?</li>
+          </ul>
+        </div>
+        <div class="col-card" style="border-color:var(--accent2)">
+          <h4 style="color:var(--accent2)">Regression → Number</h4>
+          <p>Output is a continuous number — any value on a range.</p>
+          <ul style="margin-top:5px">
+            <li>What is the house price?</li>
+            <li>How many units will we sell?</li>
+            <li>What is tomorrow's temperature?</li>
+          </ul>
+        </div>
+      </div>
+      <div class="highlight-box hb-pink">
+        <div class="hb-label" style="color:var(--accent3)">⚠ Classic Trap</div>
+        <b>Logistic Regression</b> is a <em>Classification</em> algorithm — it predicts probability of class membership, not a number. The word "regression" is misleading!
+      </div>
+      <div class="mark-done"><button class="done-btn" onclick="markDone('t2',this)">Mark as done ✓</button></div>
+    </div>
+  </div>
+
+  <!-- T3 -->
+  <div class="topic" id="t3">
+    <div class="topic-header" onclick="toggleTopic('t3')">
+      <span class="topic-num">03</span>
+      <span class="topic-title">Linear Regression</span>
+      <span class="topic-tag tag-teal">Algorithm</span>
+      <span class="topic-chevron">▼</span>
+    </div>
+    <div class="topic-body">
+      <p class="note-text"><b>Goal:</b> Fit the best straight line through data to predict a continuous number. Think of predicting house prices from size — more sqft → higher price, roughly in a straight line.</p>
+      <div class="diagram">
+        <canvas id="lrCanvas" class="plot" width="500" height="200"></canvas>
+      </div>
+      <div class="formula">ŷ = w₁x₁ + w₂x₂ + ... + b &nbsp;&nbsp; (ŷ = prediction, w = weights, b = bias)</div>
+      <p class="note-text">It finds <b>weights (w)</b> that minimise the total error — specifically the <b>Mean Squared Error (MSE)</b>.</p>
+      <div class="formula">MSE = (1/n) × Σ (yᵢ - ŷᵢ)²</div>
+      <h3 class="sub">Key Assumptions</h3>
+      <div class="three-col">
+        <div class="col-card"><h4 style="color:var(--accent)">Linear relationship</h4><p>Input and output have a roughly straight-line relationship</p></div>
+        <div class="col-card"><h4 style="color:var(--accent2)">No multicollinearity</h4><p>Input features shouldn't be highly correlated with each other</p></div>
+        <div class="col-card"><h4 style="color:var(--accent4)">Sensitive to outliers</h4><p>One extreme point can drag the line away from most data</p></div>
+      </div>
+      <div class="highlight-box hb-blue">
+        <div class="hb-label" style="color:var(--accent)">📌 Remember</div>
+        Linear Regression is for <b>regression</b> problems (predicting numbers). Evaluation metric: <b>R² score</b> (closer to 1 = better fit) and <b>MSE/RMSE</b>.
+      </div>
+      <div class="mark-done"><button class="done-btn" onclick="markDone('t3',this)">Mark as done ✓</button></div>
+    </div>
+  </div>
+
+  <!-- T4 -->
+  <div class="topic" id="t4">
+    <div class="topic-header" onclick="toggleTopic('t4')">
+      <span class="topic-num">04</span>
+      <span class="topic-title">Logistic Regression</span>
+      <span class="topic-tag tag-teal">Algorithm</span>
+      <span class="topic-chevron">▼</span>
+    </div>
+    <div class="topic-body">
+      <p class="note-text"><b>Goal:</b> Predict the <em>probability</em> that something belongs to a class. Despite the name, it's a <b>classification</b> algorithm. It wraps a linear function inside a <b>sigmoid</b> to squash output to [0, 1].</p>
+      <div class="flow-row">
+        <div class="flow-box">Input features</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">Linear combination (z = wx + b)</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box accent">Sigmoid σ(z) = 1/(1+e⁻ᶻ)</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box green">Probability [0,1]</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box teal">Class (0 or 1)</div>
+      </div>
+      <div class="formula">P(y=1) = σ(z) = 1 / (1 + e⁻⁽ʷˣ⁺ᵇ⁾)</div>
+      <div class="highlight-box hb-yellow">
+        <div class="hb-label" style="color:var(--accent4)">Decision Threshold</div>
+        If P > 0.5 → predict class 1. If P ≤ 0.5 → predict class 0. You can change 0.5 — lower it to catch more positives (higher recall), raise it to be more confident (higher precision).
+      </div>
+      <div class="two-col">
+        <div class="col-card"><h4 style="color:var(--accent)">Loss Function</h4><p>Binary Cross-Entropy (NOT MSE). Penalises confident wrong predictions heavily.</p></div>
+        <div class="col-card"><h4 style="color:var(--accent2)">When to use</h4><p>Binary or multi-class classification. Works well when classes are linearly separable.</p></div>
+      </div>
+      <div class="mark-done"><button class="done-btn" onclick="markDone('t4',this)">Mark as done ✓</button></div>
+    </div>
+  </div>
+
+  <!-- T5 -->
+  <div class="topic" id="t5">
+    <div class="topic-header" onclick="toggleTopic('t5')">
+      <span class="topic-num">05</span>
+      <span class="topic-title">Decision Tree</span>
+      <span class="topic-tag tag-teal">Algorithm</span>
+      <span class="topic-chevron">▼</span>
+    </div>
+    <div class="topic-body">
+      <p class="note-text">A Decision Tree asks a series of yes/no questions to reach a prediction. Like a flowchart — at each node it splits data based on the most informative feature.</p>
+      <div class="diagram" style="text-align:center; font-size:13px; line-height:2.2;">
+        <div style="color:var(--accent); font-weight:600">Is Age > 30?</div>
+        <div style="display:flex; justify-content:center; gap:4rem; margin-top:4px;">
+          <div>
+            <div style="color:var(--text2)">YES ↓</div>
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 14px;">Income > 50k?</div>
+            <div style="display:flex; gap:2rem; margin-top:4px; justify-content:center;">
+              <div><span style="color:var(--text2)">YES ↓</span><br><span style="color:var(--accent5);font-weight:600">✓ Approve</span></div>
+              <div><span style="color:var(--text2)">NO ↓</span><br><span style="color:var(--accent3);font-weight:600">✗ Deny</span></div>
+            </div>
+          </div>
+          <div>
+            <div style="color:var(--text2)">NO ↓</div>
+            <div style="color:var(--accent3);font-weight:600">✗ Deny</div>
+          </div>
+        </div>
+      </div>
+      <h3 class="sub">How it picks the best split</h3>
+      <div class="two-col">
+        <div class="col-card"><h4 style="color:var(--accent)">Gini Impurity</h4><p>Measures how "mixed" a node is. 0 = pure (all same class). Lower Gini = better split. Default in sklearn.</p></div>
+        <div class="col-card"><h4 style="color:var(--accent2)">Information Gain (Entropy)</h4><p>Measures how much "uncertainty" the split removes. Higher gain = better split.</p></div>
+      </div>
+      <div class="highlight-box hb-pink">
+        <div class="hb-label" style="color:var(--accent3)">⚠ Watch Out</div>
+        Decision Trees <b>easily overfit</b> — they can memorise training data by creating very deep trees. Fix: set <code>max_depth</code>, <code>min_samples_leaf</code>, or use <b>pruning</b>.
+      </div>
+      <div class="two-col">
+        <div class="col-card"><h4 style="color:var(--accent5)">Pros</h4><ul><li>Very interpretable</li><li>No feature scaling needed</li><li>Handles both types of features</li></ul></div>
+        <div class="col-card"><h4 style="color:var(--accent3)">Cons</h4><ul><li>Overfits easily</li><li>Unstable — small data change = big tree change</li><li>Biased toward features with more categories</li></ul></div>
+      </div>
+      <div class="mark-done"><button class="done-btn" onclick="markDone('t5',this)">Mark as done ✓</button></div>
+    </div>
+  </div>
+
+  <!-- T6 -->
+  <div class="topic" id="t6">
+    <div class="topic-header" onclick="toggleTopic('t6')">
+      <span class="topic-num">06</span>
+      <span class="topic-title">Random Forest</span>
+      <span class="topic-tag tag-teal">Algorithm</span>
+      <span class="topic-chevron">▼</span>
+    </div>
+    <div class="topic-body">
+      <p class="note-text">A Random Forest trains <b>many decision trees</b> on random subsets of data and features, then combines their votes. "Wisdom of the crowd" for trees.</p>
+      <div class="flow-row" style="flex-wrap:wrap; gap:6px;">
+        <div class="flow-box" style="font-size:11.5px">Training Data</div>
+        <div class="flow-arrow">→</div>
+        <div style="display:flex; gap:5px;">
+          <div class="flow-box accent" style="font-size:11px">Tree 1<br><span style="font-size:10px">random subset</span></div>
+          <div class="flow-box teal" style="font-size:11px">Tree 2<br><span style="font-size:10px">random subset</span></div>
+          <div class="flow-box yellow" style="font-size:11px">Tree N<br><span style="font-size:10px">random subset</span></div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box green" style="font-size:11.5px">Majority Vote → Final Prediction</div>
+      </div>
+      <h3 class="sub">Two key random tricks</h3>
+      <div class="two-col">
+        <div class="col-card"><h4 style="color:var(--accent)">Bagging (Bootstrap Aggregating)</h4><p>Each tree trains on a random sample of rows (with replacement). Different data → different trees → diverse errors that cancel out.</p></div>
+        <div class="col-card"><h4 style="color:var(--accent2)">Random Feature Selection</h4><p>Each split considers only a random subset of features (usually √n features). Prevents all trees from looking the same.</p></div>
+      </div>
+      <div class="highlight-box hb-green">
+        <div class="hb-label" style="color:var(--accent5)">Why better than one tree?</div>
+        Single tree = high variance (overfits). Many diverse trees averaged = lower variance, same low bias. Random Forest <b>reduces overfitting</b> without needing much tuning. Also gives built-in <b>feature importance</b>.
+      </div>
+      <div class="formula">Key params: n_estimators (more = better, slower) | max_features (√n for classification) | max_depth</div>
+      <div class="mark-done"><button class="done-btn" onclick="markDone('t6',this)">Mark as done ✓</button></div>
+    </div>
+  </div>
+
+  <!-- T7 -->
+  <div class="topic" id="t7">
+    <div class="topic-header" onclick="toggleTopic('t7')">
+      <span class="topic-num">07</span>
+      <span class="topic-title">KNN — K-Nearest Neighbors</span>
+      <span class="topic-tag tag-teal">Algorithm</span>
+      <span class="topic-chevron">▼</span>
+    </div>
+    <div class="topic-body">
+      <p class="note-text"><b>Idea:</b> To classify a new point, look at its K nearest neighbors in the training data and take a majority vote. Like asking your K closest friends what they think.</p>
+      <canvas id="knnCanvas" class="plot" width="480" height="180" style="display:block;margin:.8rem auto;border-radius:8px;"></canvas>
+      <div class="two-col" style="margin-top:.8rem">
+        <div class="col-card"><h4 style="color:var(--accent4)">Small K (e.g. K=1)</h4><p>Very sensitive — follows every individual point. <b>Overfits</b>. Wiggly, complex boundary.</p></div>
+        <div class="col-card"><h4 style="color:var(--accent2)">Large K (e.g. K=15)</h4><p>Very smooth — ignores local patterns. <b>Underfits</b>. Picks best K using cross-validation.</p></div>
+      </div>
+      <div class="highlight-box hb-pink">
+        <div class="hb-label" style="color:var(--accent3)">⚠ Must Know</div>
+        KNN is a <b>lazy learner</b> — no training phase! It memorises all training data. Prediction is slow (O(n)). <b>Feature scaling is mandatory</b> — otherwise features on large scales dominate distance calculation. Euclidean distance is most common.
+      </div>
+      <div class="formula">Distance(A,B) = √[(x₁-x₂)² + (y₁-y₂)²]  &nbsp; (Euclidean)</div>
+      <div class="mark-done"><button class="done-btn" onclick="markDone('t7',this)">Mark as done ✓</button></div>
+    </div>
+  </div>
+
+  <!-- T8 -->
+  <div class="topic" id="t8">
+    <div class="topic-header" onclick="toggleTopic('t8')">
+      <span class="topic-num">08</span>
+      <span class="topic-title">Naive Bayes</span>
+      <span class="topic-tag tag-teal">Algorithm</span>
+      <span class="topic-chevron">▼</span>
+    </div>
+    <div class="topic-body">
+      <p class="note-text">Uses <b>Bayes' Theorem</b> to predict class probability. "Naive" because it assumes all features are <b>completely independent</b> of each other — which is rarely true, but it still works surprisingly well.</p>
+      <div class="formula">P(class | features) = P(features | class) × P(class) / P(features)</div>
+      <div class="highlight-box hb-blue">
+        <div class="hb-label" style="color:var(--accent)">Real Example</div>
+        Spam detection: given a word "free", what's the probability this email is spam? Naive Bayes multiplies probabilities of each word independently: P(spam | "free","win","click") ∝ P("free"|spam) × P("win"|spam) × P("click"|spam) × P(spam)
+      </div>
+      <div class="two-col">
+        <div class="col-card"><h4 style="color:var(--accent5)">Pros</h4><ul><li>Very fast to train</li><li>Works well on small datasets</li><li>Excellent for text classification</li><li>Handles high dimensions well</li></ul></div>
+        <div class="col-card"><h4 style="color:var(--accent3)">Cons</h4><ul><li>Independence assumption rarely holds</li><li>Zero probability problem (fix with Laplace smoothing)</li><li>Poor probability estimates</li></ul></div>
+      </div>
+      <div class="highlight-box hb-yellow">
+        <div class="hb-label" style="color:var(--accent4)">Terms to Know</div>
+        <b>Prior P(class):</b> how common is each class before seeing data<br>
+        <b>Likelihood P(features|class):</b> how likely are these features given the class<br>
+        <b>Posterior P(class|features):</b> final probability after seeing features
+      </div>
+      <div class="mark-done"><button class="done-btn" onclick="markDone('t8',this)">Mark as done ✓</button></div>
+    </div>
+  </div>
+
+  <!-- T9 -->
+  <div class="topic" id="t9">
+    <div class="topic-header" onclick="toggleTopic('t9')">
+      <span class="topic-num">09</span>
+      <span class="topic-title">K-Means Clustering</span>
+      <span class="topic-tag tag-pink">Unsupervised</span>
+      <span class="topic-chevron">▼</span>
+    </div>
+    <div class="topic-body">
+      <p class="note-text"><b>Goal:</b> Group unlabelled data into K clusters where points in the same cluster are similar to each other. No labels — purely finds natural groupings.</p>
+      <div class="diagram" style="font-size:13px; text-align:center;">
+        <div style="display:flex; justify-content:space-around; align-items:center; gap:1rem; flex-wrap:wrap;">
+          <div style="text-align:center">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Step 1: Place K centroids</div>
+            <canvas id="km1" width="130" height="100" style="border-radius:6px;display:block"></canvas>
+          </div>
+          <div style="color:var(--text3);font-size:20px">→</div>
+          <div style="text-align:center">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Step 2: Assign to nearest</div>
+            <canvas id="km2" width="130" height="100" style="border-radius:6px;display:block"></canvas>
+          </div>
+          <div style="color:var(--text3);font-size:20px">→</div>
+          <div style="text-align:center">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Step 3: Move centroids</div>
+            <canvas id="km3" width="130" height="100" style="border-radius:6px;display:block"></canvas>
+          </div>
+          <div style="color:var(--text3);font-size:20px">→ Repeat</div>
+        </div>
+      </div>
+      <div class="highlight-box hb-teal">
+        <div class="hb-label" style="color:var(--accent2)">Algorithm Steps</div>
+        1. Randomly place K centroids &nbsp;→&nbsp; 2. Assign each point to nearest centroid &nbsp;→&nbsp; 3. Move centroid to mean of its group &nbsp;→&nbsp; 4. Repeat until centroids stop moving
+      </div>
+      <div class="two-col">
+        <div class="col-card"><h4 style="color:var(--accent4)">Choosing K — Elbow Method</h4><p>Plot inertia (sum of distances to centroid) vs K. The "elbow" where improvement slows is the best K.</p></div>
+        <div class="col-card"><h4 style="color:var(--accent3)">Limitations</h4><ul><li>Must pre-specify K</li><li>Sensitive to outliers & initialization</li><li>Assumes spherical clusters</li><li>Must scale features first</li></ul></div>
+      </div>
+      <div class="mark-done"><button class="done-btn" onclick="markDone('t9',this)">Mark as done ✓</button></div>
+    </div>
+  </div>
+
+  <!-- T10 -->
+  <div class="topic" id="t10">
+    <div class="topic-header" onclick="toggleTopic('t10')">
+      <span class="topic-num">10</span>
+      <span class="topic-title">Overfitting vs Underfitting</span>
+      <span class="topic-tag tag-yellow">Model Quality</span>
+      <span class="topic-chevron">▼</span>
+    </div>
+    <div class="topic-body">
+      <p class="note-text">These describe how well your model <b>generalises</b> to new data it hasn't seen before.</p>
+      <div class="three-col">
+        <div class="col-card" style="border-color:var(--accent3)">
+          <h4 style="color:var(--accent3)">Overfit 😵</h4>
+          <p>Model memorises training data including its noise. Works great on train, terribly on test.</p>
+          <ul style="margin-top:6px">
+            <li>Low train error</li>
+            <li>High test error</li>
+            <li>Model is too complex</li>
+          </ul>
+        </div>
+        <div class="col-card" style="border-color:var(--accent5)">
+          <h4 style="color:var(--accent5)">Good Fit ✓</h4>
+          <p>Model captures true pattern without memorising noise.</p>
+          <ul style="margin-top:6px">
+            <li>Low train error</li>
+            <li>Low test error</li>
+            <li>Generalises well</li>
+          </ul>
+        </div>
+        <div class="col-card" style="border-color:var(--accent4)">
+          <h4 style="color:var(--accent4)">Underfit 😴</h4>
+          <p>Model is too simple to capture the real pattern. Bad on both train and test.</p>
+          <ul style="margin-top:6px">
+            <li>High train error</li>
+            <li>High test error</li>
+            <li>Model is too simple</li>
+          </ul>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <h3 class="sub">How to fix each</h3>
+      <div class="two-col">
+        <div class="col-card"><h4 style="color:var(--accent3)">Fix Overfitting</h4><ul><li>Add more training data</li><li>Use regularisation (L1/L2)</li><li>Reduce model complexity (fewer layers/depth)</li><li>Add dropout (neural nets)</li><li>Use cross-validation</li></ul></div>
+        <div class="col-card"><h4 style="color:var(--accent4)">Fix Underfitting</h4><ul><li>Use a more complex model</li><li>Add more features</li><li>Reduce regularisation</li><li>Train longer</li></ul></div>
+      </div>
+      <div class="mark-done"><button class="done-btn" onclick="markDone('t10',this)">Mark as done ✓</button></div>
+    </div>
+  </div>
+
+  <!-- T11 -->
+  <div class="topic" id="t11">
+    <div class="topic-header" onclick="toggleTopic('t11')">
+      <span class="topic-num">11</span>
+      <span class="topic-title">Bias-Variance Tradeoff</span>
+      <span class="topic-tag tag-yellow">Model Quality</span>
+      <span class="topic-chevron">▼</span>
+    </div>
+    <div class="topic-body">
+      <p class="note-text">This is the fundamental tension in machine learning. Every model error has two main sources: <b>Bias</b> and <b>Variance</b>.</p>
+      <div class="formula">Total Error = Bias² + Variance + Irreducible Noise</div>
+      <div class="two-col" style="margin-top:.8rem">
+        <div class="col-card" style="border-color:var(--accent4)">
+          <h4 style="color:var(--accent4)">High Bias (Underfitting)</h4>
+          <p>Model makes <b>wrong assumptions</b> about the data — too simple. It's consistently wrong in the same way.</p>
+          <p style="margin-top:6px">🎯 Like a bad archer who always misses <em>left</em> — consistent but wrong direction.</p>
+        </div>
+        <div class="col-card" style="border-color:var(--accent3)">
+          <h4 style="color:var(--accent3)">High Variance (Overfitting)</h4>
+          <p>Model is <b>too sensitive</b> to training data — too complex. Small changes in data → big changes in predictions.</p>
+          <p style="margin-top:6px">🎯 Like an erratic archer who hits all over the place — unpredictable.</p>
+        </div>
+      </div>
+      <div class="diagram" style="text-align:center; padding:1.2rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; position:relative;">
+          <div style="text-align:center; font-size:12px">
+            <div style="color:var(--accent4); font-weight:600">High Bias</div>
+            <div style="color:var(--text3); font-size:11px">Low Variance</div>
+            <div style="font-size:18px; margin-top:4px">🟡🟡🟡<br>🟡🟡🟡</div>
+          </div>
+          <div style="flex:1; height:2px; background:linear-gradient(90deg, var(--accent4), var(--accent5), var(--accent3)); margin:0 1rem; border-radius:1px;"></div>
+          <div style="text-align:center; font-size:12px">
+            <div style="color:var(--accent5); font-weight:600">Sweet Spot</div>
+            <div style="color:var(--text3); font-size:11px">Good model</div>
+            <div style="font-size:18px; margin-top:4px">⚫⚫<br>&nbsp;⚫⚫</div>
+          </div>
+          <div style="flex:1; height:2px; background:linear-gradient(90deg, var(--accent5), var(--accent3)); margin:0 1rem; border-radius:1px;"></div>
+          <div style="text-align:center; font-size:12px">
+            <div style="color:var(--accent3); font-weight:600">High Variance</div>
+            <div style="color:var(--text3); font-size:11px">Low Bias</div>
+            <div style="font-size:18px; margin-top:4px">🔴&nbsp;&nbsp;🔴<br>&nbsp;🔴&nbsp;🔴</div>
+          </div>
+        </div>
+        <div style="margin-top:.8rem; font-size:11.5px; color:var(--text3)">Model Complexity →</div>
+      </div>
+      <div class="highlight-box hb-blue">
+        <div class="hb-label" style="color:var(--accent)">Key Insight</div>
+        You <em>cannot</em> minimise both simultaneously. Making a model more complex reduces bias but increases variance. The goal is to find the <b>sweet spot</b> that minimises total error on new (unseen) data.
+      </div>
+      <div class="mark-done"><button class="done-btn" onclick="markDone('t11',this)">Mark as done ✓</button></div>
+    </div>
+  </div>
+
+  <!-- T12 -->
+  <div class="topic" id="t12">
+    <div class="topic-header" onclick="toggleTopic('t12')">
+      <span class="topic-num">12</span>
+      <span class="topic-title">Train / Test Split</span>
+      <span class="topic-tag tag-yellow">Model Quality</span>
+      <span class="topic-chevron">▼</span>
+    </div>
+    <div class="topic-body">
+      <p class="note-text">You can't fairly evaluate a model on data it already trained on — it's like giving students the exam they practiced on. So you split your data into separate sets.</p>
+      <div class="diagram" style="padding:1rem;">
+        <div style="background:var(--surface);border-radius:8px;overflow:hidden;display:flex;height:40px;margin-bottom:.8rem;">
+          <div style="flex:7;background:rgba(108,138,255,.3);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--accent)">Training Set (70%)</div>
+          <div style="flex:1.5;background:rgba(78,205,196,.3);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--accent2)">Val (15%)</div>
+          <div style="flex:1.5;background:rgba(255,107,157,.3);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--accent3)">Test (15%)</div>
+        </div>
+        <div style="display:flex;gap:1rem;font-size:12px;flex-wrap:wrap;">
+          <div style="flex:1"><span style="color:var(--accent);font-weight:600">Train:</span> <span style="color:var(--text2)">Model learns from this</span></div>
+          <div style="flex:1"><span style="color:var(--accent2);font-weight:600">Validation:</span> <span style="color:var(--text2)">Tune hyperparameters</span></div>
+          <div style="flex:1"><span style="color:var(--accent3);font-weight:600">Test:</span> <span style="color:var(--text2)">Final score — touch once only!</span></div>
+        </div>
+      </div>
+      <div class="highlight-box hb-pink">
+        <div class="hb-label" style="color:var(--accent3)">⚠ Data Leakage</div>
+        <b>Never</b> fit preprocessing (like scalers, encoders, imputers) on the full dataset before splitting. Always split first, then fit on train only, transform train + test. Fitting on all data "leaks" test info into training.
+      </div>
+      <div class="formula">from sklearn.model_selection import train_test_split<br>X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)</div>
+      <div class="mark-done"><button class="done-btn" onclick="markDone('t12',this)">Mark as done ✓</button></div>
+    </div>
+  </div>
+
+  <!-- T13 -->
+  <div class="topic" id="t13">
+    <div class="topic-header" onclick="toggleTopic('t13')">
+      <span class="topic-num">13</span>
+      <span class="topic-title">Cross Validation</span>
+      <span class="topic-tag tag-yellow">Model Quality</span>
+      <span class="topic-chevron">▼</span>
+    </div>
+    <div class="topic-body">
+      <p class="note-text">One train-test split can be lucky or unlucky depending on which data ended up where. <b>Cross Validation</b> solves this by using every data point for both training and testing (at different times).</p>
+      <h3 class="sub">K-Fold Cross Validation</h3>
+      <div class="diagram" style="padding:1rem;">
+        <div style="font-size:12px;color:var(--text3);margin-bottom:.5rem">Data split into 5 folds — each fold gets to be the test set once:</div>
+        <div style="display:flex;flex-direction:column;gap:5px;">
+          <div style="display:flex;gap:3px;align-items:center;">
+            <div style="font-size:11px;color:var(--text3);width:50px">Fold 1</div>
+            <div style="flex:1;height:22px;background:rgba(255,107,157,.35);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10.5px;color:var(--accent3);font-weight:600">TEST</div>
+            <div style="flex:4;height:22px;background:rgba(108,138,255,.2);border-radius:4px;"></div>
+          </div>
+          <div style="display:flex;gap:3px;align-items:center;">
+            <div style="font-size:11px;color:var(--text3);width:50px">Fold 2</div>
+            <div style="flex:1;height:22px;background:rgba(108,138,255,.2);border-radius:4px;"></div>
+            <div style="flex:1;height:22px;background:rgba(255,107,157,.35);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10.5px;color:var(--accent3);font-weight:600">TEST</div>
+            <div style="flex:3;height:22px;background:rgba(108,138,255,.2);border-radius:4px;"></div>
+          </div>
+          <div style="display:flex;gap:3px;align-items:center;">
+            <div style="font-size:11px;color:var(--text3);width:50px">Fold 3</div>
+            <div style="flex:2;height:22px;background:rgba(108,138,255,.2);border-radius:4px;"></div>
+            <div style="flex:1;height:22px;background:rgba(255,107,157,.35);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10.5px;color:var(--accent3);font-weight:600">TEST</div>
+            <div style="flex:2;height:22px;background:rgba(108,138,255,.2);border-radius:4px;"></div>
+          </div>
+          <div style="display:flex;gap:3px;align-items:center;">
+            <div style="font-size:11px;color:var(--text3);width:50px">→ avg</div>
+            <div style="flex:5;height:22px;display:flex;align-items:center;font-size:11.5px;color:var(--accent5)">Final score = average of all fold scores</div>
+          </div>
+        </div>
+      </div>
+      <div class="highlight-box hb-green">
+        <div class="hb-label" style="color:var(--accent5)">Why use it?</div>
+        More reliable score than a single split. If CV score is good but test score is bad → overfitting. Use k=5 or k=10 in practice. Computationally k× more expensive — tradeoff.
+      </div>
+      <div class="mark-done"><button class="done-btn" onclick="markDone('t13',this)">Mark as done ✓</button></div>
+    </div>
+  </div>
+
+  <!-- T14 -->
+  <div class="topic" id="t14">
+    <div class="topic-header" onclick="toggleTopic('t14')">
+      <span class="topic-num">14</span>
+      <span class="topic-title">Confusion Matrix</span>
+      <span class="topic-tag tag-blue">Evaluation</span>
+      <span class="topic-chevron">▼</span>
+    </div>
+    <div class="topic-body">
+      <p class="note-text">A confusion matrix shows you <em>how</em> your classifier is wrong — not just how often. Rows = actual class, Columns = predicted class.</p>
+      <div class="matrix-wrap">
+        <div>
+          <table class="matrix-table">
+            <tr><th></th><th>Predicted: Positive</th><th>Predicted: Negative</th></tr>
+            <tr><th>Actual: Positive</th><td class="cell-tp">TP<br><span style="font-size:11px">True Positive</span></td><td class="cell-fn">FN<br><span style="font-size:11px">False Negative</span></td></tr>
+            <tr><th>Actual: Negative</th><td class="cell-fp">FP<br><span style="font-size:11px">False Positive</span></td><td class="cell-tn">TN<br><span style="font-size:11px">True Negative</span></td></tr>
+          </table>
+        </div>
+        <div class="matrix-legend">
+          <div><b style="color:var(--accent5)">TP (True Positive)</b> — Predicted positive, actually positive ✓</div>
+          <div><b style="color:var(--accent5)">TN (True Negative)</b> — Predicted negative, actually negative ✓</div>
+          <div><b style="color:var(--accent3)">FP (False Positive)</b> — Predicted positive, actually negative ✗ (Type I error)</div>
+          <div><b style="color:var(--accent3)">FN (False Negative)</b> — Predicted negative, actually positive ✗ (Type II error)</div>
+        </div>
+      </div>
+      <div class="highlight-box hb-yellow">
+        <div class="hb-label" style="color:var(--accent4)">Memory Trick</div>
+        The first word (True/False) tells you if the prediction was <b>correct</b>. The second word (Positive/Negative) tells you what the model <b>predicted</b>. FP = model predicted Positive but was wrong.
+      </div>
+      <div class="quiz-section">
+        <h3 class="sub">Quick Check</h3>
+        <p class="note-text">A cancer screening test incorrectly tells a healthy person they have cancer. What type of error is this?</p>
+        <div class="quiz-btn-row">
+          <button class="quiz-opt" onclick="quiz(this,'wrong','t14q1')">True Positive</button>
+          <button class="quiz-opt" onclick="quiz(this,'correct','t14q1')">False Positive</button>
+          <button class="quiz-opt" onclick="quiz(this,'wrong','t14q1')">False Negative</button>
+          <button class="quiz-opt" onclick="quiz(this,'wrong','t14q1')">True Negative</button>
+        </div>
+        <div class="quiz-feedback" id="t14q1"></div>
+      </div>
+      <div class="mark-done"><button class="done-btn" onclick="markDone('t14',this)">Mark as done ✓</button></div>
+    </div>
+  </div>
+
+  <!-- T15 -->
+  <div class="topic" id="t15">
+    <div class="topic-header" onclick="toggleTopic('t15')">
+      <span class="topic-num">15</span>
+      <span class="topic-title">Accuracy, Precision, Recall, F1</span>
+      <span class="topic-tag tag-blue">Evaluation</span>
+      <span class="topic-chevron">▼</span>
+    </div>
+    <div class="topic-body">
+      <p class="note-text">Different metrics answer different questions about your model's performance.</p>
+      <div class="formula" style="color:var(--accent)">Accuracy  = (TP + TN) / (TP + TN + FP + FN)</div>
+      <p class="note-text" style="margin-top:.3rem"><em>How often is the model correct overall?</em> — Misleading when classes are imbalanced. (99% "not sick" model gets 99% accuracy but is useless.)</p>
+      <div class="divider"></div>
+      <div class="formula" style="color:var(--accent2)">Precision = TP / (TP + FP)</div>
+      <p class="note-text" style="margin-top:.3rem"><em>Of all things I predicted positive, how many actually were?</em> — Use when <b>False Positives are costly</b>. Example: spam filter (don't want to mark real emails as spam).</p>
+      <div class="divider"></div>
+      <div class="formula" style="color:var(--accent3)">Recall    = TP / (TP + FN)   (also called Sensitivity)</div>
+      <p class="note-text" style="margin-top:.3rem"><em>Of all actual positives, how many did I catch?</em> — Use when <b>False Negatives are costly</b>. Example: cancer detection (don't want to miss sick patients).</p>
+      <div class="divider"></div>
+      <div class="formula" style="color:var(--accent4)">F1 Score  = 2 × (Precision × Recall) / (Precision + Recall)</div>
+      <p class="note-text" style="margin-top:.3rem"><em>Harmonic mean of Precision and Recall</em> — Best when you need balance between the two. Use for imbalanced datasets.</p>
+      <div class="highlight-box hb-blue">
+        <div class="hb-label" style="color:var(--accent)">Precision-Recall Tradeoff</div>
+        Making the model stricter → higher precision, lower recall. More lenient → higher recall, lower precision. F1 score helps you find the balance. For extreme imbalance, also consider <b>ROC-AUC</b>.
+      </div>
+      <div class="quiz-section">
+        <h3 class="sub">Scenario Question</h3>
+        <p class="note-text">You're building a fraud detection system. Missing a real fraud case is very costly. Which metric should you prioritise?</p>
+        <div class="quiz-btn-row">
+          <button class="quiz-opt" onclick="quiz(this,'wrong','t15q1')">Accuracy</button>
+          <button class="quiz-opt" onclick="quiz(this,'wrong','t15q1')">Precision</button>
+          <button class="quiz-opt" onclick="quiz(this,'correct','t15q1')">Recall</button>
+          <button class="quiz-opt" onclick="quiz(this,'wrong','t15q1')">None of these</button>
+        </div>
+        <div class="quiz-feedback" id="t15q1"></div>
+      </div>
+      <div class="mark-done"><button class="done-btn" onclick="markDone('t15',this)">Mark as done ✓</button></div>
+    </div>
+  </div>
+
+  <!-- T16 -->
+  <div class="topic" id="t16">
+    <div class="topic-header" onclick="toggleTopic('t16')">
+      <span class="topic-num">16</span>
+      <span class="topic-title">Feature Scaling</span>
+      <span class="topic-tag tag-green">Preprocessing</span>
+      <span class="topic-chevron">▼</span>
+    </div>
+    <div class="topic-body">
+      <p class="note-text">Features on very different scales cause problems. Age (0–100) and Income (0–100,000) — distance-based models will treat Income as way more important just because its numbers are bigger.</p>
+      <div class="two-col">
+        <div class="col-card" style="border-color:var(--accent)">
+          <h4 style="color:var(--accent)">Standardisation (Z-score)</h4>
+          <div class="formula" style="margin:.5rem 0; font-size:12px; padding:.5rem">z = (x − mean) / std</div>
+          <p>Transforms to mean=0, std=1. Output range is roughly −3 to +3. <b>Best for:</b> SVM, Logistic Regression, PCA, gradient descent models. Not bounded — handles outliers better.</p>
+        </div>
+        <div class="col-card" style="border-color:var(--accent2)">
+          <h4 style="color:var(--accent2)">Min-Max Scaling</h4>
+          <div class="formula" style="margin:.5rem 0; font-size:12px; padding:.5rem">x' = (x − min) / (max − min)</div>
+          <p>Scales to a fixed range [0, 1]. <b>Best for:</b> Neural networks, KNN, image pixel values. Sensitive to outliers (one extreme pulls everything else).</p>
+        </div>
+      </div>
+      <div class="highlight-box hb-pink">
+        <div class="hb-label" style="color:var(--accent3)">⚠ Critical Rule</div>
+        <b>Always fit the scaler on TRAINING data only.</b> Then use those same parameters to transform both train and test. If you fit on all data, you leak test information into training (data leakage). Use sklearn's <code>scaler.fit(X_train)</code> then <code>scaler.transform(X_test)</code>.
+      </div>
+      <div class="highlight-box hb-teal">
+        <div class="hb-label" style="color:var(--accent2)">When NOT to scale</div>
+        Decision Trees and Random Forests don't need scaling — they split on thresholds, not distances. Tree-based models are naturally scale-invariant.
+      </div>
+      <div class="mark-done"><button class="done-btn" onclick="markDone('t16',this)">Mark as done ✓</button></div>
+    </div>
+  </div>
+
+  <!-- T17 -->
+  <div class="topic" id="t17">
+    <div class="topic-header" onclick="toggleTopic('t17')">
+      <span class="topic-num">17</span>
+      <span class="topic-title">One-Hot vs Label Encoding</span>
+      <span class="topic-tag tag-green">Preprocessing</span>
+      <span class="topic-chevron">▼</span>
+    </div>
+    <div class="topic-body">
+      <p class="note-text">ML models only understand numbers. Categorical data (like "Red", "Blue", "Green") must be converted to numbers. Two main ways to do this:</p>
+      <div class="two-col">
+        <div class="col-card" style="border-color:var(--accent2)">
+          <h4 style="color:var(--accent2)">One-Hot Encoding</h4>
+          <p>Creates a new binary column for each category. Only one column is 1 (hot) at a time.</p>
+          <div style="margin-top:8px; font-size:12px; font-family:monospace; color:var(--text2);">
+            <div>Color="Red"   → [1, 0, 0]</div>
+            <div>Color="Blue"  → [0, 1, 0]</div>
+            <div>Color="Green" → [0, 0, 1]</div>
+          </div>
+          <p style="margin-top:8px;font-size:12.5px;color:var(--accent2)">✓ Use for: <b>nominal</b> categories (no order) — Color, City, Brand</p>
+        </div>
+        <div class="col-card" style="border-color:var(--accent4)">
+          <h4 style="color:var(--accent4)">Label Encoding</h4>
+          <p>Assigns each category an integer. Simple and compact.</p>
+          <div style="margin-top:8px; font-size:12px; font-family:monospace; color:var(--text2);">
+            <div>Size="Small"  → 0</div>
+            <div>Size="Medium" → 1</div>
+            <div>Size="Large"  → 2</div>
+          </div>
+          <p style="margin-top:8px;font-size:12.5px;color:var(--accent4)">✓ Use for: <b>ordinal</b> categories (have order) — Size, Rating, Education Level. Also fine for tree models.</p>
+        </div>
+      </div>
+      <div class="highlight-box hb-pink">
+        <div class="hb-label" style="color:var(--accent3)">⚠ Classic Mistake</div>
+        <b>Never</b> label-encode nominal categories for linear/distance models. If you encode City as Mumbai=0, Delhi=1, Chennai=2 — the model will think Delhi is "between" Mumbai and Chennai. This is wrong. Use One-Hot for nominal categories with linear models, SVM, KNN.
+      </div>
+      <div class="highlight-box hb-yellow">
+        <div class="hb-label" style="color:var(--accent4)">High Cardinality Problem</div>
+        If a column has 500 unique cities, One-Hot creates 500 new columns — very slow. Solutions: Target Encoding, Frequency Encoding, or grouping rare categories into "Other".
+      </div>
+      <div class="quiz-section">
+        <h3 class="sub">Quick Check</h3>
+        <p class="note-text">You have an "Education" column: [High School, Bachelor's, Master's, PhD]. You're training a Logistic Regression. Which encoding to use?</p>
+        <div class="quiz-btn-row">
+          <button class="quiz-opt" onclick="quiz(this,'correct','t17q1')">Label Encoding (ordinal order exists)</button>
+          <button class="quiz-opt" onclick="quiz(this,'wrong','t17q1')">One-Hot Encoding always</button>
+          <button class="quiz-opt" onclick="quiz(this,'wrong','t17q1')">No encoding needed</button>
+        </div>
+        <div class="quiz-feedback" id="t17q1"></div>
+      </div>
+      <div class="mark-done"><button class="done-btn" onclick="markDone('t17',this)">Mark as done ✓</button></div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// TOGGLE TOPIC
+function toggleTopic(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle('open');
+  updateActiveNav(id);
+}
+
+// QUIZ
+function quiz(btn, result, qid) {
+  const row = btn.parentElement;
+  row.querySelectorAll('.quiz-opt').forEach(b => b.onclick = null);
+  btn.classList.add(result);
+  const fb = document.getElementById(qid);
+  fb.classList.add('show');
+  if(result === 'correct') {
+    fb.className = 'quiz-feedback show good';
+    fb.textContent = '✓ Correct! Well done.';
+  } else {
+    fb.className = 'quiz-feedback show bad';
+    fb.textContent = '✗ Not quite — look at the highlighted answer.';
+    row.querySelectorAll('.quiz-opt').forEach(b => {
+      if(b.onclick !== null || b === btn) return;
+    });
+  }
+}
+
+// MARK DONE
+const done = new Set();
+function markDone(id, btn) {
+  if(done.has(id)) {
+    done.delete(id);
+    btn.classList.remove('marked');
+    btn.textContent = 'Mark as done ✓';
+    document.querySelector(`.nav-item[data-id="${id}"]`)?.classList.remove('done');
+  } else {
+    done.add(id);
+    btn.classList.add('marked');
+    btn.textContent = 'Done ✓';
+    document.querySelector(`.nav-item[data-id="${id}"]`)?.classList.add('done');
+  }
+  updateProgress();
+}
+
+function updateProgress() {
+  const total = 17;
+  const pct = Math.round((done.size / total) * 100);
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-label').textContent = `${done.size} / ${total} topics done`;
+}
+
+function updateActiveNav(id) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelector(`.nav-item[data-id="${id}"]`)?.classList.add('active');
+}
+
+// CANVAS: Linear Regression scatter
+window.addEventListener('load', () => {
+  const c = document.getElementById('lrCanvas');
+  if(!c) return;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#111520';
+  ctx.fillRect(0,0,500,200);
+  const pts = [[50,160],[80,140],[110,130],[140,110],[180,100],[210,90],[250,80],[280,70],[310,65],[340,55],[380,45],[420,38],[460,32]];
+  pts.forEach(([x,y])=>{
+    ctx.beginPath();
+    ctx.arc(x,y,4,0,Math.PI*2);
+    ctx.fillStyle='rgba(108,138,255,0.7)';
+    ctx.fill();
+  });
+  ctx.beginPath();
+  ctx.moveTo(40,168);
+  ctx.lineTo(470,26);
+  ctx.strokeStyle='rgba(6,214,160,0.9)';
+  ctx.lineWidth=2.5;
+  ctx.stroke();
+  ctx.fillStyle='rgba(78,205,196,0.7)';
+  ctx.font='11px Segoe UI';
+  ctx.fillText('Best fit line (minimises MSE)',20,185);
+  ctx.fillStyle='rgba(108,138,255,0.7)';
+  ctx.fillText('Data points',360,185);
+});
+
+// CANVAS: KNN
+window.addEventListener('load', ()=>{
+  const c = document.getElementById('knnCanvas');
+  if(!c) return;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle='#111520';
+  ctx.fillRect(0,0,480,180);
+  const blue=[[60,50],[90,80],[70,110],[120,60],[100,130]];
+  const red=[[300,60],[330,90],[360,50],[320,130],[380,110]];
+  blue.forEach(([x,y])=>{
+    ctx.beginPath();ctx.arc(x,y,6,0,Math.PI*2);
+    ctx.fillStyle='rgba(108,138,255,0.8)';ctx.fill();
+  });
+  red.forEach(([x,y])=>{
+    ctx.beginPath();ctx.arc(x,y,6,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,107,157,0.8)';ctx.fill();
+  });
+  // new point
+  ctx.beginPath();ctx.arc(220,100,7,0,Math.PI*2);
+  ctx.fillStyle='rgba(255,209,102,1)';ctx.fill();
+  ctx.strokeStyle='rgba(255,209,102,0.4)';
+  ctx.lineWidth=1;ctx.setLineDash([4,3]);
+  [[120,60],[100,130],[300,60]].forEach(([x,y])=>{
+    ctx.beginPath();ctx.moveTo(220,100);ctx.lineTo(x,y);ctx.stroke();
+  });
+  ctx.setLineDash([]);
+  ctx.font='11px Segoe UI';
+  ctx.fillStyle='rgba(255,209,102,0.9)';ctx.fillText('? (new point)',228,97);
+  ctx.fillStyle='rgba(108,138,255,0.8)';ctx.fillText('Class A',20,20);
+  ctx.fillStyle='rgba(255,107,157,0.8)';ctx.fillText('Class B',330,20);
+  ctx.fillStyle='rgba(255,209,102,0.7)';ctx.fillText('K=3: 2 blue, 1 red → predict Class A',130,165);
+});
+
+// K-Means canvases
+function drawKMStep(id, pts, centroids, colors, step) {
+  const c = document.getElementById(id);
+  if(!c) return;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle='#111520';ctx.fillRect(0,0,130,100);
+  if(step >= 2) {
+    pts.forEach(([x,y,ci])=>{
+      ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);
+      ctx.fillStyle=colors[ci]+'99';ctx.fill();
+    });
+  } else {
+    pts.forEach(([x,y])=>{
+      ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);
+      ctx.fillStyle='rgba(150,160,200,0.4)';ctx.fill();
+    });
+  }
+  centroids.forEach(([x,y],i)=>{
+    ctx.beginPath();ctx.arc(x,y,7,0,Math.PI*2);
+    ctx.fillStyle=colors[i];ctx.fill();
+    ctx.strokeStyle='white';ctx.lineWidth=1.5;ctx.stroke();
+  });
+}
+window.addEventListener('load',()=>{
+  const pts=[[20,25,0],[35,40,0],[25,60,0],[40,70,0],[30,50,0],[90,20,1],[110,30,1],[95,45,1],[105,55,1],[85,40,1]];
+  const c1=[[55,50],[75,30]];
+  const c2=[[30,50],[100,38]];
+  const c3=[[29,49],[98,38]];
+  const cols=['rgba(108,138,255,0.9)','rgba(255,107,157,0.9)'];
+  drawKMStep('km1',pts,c1,cols,1);
+  drawKMStep('km2',pts,c2,cols,2);
+  drawKMStep('km3',pts,c3,cols,3);
+});
+
+// SCROLL SPY
+const observer = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const id = e.target.id;
+      document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+      document.querySelector(`.nav-item[data-id="${id}"]`)?.classList.add('active');
+    }
+  });
+},{threshold:0.3});
+document.querySelectorAll('.topic').forEach(t=>observer.observe(t));
+</script>
+</body>
+</html>

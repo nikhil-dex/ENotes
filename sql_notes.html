@@ -1,0 +1,1607 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQL Notes — Data Analyst / Data Scientist / ML Engineer Edition</title>
+<style>
+:root{
+  --bg:#0d1117; --bg2:#131922; --bg3:#1c232e; --border:#2a323d;
+  --text:#c9d1d9; --text-dim:#8b949e; --text-bright:#f0f6fc;
+  --accent:#58a6ff; --accent-dim:#1f6feb;
+  --purple:#d2a8ff; --green:#56d364; --gold:#e3b341; --red:#ff7b72; --orange:#ffa657;
+  --code-bg:#0a0e14; --shadow:0 4px 16px rgba(0,0,0,.4);
+  --radius:10px;
+}
+html[data-theme="light"]{
+  --bg:#f6f8fa; --bg2:#ffffff; --bg3:#eef1f4; --border:#d0d7de;
+  --text:#24292f; --text-dim:#57606a; --text-bright:#0d1117;
+  --accent:#0969da; --accent-dim:#0550ae;
+  --purple:#8250df; --green:#1a7f37; --gold:#9a6700; --red:#cf222e; --orange:#bc4c00;
+  --code-bg:#f0f2f5; --shadow:0 4px 16px rgba(140,149,159,.3);
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg); color:var(--text); line-height:1.6; transition:background .2s,color .2s;
+}
+a{color:var(--accent); text-decoration:none;}
+a:hover{text-decoration:underline;}
+
+/* ---------- Layout ---------- */
+.wrap{display:grid; grid-template-columns:290px 1fr; min-height:100vh;}
+.sidebar{
+  position:sticky; top:0; height:100vh; overflow-y:auto; background:var(--bg2);
+  border-right:1px solid var(--border); padding:16px 14px 40px;
+}
+.sidebar h1{font-size:16px; color:var(--text-bright); margin:4px 4px 2px;}
+.sidebar .subtitle{font-size:11.5px; color:var(--text-dim); margin:0 4px 14px;}
+.search-box{
+  width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--border);
+  background:var(--bg3); color:var(--text); font-size:13px; margin-bottom:10px;
+}
+.search-box:focus{outline:2px solid var(--accent-dim);}
+.progress-wrap{margin:10px 4px 16px; font-size:11px; color:var(--text-dim);}
+.progress-bar{height:6px; border-radius:4px; background:var(--bg3); overflow:hidden; margin-top:5px;}
+.progress-fill{height:100%; background:linear-gradient(90deg,var(--accent),var(--green)); width:0%; transition:width .3s;}
+.nav-group{margin-bottom:6px;}
+.nav-group summary{
+  cursor:pointer; font-size:11px; text-transform:uppercase; letter-spacing:.05em;
+  color:var(--text-dim); padding:8px 4px 4px; font-weight:600; list-style:none;
+}
+.nav-group summary::-webkit-details-marker{display:none;}
+.nav-group summary:before{content:"▸ "; display:inline-block; transition:transform .15s;}
+.nav-group[open] summary:before{transform:rotate(90deg);}
+.nav-link{
+  display:flex; align-items:center; gap:6px; padding:6px 10px; border-radius:6px; font-size:13px;
+  color:var(--text); margin:1px 0;
+}
+.nav-link:hover{background:var(--bg3); text-decoration:none;}
+.nav-link.active{background:var(--accent-dim); color:#fff;}
+.nav-link .dot{width:6px; height:6px; border-radius:50%; background:var(--border); flex:none;}
+.nav-link.done .dot{background:var(--green);}
+.nav-link.hidden{display:none;}
+.nav-group.hidden{display:none;}
+
+.main{padding:36px 48px 120px; max-width:980px;}
+.topbar{
+  position:sticky; top:0; z-index:5; display:flex; justify-content:flex-end; gap:10px;
+  padding:10px 0; margin:-16px 0 20px; background:linear-gradient(var(--bg) 70%, transparent);
+}
+.icon-btn{
+  background:var(--bg3); border:1px solid var(--border); color:var(--text); border-radius:8px;
+  padding:8px 12px; font-size:13px; cursor:pointer; display:flex; align-items:center; gap:6px;
+}
+.icon-btn:hover{border-color:var(--accent);}
+
+/* ---------- Hero ---------- */
+.hero{margin-bottom:34px;}
+.hero h1{font-size:32px; color:var(--text-bright); margin:0 0 8px;}
+.hero p{color:var(--text-dim); font-size:15px; max-width:720px;}
+.legend{display:flex; flex-wrap:wrap; gap:8px; margin-top:16px;}
+.badge{
+  display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:700;
+  padding:3px 9px; border-radius:20px; border:1px solid transparent; white-space:nowrap;
+}
+.badge.da{background:rgba(88,166,255,.15); color:var(--accent); border-color:rgba(88,166,255,.4);}
+.badge.ds{background:rgba(210,168,255,.15); color:var(--purple); border-color:rgba(210,168,255,.4);}
+.badge.mle{background:rgba(86,211,100,.15); color:var(--green); border-color:rgba(86,211,100,.4);}
+.badge.important{background:rgba(227,179,65,.15); color:var(--gold); border-color:rgba(227,179,65,.4);}
+.badge.added{background:rgba(255,166,87,.15); color:var(--orange); border-color:rgba(255,166,87,.4); }
+
+/* ---------- Sections ---------- */
+section.topic{
+  border-top:1px solid var(--border); padding:34px 0 8px; scroll-margin-top:20px;
+}
+section.topic:first-of-type{border-top:none;}
+.topic-head{display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:6px;}
+.topic-head h2{font-size:22px; color:var(--text-bright); margin:0 0 6px; display:flex; align-items:center; gap:10px;}
+.badges-row{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px;}
+.mark-done{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-dim); cursor:pointer; white-space:nowrap; user-select:none;}
+.mark-done input{accent-color:var(--green); width:15px; height:15px; cursor:pointer;}
+
+p{margin:10px 0;}
+.lead{color:var(--text-dim); font-size:14.5px;}
+ul,ol{padding-left:22px;}
+li{margin:4px 0;}
+
+table{width:100%; border-collapse:collapse; margin:14px 0 20px; font-size:13.5px;}
+th,td{padding:8px 12px; border:1px solid var(--border); text-align:left; vertical-align:top;}
+th{background:var(--bg3); color:var(--text-bright);}
+tr:nth-child(even) td{background:rgba(255,255,255,.015);}
+
+/* ---------- Code blocks ---------- */
+.code-wrap{position:relative; margin:14px 0 20px;}
+pre{
+  background:var(--code-bg); border:1px solid var(--border); border-radius:var(--radius);
+  padding:16px 18px; overflow-x:auto; font-size:13px; line-height:1.55; margin:0;
+}
+code{font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;}
+.copy-btn{
+  position:absolute; top:8px; right:8px; background:var(--bg3); border:1px solid var(--border);
+  color:var(--text-dim); font-size:11px; padding:4px 9px; border-radius:6px; cursor:pointer;
+  opacity:0; transition:opacity .15s;
+}
+.code-wrap:hover .copy-btn{opacity:1;}
+.copy-btn.copied{color:var(--green); border-color:var(--green); opacity:1;}
+
+.tok-keyword{color:var(--purple); font-weight:600;}
+.tok-func{color:var(--accent);}
+.tok-string{color:var(--green);}
+.tok-number{color:var(--orange);}
+.tok-comment{color:var(--text-dim); font-style:italic;}
+
+/* ---------- Callouts ---------- */
+.callout{
+  border-radius:var(--radius); padding:14px 16px; margin:16px 0; border:1px solid var(--border);
+  background:var(--bg3); font-size:13.5px;
+}
+.callout .callout-title{font-weight:700; margin-bottom:6px; display:flex; align-items:center; gap:6px; color:var(--text-bright);}
+.callout.gotcha{border-color:rgba(255,123,114,.4); background:rgba(255,123,114,.06);}
+.callout.gotcha .callout-title{color:var(--red);}
+.callout.tip{border-color:rgba(88,166,255,.4); background:rgba(88,166,255,.06);}
+.callout.tip .callout-title{color:var(--accent);}
+
+details.manager{
+  margin:18px 0; border:1px solid rgba(227,179,65,.35); border-radius:var(--radius);
+  background:rgba(227,179,65,.05); overflow:hidden;
+}
+details.manager summary{
+  cursor:pointer; padding:12px 16px; font-weight:700; color:var(--gold); list-style:none;
+  display:flex; align-items:center; gap:8px; font-size:13.5px;
+}
+details.manager summary::-webkit-details-marker{display:none;}
+details.manager summary:before{content:"▸"; transition:transform .15s;}
+details.manager[open] summary:before{transform:rotate(90deg);}
+.manager-body{padding:2px 16px 16px;}
+.manager-body h4{margin:12px 0 4px; font-size:12.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--text-dim);}
+.manager-body p{margin:2px 0 8px; font-size:13.5px;}
+
+footer{margin-top:60px; padding-top:20px; border-top:1px solid var(--border); color:var(--text-dim); font-size:12px;}
+
+.back-top{
+  position:fixed; bottom:24px; right:28px; background:var(--accent-dim); color:#fff; border:none;
+  border-radius:50%; width:44px; height:44px; font-size:18px; cursor:pointer; box-shadow:var(--shadow);
+  opacity:0; pointer-events:none; transition:opacity .2s;
+}
+.back-top.show{opacity:1; pointer-events:auto;}
+
+@media (max-width:880px){
+  .wrap{grid-template-columns:1fr;}
+  .sidebar{position:relative; height:auto; max-height:60vh;}
+  .main{padding:24px 18px 100px;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <h1>📘 SQL Notes</h1>
+    <p class="subtitle">PostgreSQL · DA / DS / MLE edition</p>
+    <input id="searchBox" class="search-box" type="text" placeholder="🔍 Search topics...">
+    <div class="progress-wrap">
+      <span id="progressLabel">0 / 0 topics marked learned</span>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+
+    <details class="nav-group" open><summary>Getting Started</summary>
+      <a class="nav-link" data-id="intro" href="#intro"><span class="dot"></span>Welcome &amp; How to Use</a>
+      <a class="nav-link" data-id="sql-categories" href="#sql-categories"><span class="dot"></span>SQL Command Categories</a>
+    </details>
+
+    <details class="nav-group" open><summary>Schema &amp; Data</summary>
+      <a class="nav-link" data-id="db-table-basics" href="#db-table-basics"><span class="dot"></span>Databases &amp; Tables</a>
+      <a class="nav-link" data-id="data-types" href="#data-types"><span class="dot"></span>Data Types</a>
+      <a class="nav-link" data-id="constraints" href="#constraints"><span class="dot"></span>Constraints</a>
+    </details>
+
+    <details class="nav-group" open><summary>Manipulating Data</summary>
+      <a class="nav-link" data-id="dml-basics" href="#dml-basics"><span class="dot"></span>INSERT / UPDATE / DELETE</a>
+      <a class="nav-link" data-id="alter-table" href="#alter-table"><span class="dot"></span>ALTER TABLE</a>
+      <a class="nav-link" data-id="csv-import" href="#csv-import"><span class="dot"></span>Importing CSV Data</a>
+    </details>
+
+    <details class="nav-group" open><summary>Querying &amp; Filtering</summary>
+      <a class="nav-link" data-id="operators" href="#operators"><span class="dot"></span>Operators (WHERE clause toolkit)</a>
+    </details>
+
+    <details class="nav-group" open><summary>Aggregation</summary>
+      <a class="nav-link" data-id="aggregate-groupby" href="#aggregate-groupby"><span class="dot"></span>Aggregate Functions + GROUP BY/HAVING</a>
+    </details>
+
+    <details class="nav-group" open><summary>Functions</summary>
+      <a class="nav-link" data-id="string-functions" href="#string-functions"><span class="dot"></span>String Functions</a>
+      <a class="nav-link" data-id="date-time-functions" href="#date-time-functions"><span class="dot"></span>Date &amp; Time Functions</a>
+      <a class="nav-link" data-id="conditional-functions" href="#conditional-functions"><span class="dot"></span>Conditional Functions</a>
+    </details>
+
+    <details class="nav-group" open><summary>Advanced Analytics</summary>
+      <a class="nav-link" data-id="window-functions" href="#window-functions"><span class="dot"></span>Window Functions</a>
+      <a class="nav-link" data-id="set-operators" href="#set-operators"><span class="dot"></span>Set Operators</a>
+      <a class="nav-link" data-id="joins" href="#joins"><span class="dot"></span>Joins</a>
+      <a class="nav-link" data-id="subqueries-cte" href="#subqueries-cte"><span class="dot"></span>Subqueries &amp; CTEs</a>
+    </details>
+
+    <details class="nav-group" open><summary>Objects &amp; Performance</summary>
+      <a class="nav-link" data-id="views" href="#views"><span class="dot"></span>Views</a>
+      <a class="nav-link" data-id="indexes-performance" href="#indexes-performance"><span class="dot"></span>Indexes &amp; EXPLAIN</a>
+      <a class="nav-link" data-id="transactions" href="#transactions"><span class="dot"></span>Transactions (TCL)</a>
+      <a class="nav-link" data-id="upsert" href="#upsert"><span class="dot"></span>UPSERT</a>
+    </details>
+
+    <details class="nav-group" open><summary>Bridging to Python &amp; ML</summary>
+      <a class="nav-link" data-id="sql-python" href="#sql-python"><span class="dot"></span>SQL + pandas/SQLAlchemy</a>
+    </details>
+
+    <details class="nav-group" open><summary>Project &amp; Reference</summary>
+      <a class="nav-link" data-id="project-walkthrough" href="#project-walkthrough"><span class="dot"></span>Bookstore Project Walkthrough</a>
+      <a class="nav-link" data-id="cheatsheet" href="#cheatsheet"><span class="dot"></span>Cheat Sheet</a>
+    </details>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main">
+    <div class="topbar">
+      <button class="icon-btn" id="themeToggle">🌙 <span id="themeLabel">Dark</span></button>
+    </div>
+
+    <div class="hero">
+      <h1>SQL — from PostgreSQL basics to analyst/ML workflows</h1>
+      <p>Rebuilt from your course notes (Days 1–30 + bookstore resume project), cleaned up, corrected, and extended
+      with the topics every data analyst, data scientist, and ML engineer ends up needing on the job.
+      Every major topic includes a <strong>Manager's Corner</strong>: why we use it, what your manager actually wants
+      from you here, and what the alternatives are.</p>
+      <div class="legend">
+        <span class="badge da">DA</span>
+        <span class="badge ds">DS</span>
+        <span class="badge mle">MLE</span>
+        <span class="badge important">★ Important</span>
+        <span class="badge added">✚ Added (not in original notes)</span>
+      </div>
+    </div>
+
+    <!-- ============ INTRO ============ -->
+    <section class="topic" id="intro">
+      <div class="topic-head">
+        <h2>👋 Welcome &amp; How to Use These Notes</h2>
+        <label class="mark-done"><input type="checkbox" data-id="intro"> mark learned</label>
+      </div>
+      <p class="lead">Click any code block to see a copy button. Use the search box to filter topics. Check off
+      topics as you review them — your progress is saved locally in this browser (no server, no account).</p>
+      <p>These notes follow the exact order you learned things: DDL/DML basics → data types → constraints →
+      operators → aggregation → string/date functions → CASE/COALESCE → window functions → joins → set operators →
+      the bookstore resume project. A few sections (CTEs, views, indexes, transactions-in-practice, UPSERT,
+      SQL+Python) are <span class="badge added">✚ Added</span> because they show up constantly in real DA/DS/MLE
+      work but weren't in the original files.</p>
+    </section>
+
+    <!-- ============ SQL CATEGORIES ============ -->
+    <section class="topic" id="sql-categories">
+      <div class="topic-head">
+        <h2>🗂️ SQL Command Categories</h2>
+        <label class="mark-done"><input type="checkbox" data-id="sql-categories"> mark learned</label>
+      </div>
+      <div class="badges-row"><span class="badge important">★ Important</span><span class="badge da">DA</span><span class="badge ds">DS</span><span class="badge mle">MLE</span></div>
+      <p>Every SQL statement belongs to one of five families:</p>
+      <table>
+        <tr><th>Category</th><th>Stands for</th><th>Commands</th><th>Purpose</th></tr>
+        <tr><td><strong>DDL</strong></td><td>Data Definition Language</td><td>CREATE, ALTER, DROP, TRUNCATE</td><td>Defines/changes the structure of objects (tables, databases)</td></tr>
+        <tr><td><strong>DML</strong></td><td>Data Manipulation Language</td><td>INSERT, SELECT, UPDATE, DELETE</td><td>Directly manipulates the data itself (CRUD)</td></tr>
+        <tr><td><strong>TCL</strong></td><td>Transaction Control Language</td><td>BEGIN, COMMIT, ROLLBACK, SAVEPOINT</td><td>Controls grouping of statements into safe, all-or-nothing transactions</td></tr>
+        <tr><td><strong>DCL</strong></td><td>Data Control Language</td><td>GRANT, REVOKE</td><td>Controls who can access/modify what</td></tr>
+        <tr><td><strong>DQL</strong></td><td>Data Query Language</td><td>SELECT</td><td>Retrieves data (some group SELECT under DML instead — both views are common)</td></tr>
+      </table>
+
+      <div class="callout tip">
+        <div class="callout-title">💡 Beginner tip (from the original notes)</div>
+        Always use <code>COMMIT</code> and <code>ROLLBACK</code> carefully to avoid unintended changes, especially
+        on shared/production databases. Run the equivalent <code>SELECT</code> first to see exactly which rows a
+        DML statement will touch before you run the real UPDATE/DELETE.
+      </div>
+
+      <h3>SQL vs NoSQL</h3>
+      <table>
+        <tr><th></th><th>SQL</th><th>NoSQL</th></tr>
+        <tr><td>Data shape</td><td>Rows &amp; columns, fixed schema</td><td>JSON/key-value, documents, or graphs — flexible schema</td></tr>
+        <tr><td>Best for</td><td>Banking-style systems needing complex queries &amp; transactions</td><td>Social media, IoT streams, real-time analytics, big data</td></tr>
+        <tr><td>Examples</td><td>PostgreSQL, MySQL, Oracle SQL</td><td>MongoDB, Redis, Cassandra, DynamoDB</td></tr>
+      </table>
+      <p class="lead">PgAdmin is the GUI most commonly used to browse and query a PostgreSQL database (used throughout this course).</p>
+
+      <details class="manager">
+        <summary>💼 Manager's Corner</summary>
+        <div class="manager-body">
+          <h4>Why we use this</h4>
+          <p>SQL is the lingua franca of structured data — nearly every analytics stack, warehouse, and ML feature
+          pipeline reads from a relational store at some point, even if the app itself runs on NoSQL.</p>
+          <h4>What the manager actually wants</h4>
+          <p>"Can you pull the number I asked for, accurately, without touching anything you shouldn't?" Managers
+          rarely care about DDL vs DML — they care that you know the difference between a read-only SELECT and a
+          statement that changes data, and that you're careful with the latter.</p>
+          <h4>Alternatives</h4>
+          <p>NoSQL (MongoDB, DynamoDB) for unstructured or very high write-throughput apps; pandas/Polars for
+          ad-hoc analysis on local files; Spark SQL / BigQuery / Snowflake SQL when the data is too big for a single
+          Postgres instance. The SQL syntax you learn here transfers almost directly to all of them.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ DB & TABLE BASICS ============ -->
+    <section class="topic" id="db-table-basics">
+      <div class="topic-head">
+        <h2>🏗️ Databases &amp; Tables</h2>
+        <label class="mark-done"><input type="checkbox" data-id="db-table-basics"> mark learned</label>
+      </div>
+      <div class="badges-row"><span class="badge da">DA</span><span class="badge ds">DS</span></div>
+      <div class="code-wrap"><button class="copy-btn">Copy</button><pre><code class="lang-sql">-- create / drop a database
+CREATE DATABASE company;
+DROP DATABASE company;
+
+-- create a table inside it
+CREATE TABLE employee(
+    emp_id     SERIAL PRIMARY KEY,
+    name       VARCHAR(100) NOT NULL,
+    position   VARCHAR(50),
+    department VARCHAR(50),
+    phone      VARCHAR(15) UNIQUE,   -- see gotcha below
+    hire_date  DATE,
+    salary     NUMERIC(10,2)         -- 10 total digits, 2 after the decimal
+);</code></pre></div>
+
+      <div class="callout gotcha">
+        <div class="callout-title">⚠️ Gotcha (corrected from original notes)</div>
+        The original notes had <code>PHONE INT(10)</code>. That's invalid PostgreSQL — <code>INT</code> does not take
+        a length modifier (that's a MySQL-ism). Also, phone numbers should almost never be a numeric type: they can
+        have leading zeros, <code>+</code> country codes, or dashes, and you never do arithmetic on them. Use
+        <code>VARCHAR(15)</code> or similar instead.
+      </div>
+
+      <details class="manager">
+        <summary>💼 Manager's Corner</summary>
+        <div class="manager-body">
+          <h4>Why we use this</h4>
+          <p>The table schema is the contract every downstream report, dashboard, and model feature relies on.
+          Get it wrong once and every number built on top of it is wrong too.</p>
+          <h4>What the manager actually wants</h4>
+          <p>Assurance that changing a table (adding a column, renaming one) won't silently break an existing
+          dashboard or pipeline that reads from it.</p>
+          <h4>Alternatives</h4>
+          <p>Cloud data warehouses (Snowflake, BigQuery, Redshift) for analytics-scale tables instead of a
+          transactional Postgres database; schema-less document stores when the structure genuinely varies row to
+          row (rare for reporting use cases).</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ DATA TYPES ============ -->
+    <section class="topic" id="data-types">
+      <div class="topic-head">
+        <h2>🔢 Data Types</h2>
+        <label class="mark-done"><input type="checkbox" data-id="data-types"> mark learned</label>
+      </div>
+      <div class="badges-row"><span class="badge important">★ Important</span><span class="badge da">DA</span><span class="badge ds">DS</span><span class="badge mle">MLE</span></div>
+
+      <h3>Numeric</h3>
+      <table>
+        <tr><th>Type</th><th>Use for</th></tr>
+        <tr><td><code>INTEGER</code></td><td>Whole numbers</td></tr>
+        <tr><td><code>SERIAL</code></td><td>Auto-incrementing integer, no duplicates — classic surrogate primary key</td></tr>
+        <tr><td><code>BIGINT</code></td><td>Very large whole numbers</td></tr>
+        <tr><td><code>NUMERIC(P,S)</code></td><td>Exact precision P digits, S after decimal — <strong>always use for money</strong></td></tr>
+        <tr><td><code>REAL</code></td><td>Single-precision floating point</td></tr>
+        <tr><td><code>DOUBLE PRECISION</code></td><td>Double-precision floating point</td></tr>
+      </table>
+
+      <h3>Character</h3>
+      <table>
+        <tr><th>Type</th><th>Use for</th></tr>
+        <tr><td><code>CHAR(n)</code></td><td>Fixed-length string of exactly n characters</td></tr>
+        <tr><td><code>VARCHAR(n)</code></td><td>Variable length, capped at n</td></tr>
+        <tr><td><code>TEXT</code></td><td>Unlimited length — comments, descriptions, bios</td></tr>
+      </table>
+
+      <h3>Date &amp; Time</h3>
+      <table>
+        <tr><th>Type</th><th>Use for</th></tr>
+        <tr><td><code>DATE</code></td><td>Calendar date, no time (YYYY-MM-DD)</td></tr>
+        <tr><td><code>TIME</code></td><td>Time of day only (HH:MM:SS)</td></tr>
+        <tr><td><code>TIMESTAMP</code></td><td>Date + time, no timezone</td></tr>
+        <tr><td><code>TIMESTAMPTZ</code></td><td>Date + time with timezone — use this for globally distributed events</td></tr>
+        <tr><td><code>INTERVAL</code></td><td>A duration of time (e.g. '6 days')</td></tr>
+      </table>
+
+      <h3>Boolean</h3>
+      <table><tr><th>Type</th><th>Use for</th></tr><tr><td><code>BOOLEAN</code></td><td>TRUE / FALSE / NULL</td></tr></table>
+
+      <details class="manager">
+        <summary>💼 Manager's Corner</summary>
+        <div class="manager-body">
+          <h4>Why we use this</h4>
+          <p>Picking the right type is what makes math correct (NUMERIC vs FLOAT avoids penny-rounding bugs in
+          financial reports) and queries fast (proper types are indexable and compact).</p>
+          <h4>What the manager actually wants</h4>
+          <p>Numbers that reconcile exactly with finance/accounting — this is precisely why money columns must be
+          <code>NUMERIC</code>, never <code>FLOAT</code>/<code>REAL</code>, which can introduce tiny rounding errors.</p>
+          <h4>Alternatives</h4>
+          <p>Storing everything as text and casting in the application layer (fragile, avoid); using
+          <code>FLOAT</code>/<code>DOUBLE</code> deliberately for ML feature columns where exact precision doesn't
+          matter and speed/memory does.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ CONSTRAINTS ============ -->
+    <section class="topic" id="constraints">
+      <div class="topic-head">
+        <h2>🔒 Constraints</h2>
+        <label class="mark-done"><input type="checkbox" data-id="constraints"> mark learned</label>
+      </div>
+      <div class="badges-row"><span class="badge important">★ Important</span><span class="badge da">DA</span><span class="badge ds">DS</span></div>
+      <p>Constraints are rules enforced on table data to guarantee accuracy, consistency, and integrity. They're
+      applied to columns/tables at creation time or added later via <code>ALTER TABLE</code>.</p>
+      <table>
+        <tr><th>Constraint</th><th>Meaning</th></tr>
+        <tr><td><code>NOT NULL</code></td><td>Column can never be empty</td></tr>
+        <tr><td><code>UNIQUE</code></td><td>No two rows may share this value</td></tr>
+        <tr><td><code>PRIMARY KEY</code></td><td>Unique + not null — identifies each row</td></tr>
+        <tr><td><code>FOREIGN KEY</code></td><td>Value must exist in another table's referenced column</td></tr>
+        <tr><td><code>CHECK</code></td><td>Custom boolean condition the value must satisfy</td></tr>
+        <tr><td><code>DEFAULT</code></td><td>Auto-fills a value when none is given</td></tr>
+        <tr><td><code>EXCLUSION</code></td><td>Generalizes UNIQUE to arbitrary comparison operators (advanced)</td></tr>
+      </table>
+
+      <div class="code-wrap"><button class="copy-btn">Copy</button><pre><code class="lang-sql">CREATE TABLE students1(
+    student_id SERIAL PRIMARY KEY,
+    name       VARCHAR(50) NOT NULL,
+    email      VARCHAR(100) UNIQUE,
+    age        INTEGER CHECK (age >= 18),
+    reg_date   TIMESTAMP DEFAULT CURRENT_TIMESTAMP   -- auto-filled if omitted
+);
+
+INSERT INTO students1 (student_id, name, email, age)   -- reg_date not specified
+VALUES (101, 'Nikhil', 'nk813@gmail.com', 21),
+       (102, 'Nitin',  'nit333@gmail.com', 19),
+       (103, 'Manya',  'man737@gmail.com', 20);</code></pre></div>
+
+      <details class="manager">
+        <summary>💼 Manager's Corner</summary>
+        <div class="manager-body">
+          <h4>Why we use this</h4>
+          <p>Constraints are automated data-quality guardrails — they stop garbage data at the door instead of you
+          discovering "why does this dashboard show a negative age" three weeks later.</p>
+          <h4>What the manager actually wants</h4>
+          <p>Confidence that "the data is clean" without personally auditing every load — constraints are the
+          cheapest way to earn that trust.</p>
+          <h4>Alternatives</h4>
+          <p>Enforce quality downstream instead of at the schema level: dbt tests, Great Expectations, or
+          application-level validation. These are more flexible but reactive — bad data can land before you catch it.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ DML BASICS ============ -->
+    <section class="topic" id="dml-basics">
+      <div class="topic-head">
+        <h2>✏️ INSERT / UPDATE / DELETE / TRUNCATE</h2>
+        <label class="mark-done"><input type="checkbox" data-id="dml-basics"> mark learned</label>
+      </div>
+      <div class="badges-row"><span class="badge important">★ Important</span><span class="badge da">DA</span><span class="badge ds">DS</span><span class="badge mle">MLE</span></div>
+
+      <div class="code-wrap"><button class="copy-btn">Copy</button><pre><code class="lang-sql">-- INSERT (emp_id omitted: SERIAL auto-increments it)
+INSERT INTO employee (name, position, department, hire_date, salary)
+VALUES ('Nikhil', 'Data Analyst', 'Data Science', '2022-05-15', 65000.00),
+       ('Nitin',  'Data Analyst', 'Data Science', '2022-05-20', 60000.00);
+
+-- UPDATE
+UPDATE employee2
+SET salary = 60000, position = 'Data Finance'
+WHERE department LIKE 'Data Science';
+
+-- DELETE a row
+DELETE FROM employee WHERE emp_id = 105;
+
+-- TRUNCATE wipes all rows but keeps the table structure
+TRUNCATE TABLE employee;
+-- identity counter is NOT reset by default; next insert continues where it left off
+TRUNCATE TABLE employee RESTART IDENTITY;   -- resets the SERIAL counter too</code></pre></div>
+
+      <div class="callout gotcha">
+        <div class="callout-title">⚠️ DELETE vs TRUNCATE vs DROP</div>
+        <ul>
+          <li><code>DELETE FROM t WHERE ...</code> — removes matching rows, keeps table, can be rolled back, fires triggers, slower on huge tables.</li>
+          <li><code>TRUNCATE TABLE t</code> — removes <em>all</em> rows instantly, keeps structure, much faster, minimal logging.</li>
+          <li><code>DROP TABLE t</code> — removes the table and its structure entirely.</li>
+        </ul>
+      </div>
+
+      <details class="manager">
+        <summary>💼 Manager's Corner</summary>
+        <div class="manager-body">
+          <h4>Why we use this</h4>
+          <p>This is how you correct data, load new records, or purge stale ones. As a DA you'll patch reference
+          tables; as an MLE you'll write processed features back into a feature table.</p>
+          <h4>What the manager actually wants</h4>
+          <p>"If this update is wrong, can we roll it back?" — this is exactly why transaction discipline
+          (see <a href="#transactions">Transactions</a>) matters more than the UPDATE syntax itself.</p>
+          <h4>Alternatives</h4>
+          <p>Bulk ETL/ELT tools (Airbyte, Fivetran, dbt) instead of manual INSERT/UPDATE for production pipelines;
+          an ORM (SQLAlchemy) for programmatic manipulation from Python.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ ALTER TABLE ============ -->
+    <section class="topic" id="alter-table">
+      <div class="topic-head">
+        <h2>🛠️ ALTER TABLE</h2>
+        <label class="mark-done"><input type="checkbox" data-id="alter-table"> mark learned</label>
+      </div>
+      <div class="badges-row"><span class="badge da">DA</span><span class="badge ds">DS</span></div>
+      <div class="code-wrap"><button class="copy-btn">Copy</button><pre><code class="lang-sql">-- 1. rename a column
+ALTER TABLE employee2 RENAME COLUMN name TO emp_name;
+
+-- 2. change a column's datatype (USING is required for non-trivial casts)
+ALTER TABLE employees
+ALTER COLUMN salary TYPE INTEGER USING salary::INTEGER;
+
+-- 3. add a constraint to an existing column
+ALTER TABLE students ALTER COLUMN name SET NOT NULL;
+
+-- 4. drop a constraint
+ALTER TABLE students DROP CONSTRAINT age_check;
+
+-- 5. rename the whole table
+ALTER TABLE students1 RENAME TO students;
+
+-- 6. add / drop a column
+ALTER TABLE employees ADD COLUMN email VARCHAR(100);
+ALTER TABLE employee2 DROP COLUMN salary;</code></pre></div>
+
+      <details class="manager">
+        <summary>💼 Manager's Corner</summary>
+        <div class="manager-body">
+          <h4>Why we use this</h4>
+          <p>Schemas evolve as business requirements change — you'll constantly need to add a tracked field without
+          taking the system down.</p>
+          <h4>What the manager actually wants</h4>
+          <p>"Will this lock the table and take down the app while it runs?" On large production tables, some
+          ALTER operations (like changing a column type) can hold a lock for a long time — this is a real concern,
+          not a hypothetical one.</p>
+          <h4>Alternatives</h4>
+          <p>Migration tools (Alembic, Flyway, Liquibase) track ALTER statements in version control and can run them
+          more safely than ad hoc console changes.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ CSV IMPORT ============ -->
+    <section class="topic" id="csv-import">
+      <div class="topic-head">
+        <h2>📥 Importing CSV Data</h2>
+        <label class="mark-done"><input type="checkbox" data-id="csv-import"> mark learned</label>
+      </div>
+      <div class="badges-row"><span class="badge important">★ Important</span><span class="badge da">DA</span><span class="badge ds">DS</span><span class="badge mle">MLE</span></div>
+      <p>PostgreSQL's <code>COPY</code> command bulk-loads a CSV straight into a table — far faster than row-by-row
+      INSERTs.</p>
+      <div class="code-wrap"><button class="copy-btn">Copy</button><pre><code class="lang-sql">CREATE TABLE employee (
+    employee_id  INT PRIMARY KEY,
+    first_name   VARCHAR(20) NOT NULL,
+    last_name    VARCHAR(20) NOT NULL,
+    department   VARCHAR(20),
+    salary       NUMERIC(10,2),
+    joining_date DATE,
+    age          INT
+);
+
+COPY employee (employee_id, first_name, last_name, department, salary, joining_date, age)
+FROM 'E:\study\SQL\12_sql_emp_csv.csv'
+DELIMITER ','
+CSV HEADER;</code></pre></div>
+
+      <p>Real files are messy. Here the joining_date column was formatted <code>DD-MM-YYYY</code> and Postgres
+      expects <code>YYYY-MM-DD</code>, so it was fixed in pandas before loading:</p>
+      <div class="code-wrap"><button class="copy-btn">Copy</button><pre><code class="lang-python">import pandas as pd
+
+df = pd.read_csv('13_employee_data_with_error.csv')
+df['joining_date'] = pd.to_datetime(df['joining_date'], format='%d-%m-%Y').dt.strftime('%Y-%m-%d')
+df.to_csv('13_employee_data_with_error.csv', index=False)</code></pre></div>
+
+      <div class="callout tip">
+        <div class="callout-title">💡 Tip</div>
+        This "fix it in pandas, then COPY it into SQL" pattern is extremely common in real DA/DS work — raw CSV
+        exports almost never arrive in the exact date format or encoding the database expects.
+      </div>
+
+      <details class="manager">
+        <summary>💼 Manager's Corner</summary>
+        <div class="manager-body">
+          <h4>Why we use this</h4>
+          <p>Real data almost always arrives as a CSV/Excel/API dump. Getting it into SQL correctly — right types,
+          right date formats, no silent truncation — is a huge share of a data analyst's actual job.</p>
+          <h4>What the manager actually wants</h4>
+          <p>"Is the data actually correct in the table?" Not "did the load finish without error" — a load can
+          succeed and still have silently mis-parsed dates or truncated strings.</p>
+          <h4>Alternatives</h4>
+          <p>pandas <code>df.to_sql()</code> for smaller loads from Python; orchestrated pipelines (Airflow +
+          COPY) for recurring loads; cloud-native bulk loaders (Snowflake <code>COPY INTO</code>, BigQuery load
+          jobs) at warehouse scale.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ OPERATORS ============ -->
+    <section class="topic" id="operators">
+      <div class="topic-head">
+        <h2>🔎 Operators — the WHERE clause toolkit</h2>
+        <label class="mark-done"><input type="checkbox" data-id="operators"> mark learned</label>
+      </div>
+      <div class="badges-row"><span class="badge important">★ Important</span><span class="badge da">DA</span><span class="badge ds">DS</span><span class="badge mle">MLE</span></div>
+
+      <h3>Arithmetic</h3>
+      <div class="code-wrap"><button class="copy-btn">Copy</button><pre><code class="lang-sql">-- 10% bonus on salary
+SELECT first_name, salary, (salary * 0.1) AS bonus FROM employee3;
+
+-- annual salary + 5% increment, and the resulting new monthly salary
+SELECT first_name, salary,
+       (salary * 12)   AS annual_salary,
+       (salary * 0.05) AS increment_salary,
+       (salary * 1.05) AS new_salary
+FROM employee3;   -- operators: + - * / %</code></pre></div>
+
+      <h3>Comparison</h3>
+      <div class="code-wrap"><button class="copy-btn">Copy</button><pre><code class="lang-sql">-- =  !=  <>  <=  >=  <  >
+SELECT * FROM employee3 WHERE age = 30;
+SELECT * FROM employee3 WHERE age != 30;      -- same as <>
+SELECT * FROM employee3 WHERE salary > 50000;</code></pre></div>
+
+      <h3>Logical</h3>
+      <div class="code-wrap"><button class="copy-btn">Copy</button><pre><code class="lang-sql">-- AND / OR / NOT
+SELECT * FROM employee WHERE age >= 60 AND salary >= 50000;
+SELECT * FROM employee WHERE age >= 60 OR  salary >= 50000;
+SELECT * FROM employee WHERE NOT (department = 'IT');</code></pre></div>
+
+      <h3>BETWEEN, LIKE, IN</h3>
+      <div class="code-wrap"><button class="copy-btn">Copy</button><pre><code class="lang-sql">-- range check
+SELECT * FROM employee4 WHERE salary BETWEEN 40000 AND 60000;
+
+-- pattern match: % = any sequence, _ = single char
+SELECT * FROM employee4 WHERE email LIKE '%gmail.com';
+SELECT * FROM employee4 WHERE email NOT LIKE '%gmail.com';
+SELECT * FROM employee4 WHERE LOWER(email) LIKE '%gmail.com';  -- case-safe match
+
+-- membership check
+SELECT * FROM employee4 WHERE department IN ('Finance', 'Marketing');
+SELECT * FROM employee4 WHERE department NOT IN ('Finance', 'Marketing');</code></pre></div>
+
+      <h3>IS NULL, ORDER BY, LIMIT, DISTINCT</h3>
+      <div class="code-wrap"><button class="copy-btn">Copy</button><pre><code class="lang-sql">-- find missing values (never use = NULL, it never matches)
+SELECT first_name, last_name, email FROM employee4 WHERE email IS NULL;
+
+-- sort  (ASC is the default)
+SELECT first_name, last_name, salary FROM employee4 ORDER BY salary DESC;
+
+-- top N rows
+SELECT first_name, last_name, salary FROM employee4
+ORDER BY salary DESC LIMIT 5;
+
+-- unique values / count of unique values
+SELECT DISTINCT department FROM employee4;
+SELECT COUNT(DISTINCT department) AS total_dept FROM employee4;</code></pre></div>
+
+      <details class="manager">
+        <summary>💼 Manager's Corner</summary>
+        <div class="manager-body">
+          <h4>Why we use this</h4>
+          <p>This is the bread and butter of every WHERE clause you'll ever write to slice data for a report or
+          feature set.</p>
+          <h4>What the manager actually wants</h4>
+          <p>The filtered number that matches their mental definition of the question — e.g. "active customers"
+          needs a precise, agreed-upon definition before you filter, or your number and theirs won't match.</p>
+          <h4>Alternatives</h4>
+          <p>The same filtering logic expressed in pandas (<code>df[df.col &gt; x]</code>) or a BI tool's filter
+          UI — SQL is usually faster and more reproducible when the data lives at the source.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ AGGREGATE + GROUP BY ============ -->
+    <section class="topic" id="aggregate-groupby">
+      <div class="topic-head">
+        <h2>📊 Aggregate Functions + GROUP BY / HAVING</h2>
+        <label class="mark-done"><input type="checkbox" data-id="aggregate-groupby"> mark learned</label>
+      </div>
+      <div class="badges-row"><span class="badge important">★ Important</span><span class="badge da">DA</span><span class="badge ds">DS</span><span class="badge added">✚ GROUP BY/HAVING added</span></div>
+      <p>Aggregate functions collapse a set of rows into a single value: <code>COUNT()</code>, <code>SUM()</code>,
+      <code>AVG()</code>, <code>MAX()</code>, <code>MIN()</code>.</p>
+
+      <div class="code-wrap"><button class="copy-btn">Copy</button><pre><code class="lang-sql">SELECT COUNT(*) AS total_products FROM products;
+
+SELECT COUNT(*) AS total_electronics_over_50k
+FROM products
+WHERE LOWER(category) = 'electronics' AND price > 50000;
+
+SELECT SUM(quantity) AS total_qty FROM products;
+SELECT AVG(price)    AS avg_price  FROM products;
+SELECT MAX(price), MIN(price) FROM products;</code></pre></div>
+
+      <div class="callout tip">
+        <div class="callout-title">✚ Added — GROUP BY / HAVING</div>
+        The original notes used aggregates only over the whole table. In practice you almost always want them
+        <em>per group</em> (per category, per department, per month) — that's <code>GROUP BY</code>. To filter on
+        an aggregated value, you need <code>HAVING</code>, not <code>WHERE</code> (WHERE runs before grouping,
+        HAVING runs after).
+      </div>
+      <div class="code-wrap"><button class="copy-btn">Copy</button><pre><code class="lang-sql">-- revenue per genre (from the bookstore project)
+SELECT b.genre, SUM(o.quantity) AS number_of_books_sold
+FROM Books b
+JOIN Orders o ON b.book_id = o.book_id
+GROUP BY b.genre;
+
+-- customers with at least 2 orders  -> filter AFTER aggregation = HAVING
+SELECT c.name, COUNT(o.order_id) AS order_count
+FROM Orders o
+JOIN Customers c ON o.customer_id = c.customer_id
+GROUP BY c.name
+HAVING COUNT(o.order_id) > 1;</code></pre></div>
+
+      <div class="callout gotcha">
+        <div class="callout-title">⚠️ WHERE vs HAVING</div>
+        <code>WHERE</code> filters individual rows before grouping. <code>HAVING</code> filters the grouped
+        results after aggregation. Trying to write <code>WHERE COUNT(*) &gt; 1</code> is a classic beginner error —
+        it must be <code>HAVING COUNT(*) &gt; 1</code>.
+      </div>
+
+      <details class="manager">
+        <summary>💼 Manager's Corner</summary>
+        <div class="manager-body">
+          <h4>Why we use this</h4>
+          <p>This <em>is</em> reporting. COUNT/SUM/AVG grouped by a dimension is what's behind almost every KPI
+          tile on a dashboard.</p>
+          <h4>What the manager actually wants</h4>
+          <p>A single summary number, broken down by team/region/month — and confidence that HAVING is applied
+          correctly so "customers with 2+ orders" doesn't secretly include customers with just 1.</p>
+          <h4>Alternatives</h4>
+          <p>pandas <code>.groupby().agg()</code>, Excel Pivot Tables, or a BI tool's built-in aggregation — SQL
+          aggregation pushes the computation to the database and scales to billions of rows, which pandas/Excel
+          cannot.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ STRING FUNCTIONS ============ -->
+    <section class="topic" id="string-functions">
+      <div class="topic-head">
+        <h2>🔤 String Functions</h2>
+        <label class="mark-done"><input type="checkbox" data-id="string-functions"> mark learned</label>
+      </div>
+      <div class="badges-row"><span class="badge da">DA</span><span class="badge ds">DS</span></div>
+      <div class="code-wrap"><button class="copy-btn">Copy</button><pre><code class="lang-sql">SELECT UPPER(product_name) FROM products;
+SELECT LOWER(product_name) FROM products;
+
+-- join two columns together with a separator
+SELECT CONCAT(product_name, '_', category) AS combined FROM products;
+
+-- substring(column, start_index, length)
+SELECT SUBSTRING(product_name, 1, 5) AS shortname FROM products;
+
+SELECT product_name, LENGTH(product_name) AS name_len FROM products;
+
+-- TRIM removes leading/trailing whitespace
+SELECT TRIM(product_name), LENGTH(product_name) AS before_len,
+       LENGTH(TRIM(product_name)) AS after_len
+FROM products;
+UPDATE products SET product_name = TRIM(product_name);
+
+-- REPLACE(column, find, replace_with)
+SELECT REPLACE(product_name, 'phone', 'device') FROM products;
+
+-- first / last n characters
+SELECT LEFT(category, 3)  FROM products;
+SELECT RIGHT(category, 3) FROM products;</code></pre></div>
+
+      <details class="manager">
+        <summary>💼 Manager's Corner</summary>
+        <div class="manager-body">
+          <h4>Why we use this</h4>
+          <p>Real-world text is messy — inconsistent casing, stray whitespace, embedded codes. String functions
+          clean it before it reaches a report or a model.</p>
+          <h4>What the manager actually wants</h4>
+          <p>"The names in this report look consistent" — no duplicated rows caused by <code>"Laptop"</code> vs
+          <code>"  Laptop  "</code> being treated as different values.</p>
+          <h4>Alternatives</h4>
+          <p>Regex-heavy cleaning in Python/pandas for complex cases, or a dedicated data-quality tool — SQL string
+          functions are fine for simple, high-volume cleaning right at the source.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ DATE/TIME FUNCTIONS ============ -->
+    <section class="topic" id="date-time-functions">
+      <div class="topic-head">
+        <h2>📅 Date &amp; Time Functions</h2>
+        <label class="mark-done"><input type="checkbox" data-id="date-time-functions"> mark learned</label>
+      </div>
+      <div class="badges-row"><span class="badge important">★ Important</span><span class="badge da">DA</span><span class="badge ds">DS</span><span class="badge mle">MLE</span></div>
+      <div class="code-wrap"><button class="copy-btn">Copy</button><pre><code class="lang-sql">SELECT NOW()           AS now_datetime;
+SELECT CURRENT_DATE    AS today;
+SELECT CURRENT_TIME    AS now_time;
+
+-- days between two dates (simple subtraction of DATE types)
+SELECT product_name, added_date, CURRENT_DATE, (CURRENT_DATE - added_date) AS days_old
+FROM products;
+
+-- EXTRACT() pulls a part out of a date
+SELECT product_name,
+       EXTRACT(YEAR  FROM added_date) AS added_year,
+       EXTRACT(MONTH FROM added_date) AS added_month,
+       EXTRACT(DAY   FROM added_date) AS added_day
+FROM products;
+
+-- AGE() gives a human-readable interval
+SELECT product_name, AGE(CURRENT_DATE, added_date) AS age_of_product FROM products;
+
+-- TO_CHAR() formats a date as a string
+SELECT product_name, TO_CHAR(added_date, 'DD-MM-YYYY') AS formatted FROM products;
+
+-- DATE_PART() — numeric part of a date; 'dow' = day of week (0=Sun..6=Sat)
+SELECT product_name, DATE_PART('doy', added_date) AS day_of_year FROM products;
+
+-- DATE_TRUNC() rounds a timestamp down to a unit — great for "group by month"
+SELECT product_name, DATE_TRUNC('month', added_date) AS month_start FROM products;
+
+-- INTERVAL — add/subtract a duration
+SELECT product_name, added_date + INTERVAL '6 months' AS renewal_date FROM products;
+
+-- TO_DATE() parses a string into a DATE
+SELECT TO_DATE('28-11-2026', 'DD-MM-YYYY') AS converted_date;</code></pre></div>
+
+      <details class="manager">
+        <summary>💼 Manager's Corner</summary>
+        <div class="manager-body">
+          <h4>Why we use this</h4>
+          <p>Nearly every business question is time-boxed — "this month," "last quarter," "days since signup."
+          <code>DATE_TRUNC</code>/<code>EXTRACT</code>/<code>AGE</code> are essential for cohort analysis and for
+          engineering recency features in ML models.</p>
+          <h4>What the manager actually wants</h4>
+          <p>MTD/QTD/YTD numbers that match the company's actual fiscal calendar, not just calendar months.</p>
+          <h4>Alternatives</h4>
+          <p>pandas' <code>.dt</code> accessor for the same operations after export; a dedicated date-dimension
+          table in a warehouse to correctly handle fiscal-year edge cases (common in finance-heavy orgs).</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ CONDITIONAL FUNCTIONS ============ -->
+    <section class="topic" id="conditional-functions">
+      <div class="topic-head">
+        <h2>🔀 Conditional Functions — CASE &amp; COALESCE</h2>
+        <label class="mark-done"><input type="checkbox" data-id="conditional-functions"> mark learned</label>
+      </div>
+      <div class="badges-row"><span class="badge important">★ Important</span><span class="badge da">DA</span><span class="badge ds">DS</span><span class="badge mle">MLE</span></div>
+
+      <h3>CASE — bucket rows by a condition</h3>
+      <div class="code-wrap"><button class="copy-btn">Copy</button><pre><code class="lang-sql">SELECT product_name, price,
+       CASE
+           WHEN price >= 50000 THEN 'EXPENSIVE'
+           WHEN price >= 10000 THEN 'MODERATE'
+           ELSE 'AFFORDABLE'
+       END AS price_category
+FROM products;
+
+-- stock status assignment (combining CASE with BETWEEN)
+SELECT product_name, quantity,
+       CASE
+           WHEN quantity >= 10             THEN 'IN STOCK'
+           WHEN quantity BETWEEN 5 AND 9   THEN 'LIMITED STOCK'
+           ELSE 'OUT OF STOCK SOON'
+       END AS stock_status
+FROM products;</code></pre></div>
+
+      <h3>COALESCE — first non-null value</h3>
+      <div class="code-wrap"><button class="copy-btn">Copy</button><pre><code class="lang-sql">-- fall back to the regular price when there's no discount_price
+SELECT product_name,
+       COALESCE(discount_price, price) AS final_price
+FROM products;</code></pre></div>
+
+      <div class="callout tip">
+        <div class="callout-title">✚ Added — related functions worth knowing</div>
+        <code>NULLIF(a, b)</code> returns NULL if a = b (handy to avoid divide-by-zero:
+        <code>x / NULLIF(y, 0)</code>). <code>GREATEST(a, b, ...)</code> / <code>LEAST(a, b, ...)</code> return the
+        largest/smallest of a list of values — useful for capping/flooring a column.
+      </div>
+
+      <details class="manager">
+        <summary>💼 Manager's Corner</summary>
+        <div class="manager-body">
+          <h4>Why we use this</h4>
+          <p>CASE is business-rule bucketing directly in SQL (age bands, price tiers) — often exactly the
+          "segmentation" a manager asks for by name. COALESCE handles missing data gracefully, which matters for
+          both reporting and ML feature pipelines.</p>
+          <h4>What the manager actually wants</h4>
+          <p>Segments/buckets that match the business definition exactly, and no blank cells breaking the report.</p>
+          <h4>Alternatives</h4>
+          <p>Bucketing in pandas (<code>pd.cut</code>) or in the BI tool itself — SQL CASE keeps the logic
+          versioned in one place and reused by every query touching the table, instead of redefined in every tool.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ WINDOW FUNCTIONS ============ -->
+    <section class="topic" id="window-functions">
+      <div class="topic-head">
+        <h2>🪟 Window Functions</h2>
+        <label class="mark-done"><input type="checkbox" data-id="window-functions"> mark learned</label>
+      </div>
+      <div class="badges-row"><span class="badge important">★ Important</span><span class="badge da">DA</span><span class="badge ds">DS</span><span class="badge mle">MLE</span></div>
+      <p>Window functions perform a calculation across a set of rows <em>related to the current row</em>, without
+      collapsing them into one output row like an aggregate does. Great for ranking, running totals, and
+      period-over-period comparisons.</p>
+      <div class="callout tip">
+        <div class="callout-title">💡 Aggregate vs Window</div>
+        An aggregate function collapses many rows into one. A window function keeps every row but adds a computed
+        column based on a "window" of related rows (defined by <code>PARTITION BY</code> / <code>ORDER BY</code>).
+      </div>
+
+      <div class="code-wrap"><button class="copy-btn">Copy</button><pre><code class="lang-sql">-- number rows within each category
+SELECT product_name, category, price,
+       ROW_NUMBER() OVER (PARTITION BY category ORDER BY price) AS row_num
+FROM products;
+
+-- RANK() leaves gaps after ties; DENSE_RANK() does not
+SELECT product_name, category, price,
+       RANK()       OVER (PARTITION BY category ORDER BY price) AS rank_with_gaps,
+       DENSE_RANK() OVER (PARTITION BY category ORDER BY price) AS rank_no_gaps
+FROM products;
+
+-- running total, overall and per category
+SELECT product_name, category, price,
+       SUM(price) OVER (ORDER BY price DESC) AS running_total_overall,
+       SUM(price) OVER (PARTITION BY category ORDER BY price DESC) AS running_total_by_cat
+FROM products;</code></pre></div>
+
+      <div class="callout tip">
+        <div class="callout-title">✚ Added — LAG/LEAD &amp; NTILE (very common in real analysis)</div>
+      </div>
+      <div class="code-wrap"><button class="copy-btn">Copy</button><pre><code class="lang-sql">-- LAG/LEAD: compare a row to the previous/next row -- classic for month-over-month change
+SELECT product_name, added_date, price,
+       LAG(price)  OVER (ORDER BY added_date) AS prev_price,
+       LEAD(price) OVER (ORDER BY added_date) AS next_price,
+       price - LAG(price) OVER (ORDER BY added_date) AS change_from_prev
+FROM products;
+
+-- NTILE: split rows into N roughly-equal buckets (e.g. quartiles for a feature)
+SELECT product_name, price,
+       NTILE(4) OVER (ORDER BY price) AS price_quartile
+FROM products;</code></pre></div>
+
+      <details class="manager">
+        <summary>💼 Manager's Corner</summary>
+        <div class="manager-body">
+          <h4>Why we use this</h4>
+          <p>Ranking "top N per group," running totals, and period-over-period comparisons — arguably the single
+          most powerful analytical SQL feature. Also a core ML feature-engineering technique (lag features,
+          rolling aggregates).</p>
+          <h4>What the manager actually wants</h4>
+          <p>"Top 5 products per region" or "month-over-month growth" — phrased casually, but it's a window
+          function underneath.</p>
+          <h4>Alternatives</h4>
+          <p>pandas <code>.rank()</code>, <code>.cumsum()</code>, <code>.shift()</code> after pulling data into
+          memory — fine for smaller datasets, but window functions scale inside the database and avoid moving huge
+          tables into memory first.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ SET OPERATORS ============ -->
+    <section class="topic" id="set-operators">
+      <div class="topic-head">
+        <h2>➕ Set Operators</h2>
+        <label class="mark-done"><input type="checkbox" data-id="set-operators"> mark learned</label>
+      </div>
+      <div class="badges-row"><span class="badge da">DA</span><span class="badge ds">DS</span></div>
+      <table>
+        <tr><th>Operator</th><th>Behavior</th></tr>
+        <tr><td><code>UNION</code></td><td>Combine results from both queries, remove duplicates</td></tr>
+        <tr><td><code>UNION ALL</code></td><td>Combine results, keep duplicates (faster — no dedup step)</td></tr>
+        <tr><td><code>INTERSECT</code></td><td>Only rows present in <em>both</em> result sets</td></tr>
+        <tr><td><code>EXCEPT</code></td><td>Rows in the first query that are <em>not</em> in the second</td></tr>
+      </table>
+      <div class="callout gotcha">
+        <div class="callout-title">⚠️ Rule for all set operators</div>
+        Both queries must return the same number of columns, in a compatible order/type. Column names in the
+        output come from the <em>first</em> query.
+      </div>
+      <div class="code-wrap"><button class="copy-btn">Copy</button><pre><code class="lang-sql">SELECT * FROM students_2023
+UNION
+SELECT * FROM students_2024
+ORDER BY student_id;
+
+SELECT * FROM students_2023
+INTERSECT
+SELECT * FROM students_2024;              -- students enrolled BOTH years
+
+SELECT * FROM students_2024
+EXCEPT
+SELECT * FROM students_2023;              -- new students in 2024 who weren't there in 2023
+
+SELECT * FROM students_2023
+EXCEPT
+SELECT * FROM students_2024;              -- students lost between 2023 and 2024 (a churn query!)</code></pre></div>
+
+      <details class="manager">
+        <summary>💼 Manager's Corner</summary>
+        <div class="manager-body">
+          <h4>Why we use this</h4>
+          <p>Combining or comparing similarly-shaped result sets — e.g. reconciling "who ordered in 2023 vs 2024"
+          for churn/retention analysis.</p>
+          <h4>What the manager actually wants</h4>
+          <p>"Who did we lose, who's new" — that's literally <code>EXCEPT</code> and <code>INTERSECT</code> under
+          the hood, even if they never use those words.</p>
+          <h4>Alternatives</h4>
+          <p><code>pd.concat</code> or <code>merge(..., indicator=True)</code> in pandas for the same set logic
+          once the data is local in memory.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ JOINS ============ -->
+    <section class="topic" id="joins">
+      <div class="topic-head">
+        <h2>🔗 Joins</h2>
+        <label class="mark-done"><input type="checkbox" data-id="joins"> mark learned</label>
+      </div>
+      <div class="badges-row"><span class="badge important">★ Important</span><span class="badge da">DA</span><span class="badge ds">DS</span><span class="badge mle">MLE</span></div>
+      <table>
+        <tr><th>Join</th><th>Returns</th></tr>
+        <tr><td><code>INNER JOIN</code></td><td>Only rows with a match in both tables</td></tr>
+        <tr><td><code>LEFT JOIN</code></td><td>All rows from the left table; unmatched right columns are NULL</td></tr>
+        <tr><td><code>RIGHT JOIN</code></td><td>All rows from the right table; unmatched left columns are NULL</td></tr>
+        <tr><td><code>FULL OUTER JOIN</code></td><td>Everything from both sides; NULLs where there's no match either way</td></tr>
+        <tr><td><code>CROSS JOIN</code></td><td>Every row of table A paired with every row of table B (n × m rows)</td></tr>
+        <tr><td><code>SELF JOIN</code></td><td>A table joined to itself, to compare rows within the same table</td></tr>
+      </table>
+
+      <div class="code-wrap"><button class="copy-btn">Copy</button><pre><code class="lang-sql">SELECT e.employee_id, e.first_name, d.department_name
+FROM employee3 e
+INNER JOIN departments d ON e.department_id = d.department_id;
+
+SELECT e.employee_id, e.first_name, d.department_name
+FROM employee3 e
+LEFT JOIN departments d ON e.department_id = d.department_id;   -- keeps employees with no dept
+
+SELECT e.employee_id, e.first_name, d.department_name
+FROM employee3 e
+FULL OUTER JOIN departments d ON e.department_id = d.department_id;
+
+-- SELF JOIN: find coworkers in the same department
+SELECT e1.first_name AS employee_1, e2.first_name AS employee_2, d.department_name
+FROM employee3 e1
+JOIN employee3 e2 ON e1.department_id = e2.department_id AND e1.employee_id != e2.employee_id
+JOIN departments d ON e1.department_id = d.department_id;</code></pre></div>
+
+      <div class="callout tip">
+        <div class="callout-title">✚ Added — the "anti-join" pattern (extremely common in real analysis)</div>
+        "Customers who have never ordered anything" or "products that were never sold" — this is a LEFT JOIN
+        followed by filtering for NULL on the right side:
+      </div>
+      <div class="code-wrap"><button class="copy-btn">Copy</button><pre><code class="lang-sql">SELECT c.customer_id, c.name
+FROM Customers c
+LEFT JOIN Orders o ON c.customer_id = o.customer_id
+WHERE o.order_id IS NULL;   -- customers with NO matching order = anti-join</code></pre></div>
+
+      <div class="callout gotcha">
+        <div class="callout-title">⚠️ The silent "fan-out" bug</div>
+        Joining a one-to-many relationship (e.g. one customer → many orders) and then summing a customer-level
+        column will double-count it once per matching order row. Always be sure which side of the join is
+        "one" and which is "many" before aggregating.
+      </div>
+
+      <details class="manager">
+        <summary>💼 Manager's Corner</summary>
+        <div class="manager-body">
+          <h4>Why we use this</h4>
+          <p>The single most-used SQL skill for analysts — almost no useful business question lives in one table;
+          you're constantly joining facts (orders) to dimensions (customers, products).</p>
+          <h4>What the manager actually wants</h4>
+          <p>Numbers that aren't inflated or duplicated by an incorrect join — the fan-out bug above is the classic
+          silent way a "total revenue" number ends up wrong without any error being thrown.</p>
+          <h4>Alternatives</h4>
+          <p><code>pd.merge</code> in pandas after exporting data, or a semantic layer / BI tool that pre-joins a
+          star schema — but joining at the source in SQL is usually the most efficient and auditable approach.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ SUBQUERIES & CTE ============ -->
+    <section class="topic" id="subqueries-cte">
+      <div class="topic-head">
+        <h2>🧩 Subqueries &amp; CTEs <span class="badge added">✚ Added</span></h2>
+        <label class="mark-done"><input type="checkbox" data-id="subqueries-cte"> mark learned</label>
+      </div>
+      <div class="badges-row"><span class="badge important">★ Important</span><span class="badge da">DA</span><span class="badge ds">DS</span><span class="badge mle">MLE</span></div>
+      <p>Not covered in the original notes, but essential once queries get past 2–3 tables. A <strong>subquery</strong>
+      is a query nested inside another. A <strong>CTE</strong> (Common Table Expression, the <code>WITH</code>
+      clause) names a subquery so you can reference it like a temporary table — and reuse it more than once in the
+      same statement.</p>
+      <div class="code-wrap"><button class="copy-btn">Copy</button><pre><code class="lang-sql">-- subquery in WHERE: books priced above the overall average
+SELECT title, price FROM Books
+WHERE price > (SELECT AVG(price) FROM Books);
+
+-- CTE: break a multi-step analysis into readable named steps
+WITH genre_sales AS (
+    SELECT b.genre, SUM(o.quantity) AS total_sold
+    FROM Books b
+    JOIN Orders o ON b.book_id = o.book_id
+    GROUP BY b.genre
+)
+SELECT genre, total_sold
+FROM genre_sales
+WHERE total_sold > 10
+ORDER BY total_sold DESC;
+
+-- multiple CTEs chained together
+WITH customer_spend AS (
+    SELECT customer_id, SUM(total_amount) AS spend
+    FROM Orders
+    GROUP BY customer_id
+),
+top_spenders AS (
+    SELECT * FROM customer_spend WHERE spend > 100
+)
+SELECT c.name, t.spend
+FROM top_spenders t
+JOIN Customers c ON c.customer_id = t.customer_id
+ORDER BY t.spend DESC;</code></pre></div>
+
+      <details class="manager">
+        <summary>💼 Manager's Corner</summary>
+        <div class="manager-body">
+          <h4>Why we use this</h4>
+          <p>Break a complex analytical question into named, readable steps instead of one unreadable deeply
+          nested query — essential for anything beyond a simple two-table lookup.</p>
+          <h4>What the manager actually wants</h4>
+          <p>They don't care about CTEs by name, but they do care that you can explain and audit exactly how a
+          complex number was derived when someone asks "where did this figure come from?" — CTEs make that
+          possible by giving each step a name.</p>
+          <h4>Alternatives</h4>
+          <p>Temp tables or views for the same decomposition, or pushing the logic into a Python/dbt transformation
+          layer entirely (common once the logic is reused across many reports).</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ VIEWS ============ -->
+    <section class="topic" id="views">
+      <div class="topic-head">
+        <h2>🪞 Views <span class="badge added">✚ Added</span></h2>
+        <label class="mark-done"><input type="checkbox" data-id="views"> mark learned</label>
+      </div>
+      <div class="badges-row"><span class="badge da">DA</span><span class="badge ds">DS</span></div>
+      <p>A view is a saved query that behaves like a virtual table. A materialized view is the same idea but
+      physically stores the result and must be refreshed.</p>
+      <div class="code-wrap"><button class="copy-btn">Copy</button><pre><code class="lang-sql">CREATE VIEW active_customers AS
+SELECT c.customer_id, c.name, COUNT(o.order_id) AS order_count
+FROM Customers c
+JOIN Orders o ON c.customer_id = o.customer_id
+GROUP BY c.customer_id, c.name
+HAVING COUNT(o.order_id) > 0;
+
+SELECT * FROM active_customers WHERE order_count > 3;   -- query it like a normal table
+
+-- materialized view: physically stored, faster to query, needs manual refresh
+CREATE MATERIALIZED VIEW monthly_revenue AS
+SELECT DATE_TRUNC('month', order_date) AS month, SUM(total_amount) AS revenue
+FROM Orders
+GROUP BY 1;
+
+REFRESH MATERIALIZED VIEW monthly_revenue;</code></pre></div>
+
+      <details class="manager">
+        <summary>💼 Manager's Corner</summary>
+        <div class="manager-body">
+          <h4>Why we use this</h4>
+          <p>Package a frequently-reused query (e.g. "active customers") into one object, so every analyst/report
+          uses the exact same definition.</p>
+          <h4>What the manager actually wants</h4>
+          <p>One source of truth for key metrics — avoids the classic "your revenue number doesn't match mine"
+          argument in a meeting.</p>
+          <h4>Alternatives</h4>
+          <p>dbt models (version-controlled, testable views) or a dedicated metrics/semantic layer tool (Cube,
+          LookML) when the same metric needs to be consistent across many BI tools.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ INDEXES / PERFORMANCE ============ -->
+    <section class="topic" id="indexes-performance">
+      <div class="topic-head">
+        <h2>⚡ Indexes &amp; EXPLAIN ANALYZE <span class="badge added">✚ Added</span></h2>
+        <label class="mark-done"><input type="checkbox" data-id="indexes-performance"> mark learned</label>
+      </div>
+      <div class="badges-row"><span class="badge important">★ Important</span><span class="badge ds">DS</span><span class="badge mle">MLE</span></div>
+      <p>An index is a lookup structure (usually a B-tree) built on one or more columns so the database doesn't have
+      to scan every row to find a match.</p>
+      <div class="code-wrap"><button class="copy-btn">Copy</button><pre><code class="lang-sql">CREATE INDEX idx_orders_customer_id ON Orders(customer_id);
+
+-- see the actual query plan and timing before/after adding an index
+EXPLAIN ANALYZE
+SELECT * FROM Orders WHERE customer_id = 42;</code></pre></div>
+      <div class="callout gotcha">
+        <div class="callout-title">⚠️ Indexes aren't free</div>
+        Every index speeds up reads on that column but slows down every INSERT/UPDATE/DELETE (the index has to be
+        maintained too). Index the columns you filter/join on frequently — not every column.
+      </div>
+
+      <details class="manager">
+        <summary>💼 Manager's Corner</summary>
+        <div class="manager-body">
+          <h4>Why we use this</h4>
+          <p>As data grows, an unindexed query that took 200ms can take 2 minutes. Understanding indexes and
+          reading a query plan is what separates "it works on my laptop with 100 rows" from "it works in
+          production with 100 million rows."</p>
+          <h4>What the manager actually wants</h4>
+          <p>Dashboards that load in seconds, not minutes — this is almost always a query-performance problem, not
+          a "buy a bigger server" problem.</p>
+          <h4>Alternatives</h4>
+          <p>Materialized views / pre-aggregated summary tables, or moving heavy analytical queries to a columnar
+          warehouse (BigQuery/Snowflake/Redshift), which uses column storage instead of row-based indexes and is
+          built for exactly this kind of scan-heavy analytical query.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ TRANSACTIONS ============ -->
+    <section class="topic" id="transactions">
+      <div class="topic-head">
+        <h2>🔁 Transactions in Practice (TCL) <span class="badge added">✚ Expanded</span></h2>
+        <label class="mark-done"><input type="checkbox" data-id="transactions"> mark learned</label>
+      </div>
+      <div class="badges-row"><span class="badge important">★ Important</span><span class="badge da">DA</span><span class="badge ds">DS</span></div>
+      <p>The original notes defined BEGIN/COMMIT/ROLLBACK/SAVEPOINT but didn't show them in action. Here's the
+      practical pattern you'll actually use before running a risky UPDATE/DELETE by hand:</p>
+      <div class="code-wrap"><button class="copy-btn">Copy</button><pre><code class="lang-sql">BEGIN;
+
+UPDATE employees SET salary = salary * 1.1 WHERE department = 'IT';
+
+-- check the result BEFORE committing
+SELECT employee_id, salary FROM employees WHERE department = 'IT';
+
+-- if it looks right:
+COMMIT;
+-- if something looks wrong instead:
+-- ROLLBACK;
+
+-- SAVEPOINT lets you roll back part of a transaction without losing everything
+BEGIN;
+UPDATE employees SET salary = salary * 1.1 WHERE department = 'IT';
+SAVEPOINT after_it_raise;
+UPDATE employees SET salary = salary * 1.1 WHERE department = 'HR';
+ROLLBACK TO after_it_raise;   -- undoes only the HR update, keeps the IT update
+COMMIT;</code></pre></div>
+
+      <details class="manager">
+        <summary>💼 Manager's Corner</summary>
+        <div class="manager-body">
+          <h4>Why we use this</h4>
+          <p>Guarantees that multi-step changes either fully happen or fully don't — critical whenever you (a DA or
+          DS) are doing a manual data fix directly in a production table.</p>
+          <h4>What the manager actually wants</h4>
+          <p>"If something goes wrong halfway through, can we undo it cleanly?" A transaction is literally the
+          answer to that question.</p>
+          <h4>Alternatives</h4>
+          <p>Idempotent, upsert-based ETL pipelines that make re-running the whole job safe, removing the need for
+          careful manual transaction management in the first place.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ UPSERT ============ -->
+    <section class="topic" id="upsert">
+      <div class="topic-head">
+        <h2>🔃 UPSERT (ON CONFLICT) <span class="badge added">✚ Added</span></h2>
+        <label class="mark-done"><input type="checkbox" data-id="upsert"> mark learned</label>
+      </div>
+      <div class="badges-row"><span class="badge ds">DS</span><span class="badge mle">MLE</span></div>
+      <p>Incremental data loads need to insert new rows and update changed ones without creating duplicates. In
+      PostgreSQL that's <code>INSERT ... ON CONFLICT</code>.</p>
+      <div class="code-wrap"><button class="copy-btn">Copy</button><pre><code class="lang-sql">INSERT INTO products (product_id, product_name, price, quantity)
+VALUES (3, 'Headphones', 1400.00, 60)
+ON CONFLICT (product_id)
+DO UPDATE SET price = EXCLUDED.price, quantity = EXCLUDED.quantity;</code></pre></div>
+
+      <details class="manager">
+        <summary>💼 Manager's Corner</summary>
+        <div class="manager-body">
+          <h4>Why we use this</h4>
+          <p>The standard pattern behind almost every scheduled ETL job — daily refreshes need to add new records
+          and update changed ones, never duplicate.</p>
+          <h4>What the manager actually wants</h4>
+          <p>"The daily numbers refresh correctly without creating duplicate rows" — this is exactly what breaks a
+          dashboard silently if it's done wrong.</p>
+          <h4>Alternatives</h4>
+          <p>Full DELETE + INSERT refresh each run (simpler logic, but slower and heavier on large tables); the
+          <code>MERGE</code> statement (the SQL Server/Oracle/Snowflake equivalent concept).</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ SQL + PYTHON ============ -->
+    <section class="topic" id="sql-python">
+      <div class="topic-head">
+        <h2>🐍 SQL + pandas / SQLAlchemy <span class="badge added">✚ Added</span></h2>
+        <label class="mark-done"><input type="checkbox" data-id="sql-python"> mark learned</label>
+      </div>
+      <div class="badges-row"><span class="badge important">★ Important</span><span class="badge ds">DS</span><span class="badge mle">MLE</span></div>
+      <p>Your course notes already used pandas once (fixing dates before a CSV import). In real DA/DS/MLE work,
+      SQL and Python are used together constantly: SQL narrows down billions of rows to the ones you need, then
+      Python (pandas/scikit-learn) does modeling, plotting, or further shaping.</p>
+      <div class="code-wrap"><button class="copy-btn">Copy</button><pre><code class="lang-python">import pandas as pd
+from sqlalchemy import create_engine
+
+engine = create_engine("postgresql://user:password@localhost:5432/company")
+
+# pull a query straight into a DataFrame
+df = pd.read_sql("SELECT * FROM employees WHERE department = 'IT'", engine)
+
+# ... do analysis / feature engineering / modeling in pandas ...
+
+# write results back to a new table
+df.to_sql("it_department_summary", engine, if_exists="replace", index=False)</code></pre></div>
+
+      <details class="manager">
+        <summary>💼 Manager's Corner</summary>
+        <div class="manager-body">
+          <h4>Why we use this</h4>
+          <p>DA/DS/MLE work rarely stops at SQL — pulling query results into pandas or writing them back with
+          SQLAlchemy is the normal bridge between the database/warehouse and modeling or reporting code.</p>
+          <h4>What the manager actually wants</h4>
+          <p>They don't see this step directly, but this is how the numbers in their dashboard, or the features
+          feeding a model, actually get there.</p>
+          <h4>Alternatives</h4>
+          <p>BI tools with native database connectors (Tableau/Power BI direct query) skip Python entirely for pure
+          reporting; for ML specifically, a feature store (e.g. Feast) formalizes this SQL→features handoff so
+          training and serving stay consistent.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ PROJECT WALKTHROUGH ============ -->
+    <section class="topic" id="project-walkthrough">
+      <div class="topic-head">
+        <h2>📚 Bookstore Project Walkthrough</h2>
+        <label class="mark-done"><input type="checkbox" data-id="project-walkthrough"> mark learned</label>
+      </div>
+      <div class="badges-row"><span class="badge important">★ Important</span><span class="badge da">DA</span><span class="badge ds">DS</span></div>
+      <p>The course's capstone: a 3-table schema (<code>Books</code>, <code>Customers</code>, <code>Orders</code>)
+      loaded from CSV, used to answer realistic business questions end to end.</p>
+      <div class="code-wrap"><button class="copy-btn">Copy</button><pre><code class="lang-sql">CREATE TABLE Books(
+    Book_ID SERIAL PRIMARY KEY,
+    Title VARCHAR(100), Author VARCHAR(100), Genre VARCHAR(50),
+    Published_Year INT, Price NUMERIC(10,2), Stock INT
+);
+
+CREATE TABLE Customers(
+    Customer_ID SERIAL PRIMARY KEY,
+    Name VARCHAR(100), Email VARCHAR(100), Phone NUMERIC(15),
+    City VARCHAR(50), Country VARCHAR(150)
+);
+
+CREATE TABLE Orders(
+    Order_ID SERIAL PRIMARY KEY,
+    Customer_ID INT REFERENCES Customers(Customer_ID),
+    Book_ID INT REFERENCES Books(Book_ID),
+    Order_Date DATE, Quantity INT, Total_Amount NUMERIC(10,2)
+);</code></pre></div>
+
+      <h3>Business questions → queries</h3>
+      <div class="code-wrap"><button class="copy-btn">Copy</button><pre><code class="lang-sql">-- most frequently ordered book
+SELECT o.book_id, b.title, COUNT(o.order_id) AS freq_ordered
+FROM Orders o JOIN Books b ON o.book_id = b.book_id
+GROUP BY o.book_id, b.title
+ORDER BY freq_ordered DESC;
+
+-- the customer who spent the most, overall
+SELECT c.customer_id, c.name, SUM(o.total_amount) AS spent
+FROM Customers c JOIN Orders o ON c.customer_id = o.customer_id
+GROUP BY c.customer_id, c.name
+ORDER BY spent DESC;
+
+-- remaining stock after fulfilling all orders (LEFT JOIN + COALESCE handles
+-- books that have never been ordered, where SUM(o.quantity) would be NULL)
+SELECT b.book_id, b.title,
+       b.stock,
+       COALESCE(SUM(o.quantity), 0) AS total_ordered,
+       b.stock - COALESCE(SUM(o.quantity), 0) AS remaining_stock
+FROM Books b
+LEFT JOIN Orders o ON b.book_id = o.book_id
+GROUP BY b.book_id, b.title, b.stock
+ORDER BY b.book_id;</code></pre></div>
+
+      <div class="callout tip">
+        <div class="callout-title">💡 Why this project is a good portfolio piece</div>
+        It touches nearly every skill in these notes in one place: schema design with foreign keys, CSV import,
+        filtering, aggregation with GROUP BY/HAVING, joins (including LEFT JOIN for the "never ordered" case), and
+        NULL-handling with COALESCE — exactly the mix an interviewer expects to see explained clearly.
+      </div>
+    </section>
+
+    <!-- ============ CHEAT SHEET ============ -->
+    <section class="topic" id="cheatsheet">
+      <div class="topic-head">
+        <h2>📋 Cheat Sheet</h2>
+        <label class="mark-done"><input type="checkbox" data-id="cheatsheet"> mark learned</label>
+      </div>
+      <table>
+        <tr><th>Need to...</th><th>Use</th></tr>
+        <tr><td>Filter rows</td><td>WHERE, AND/OR/NOT, BETWEEN, IN, LIKE, IS NULL</td></tr>
+        <tr><td>Sort / limit</td><td>ORDER BY ... ASC/DESC, LIMIT n</td></tr>
+        <tr><td>Summarize per group</td><td>GROUP BY + COUNT/SUM/AVG/MAX/MIN, filter groups with HAVING</td></tr>
+        <tr><td>Combine tables side-by-side</td><td>JOIN (INNER/LEFT/RIGHT/FULL/CROSS/SELF)</td></tr>
+        <tr><td>Stack/compare similarly-shaped queries</td><td>UNION / UNION ALL / INTERSECT / EXCEPT</td></tr>
+        <tr><td>Rank or run totals per row</td><td>Window functions: ROW_NUMBER, RANK, DENSE_RANK, SUM() OVER, LAG/LEAD</td></tr>
+        <tr><td>Bucket rows by condition</td><td>CASE WHEN ... THEN ... ELSE ... END</td></tr>
+        <tr><td>Handle missing values</td><td>COALESCE(col, fallback), NULLIF(a,b), IS NULL</td></tr>
+        <tr><td>Break a query into readable steps</td><td>WITH name AS (...) — CTE</td></tr>
+        <tr><td>Reuse a query definition everywhere</td><td>CREATE VIEW</td></tr>
+        <tr><td>Speed up a slow filter/join</td><td>CREATE INDEX ..., check with EXPLAIN ANALYZE</td></tr>
+        <tr><td>Safely test a risky change</td><td>BEGIN ... [check result] ... COMMIT / ROLLBACK</td></tr>
+        <tr><td>Load new + update existing rows</td><td>INSERT ... ON CONFLICT DO UPDATE (UPSERT)</td></tr>
+        <tr><td>Bring query results into Python</td><td>pandas.read_sql() / SQLAlchemy</td></tr>
+      </table>
+    </section>
+
+    <footer>
+      Built from your PostgreSQL course notes (Days 1–30) + bookstore resume project. Dark mode by default —
+      toggle top right. Progress and theme preference are saved locally in this browser only.
+    </footer>
+  </main>
+</div>
+
+<button class="back-top" id="backTop" title="Back to top">↑</button>
+
+<script>
+(function(){
+  // ---------- Theme ----------
+  const root = document.documentElement;
+  const themeBtn = document.getElementById('themeToggle');
+  const themeLabel = document.getElementById('themeLabel');
+  function applyTheme(t){
+    root.setAttribute('data-theme', t);
+    themeLabel.textContent = t === 'dark' ? 'Dark' : 'Light';
+    themeBtn.firstChild.textContent = (t === 'dark' ? '🌙 ' : '☀️ ');
+    localStorage.setItem('sql-notes-theme', t);
+  }
+  applyTheme(localStorage.getItem('sql-notes-theme') || 'dark');
+  themeBtn.addEventListener('click', () => {
+    applyTheme(root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  });
+
+  // ---------- Syntax highlighting ----------
+  const SQL_KEYWORDS = ['SELECT','FROM','WHERE','AND','OR','NOT','INSERT','INTO','VALUES','UPDATE','SET',
+    'DELETE','CREATE','TABLE','ALTER','DROP','TRUNCATE','COLUMN','RENAME','TO','ADD','TYPE','USING','CONSTRAINT',
+    'PRIMARY','KEY','FOREIGN','REFERENCES','UNIQUE','NOT NULL','NULL','DEFAULT','CHECK','SERIAL','VARCHAR','INT',
+    'INTEGER','NUMERIC','DATE','TIMESTAMP','BOOLEAN','TEXT','ORDER','BY','ASC','DESC','LIMIT','GROUP','HAVING',
+    'JOIN','INNER','LEFT','RIGHT','FULL','OUTER','CROSS','ON','AS','DISTINCT','BETWEEN','LIKE','IN','IS','CASE',
+    'WHEN','THEN','ELSE','END','UNION','ALL','INTERSECT','EXCEPT','WITH','OVER','PARTITION','BEGIN','COMMIT',
+    'ROLLBACK','SAVEPOINT','TRANSACTION','GRANT','REVOKE','COPY','DELIMITER','HEADER','CSV','CURRENT_DATE',
+    'CURRENT_TIME','CURRENT_TIMESTAMP','INTERVAL','RESTART','IDENTITY','IF','EXISTS','CONFLICT','DO','EXCLUDED',
+    'VIEW','MATERIALIZED','REFRESH','INDEX','EXPLAIN','ANALYZE'];
+  const SQL_FUNCS = ['COUNT','SUM','AVG','MAX','MIN','UPPER','LOWER','CONCAT','SUBSTRING','LENGTH','TRIM',
+    'REPLACE','LEFT','RIGHT','NOW','EXTRACT','AGE','TO_CHAR','TO_DATE','DATE_PART','DATE_TRUNC','COALESCE',
+    'NULLIF','GREATEST','LEAST','ROW_NUMBER','RANK','DENSE_RANK','LAG','LEAD','NTILE','ROUND'];
+
+  function highlightSQL(src){
+    const kwRe = new RegExp('\\b(' + SQL_KEYWORDS.slice().sort((a,b)=>b.length-a.length).join('|') + ')\\b', 'gi');
+    const fnRe = new RegExp('\\b(' + SQL_FUNCS.join('|') + ')(?=\\s*\\()', 'gi');
+    let out = src
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const tokens = [];
+    out = out.replace(/(--[^\n]*)/g, (m)=>{ tokens.push('<span class="tok-comment">'+m+'</span>'); return 'ZQZ'+(tokens.length-1)+'ZQZ'; });
+    out = out.replace(/('(?:[^'\\]|\\.)*')/g, (m)=>{ tokens.push('<span class="tok-string">'+m+'</span>'); return 'ZQZ'+(tokens.length-1)+'ZQZ'; });
+    out = out.replace(fnRe, (m)=>'<span class="tok-func">'+m+'</span>');
+    out = out.replace(kwRe, (m)=>'<span class="tok-keyword">'+m.toUpperCase()+'</span>');
+    out = out.replace(/\b(\d+(?:\.\d+)?)\b/g, '<span class="tok-number">$1</span>');
+    out = out.replace(/ZQZ(\d+)ZQZ/g, (_,i)=>tokens[Number(i)]);
+    return out;
+  }
+
+  document.querySelectorAll('code.lang-sql').forEach(el=>{
+    el.innerHTML = highlightSQL(el.textContent);
+  });
+  document.querySelectorAll('code.lang-python').forEach(el=>{
+    // light python highlighting: strings + comments only, keeps it simple/safe
+    let out = el.textContent.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    out = out.replace(/(#[^\n]*)/g, '<span class="tok-comment">$1</span>');
+    out = out.replace(/('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")/g, '<span class="tok-string">$1</span>');
+    out = out.replace(/\b(import|from|as|def|return|if|else|for|in)\b/g, '<span class="tok-keyword">$1</span>');
+    el.innerHTML = out;
+  });
+
+  // ---------- Copy buttons ----------
+  document.querySelectorAll('.code-wrap').forEach(wrap=>{
+    const btn = wrap.querySelector('.copy-btn');
+    const code = wrap.querySelector('code');
+    btn.addEventListener('click', async ()=>{
+      try{
+        await navigator.clipboard.writeText(code.textContent);
+        btn.textContent = 'Copied!'; btn.classList.add('copied');
+        setTimeout(()=>{ btn.textContent='Copy'; btn.classList.remove('copied'); }, 1400);
+      }catch(e){
+        btn.textContent = 'Failed';
+        setTimeout(()=>{ btn.textContent='Copy'; }, 1400);
+      }
+    });
+  });
+
+  // ---------- Progress tracking ----------
+  const STORAGE_KEY = 'sql-notes-progress';
+  const allTopicIds = Array.from(document.querySelectorAll('section.topic')).map(s=>s.id);
+  function loadProgress(){
+    try{ return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }catch(e){ return {}; }
+  }
+  function saveProgress(p){ localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); }
+  function refreshProgressUI(){
+    const p = loadProgress();
+    const doneCount = allTopicIds.filter(id=>p[id]).length;
+    document.getElementById('progressLabel').textContent = doneCount + ' / ' + allTopicIds.length + ' topics marked learned';
+    document.getElementById('progressFill').style.width = (allTopicIds.length? (doneCount/allTopicIds.length*100):0) + '%';
+    document.querySelectorAll('.mark-done input').forEach(cb=>{ cb.checked = !!p[cb.dataset.id]; });
+    document.querySelectorAll('.nav-link').forEach(a=>{ a.classList.toggle('done', !!p[a.dataset.id]); });
+  }
+  document.querySelectorAll('.mark-done input').forEach(cb=>{
+    cb.addEventListener('change', ()=>{
+      const p = loadProgress();
+      p[cb.dataset.id] = cb.checked;
+      saveProgress(p);
+      refreshProgressUI();
+    });
+  });
+  refreshProgressUI();
+
+  // ---------- Active nav on scroll ----------
+  const navLinks = Array.from(document.querySelectorAll('.nav-link'));
+  const sections = Array.from(document.querySelectorAll('section.topic'));
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        navLinks.forEach(l=>l.classList.remove('active'));
+        const link = navLinks.find(l=>l.dataset.id === entry.target.id);
+        if(link) link.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-10% 0px -75% 0px', threshold: 0 });
+  sections.forEach(s=>io.observe(s));
+
+  // ---------- Search filter ----------
+  const searchBox = document.getElementById('searchBox');
+  searchBox.addEventListener('input', ()=>{
+    const q = searchBox.value.trim().toLowerCase();
+    sections.forEach(sec=>{
+      const match = !q || sec.textContent.toLowerCase().includes(q);
+      sec.style.display = match ? '' : 'none';
+    });
+    document.querySelectorAll('.nav-group').forEach(group=>{
+      let anyVisible = false;
+      group.querySelectorAll('.nav-link').forEach(link=>{
+        const sec = document.getElementById(link.dataset.id);
+        const match = !q || (sec && sec.textContent.toLowerCase().includes(q)) || link.textContent.toLowerCase().includes(q);
+        link.classList.toggle('hidden', !match);
+        if(match) anyVisible = true;
+      });
+      group.classList.toggle('hidden', !anyVisible);
+      if(q && anyVisible) group.open = true;
+    });
+  });
+
+  // ---------- Back to top ----------
+  const backTop = document.getElementById('backTop');
+  window.addEventListener('scroll', ()=>{
+    backTop.classList.toggle('show', window.scrollY > 500);
+  });
+  backTop.addEventListener('click', ()=> window.scrollTo({top:0, behavior:'smooth'}));
+})();
+</script>
+</body>
+</html>

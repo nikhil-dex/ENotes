@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data Analyst Roadmap — Ryuga</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#171a23; --panel2:#1e2230; --border:#2a2f42;
+    --text:#e6e9f2; --muted:#9aa3b8; --accent:#4f8cff; --green:#3ecf8e;
+    --orange:#ffb454; --red:#ff6b6b; --purple:#b58cff; --cyan:#4dd0e1;
+    --pink:#ff7eb6;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; line-height:1.6;}
+  header{padding:28px 24px 12px; text-align:center; border-bottom:1px solid var(--border); background:linear-gradient(180deg,#141826,var(--bg));}
+  header h1{font-size:1.7rem;}
+  header h1 span{color:var(--accent);}
+  header p{color:var(--muted); font-size:.95rem; margin-top:4px;}
+  .journey{display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin:14px 0 6px; font-size:.85rem;}
+  .journey .step{background:var(--panel2); border:1px solid var(--border); padding:5px 14px; border-radius:20px; color:var(--muted);}
+  .journey .step.now{border-color:var(--accent); color:var(--accent); font-weight:600;}
+  .journey .arrow{color:var(--muted); align-self:center;}
+  .progressWrap{max-width:560px; margin:12px auto 4px;}
+  .progressBar{height:10px; background:var(--panel2); border-radius:6px; overflow:hidden; border:1px solid var(--border);}
+  .progressFill{height:100%; width:0%; background:linear-gradient(90deg,var(--accent),var(--green)); transition:width .4s;}
+  .progressText{font-size:.8rem; color:var(--muted); margin-top:4px;}
+  nav{display:flex; justify-content:center; flex-wrap:wrap; gap:6px; padding:12px; position:sticky; top:0; background:rgba(15,17,23,.95); backdrop-filter:blur(6px); z-index:10; border-bottom:1px solid var(--border);}
+  nav button{background:var(--panel); color:var(--muted); border:1px solid var(--border); padding:8px 16px; border-radius:8px; cursor:pointer; font-size:.9rem; font-family:inherit;}
+  nav button:hover{color:var(--text); border-color:var(--accent);}
+  nav button.active{background:var(--accent); color:#fff; border-color:var(--accent); font-weight:600;}
+  main{max-width:1000px; margin:0 auto; padding:24px 16px 80px;}
+  .tab{display:none;}
+  .tab.active{display:block; animation:fade .25s;}
+  @keyframes fade{from{opacity:0; transform:translateY(6px);} to{opacity:1;}}
+  h2{font-size:1.35rem; margin:8px 0 4px;}
+  .sub{color:var(--muted); margin-bottom:18px; font-size:.95rem;}
+  .card{background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:18px 20px; margin-bottom:16px;}
+  .card h3{font-size:1.05rem; margin-bottom:8px;}
+  details{background:var(--panel); border:1px solid var(--border); border-radius:12px; margin-bottom:12px; overflow:hidden;}
+  details summary{cursor:pointer; padding:14px 18px; font-weight:600; list-style:none; display:flex; align-items:center; gap:10px;}
+  details summary::before{content:"▸"; color:var(--accent); transition:transform .2s;}
+  details[open] summary::before{transform:rotate(90deg);}
+  details .body{padding:0 18px 16px; border-top:1px solid var(--border); padding-top:12px;}
+  table{width:100%; border-collapse:collapse; font-size:.88rem; margin:8px 0;}
+  th,td{border:1px solid var(--border); padding:8px 10px; text-align:left; vertical-align:top;}
+  th{background:var(--panel2); color:var(--accent);}
+  td{color:#c9d0e0;}
+  code{background:var(--panel2); padding:2px 6px; border-radius:4px; font-size:.85em; color:var(--cyan);}
+  .formula{background:var(--panel2); border-left:3px solid var(--accent); padding:8px 12px; border-radius:0 6px 6px 0; margin:6px 0; font-family:Consolas,monospace; font-size:.85rem; color:var(--cyan);}
+  .tag{display:inline-block; font-size:.72rem; padding:2px 10px; border-radius:12px; margin:2px 4px 2px 0; font-weight:600;}
+  .tag.excel{background:#1d3a2a; color:var(--green);}
+  .tag.sql{background:#1d2c4a; color:var(--accent);}
+  .tag.pbi{background:#3d2f14; color:var(--orange);}
+  .tag.py{background:#2e2344; color:var(--purple);}
+  .tag.stat{background:#133a3f; color:var(--cyan);}
+  .tag.biz{background:#3d1f2e; color:var(--pink);}
+  .tag.level{background:var(--panel2); color:var(--muted);}
+  label.check{display:flex; gap:10px; align-items:flex-start; padding:7px 10px; border-radius:8px; cursor:pointer; font-size:.92rem;}
+  label.check:hover{background:var(--panel2);}
+  label.check input{margin-top:5px; accent-color:var(--green); width:15px; height:15px; flex-shrink:0;}
+  label.check.done{color:var(--muted); text-decoration:line-through;}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr;}}
+  .pill-row{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0;}
+  .status{display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px;}
+  .s-done{background:var(--green);} .s-gap{background:var(--red);} .s-part{background:var(--orange);}
+  ul.plain{list-style:none;} ul.plain li{padding:3px 0;}
+  ul.disc{padding-left:20px;} ul.disc li{padding:2px 0; color:#c9d0e0;}
+  .qa{margin-bottom:10px;}
+  .qa .q{font-weight:600; color:var(--text);}
+  .qa .a{color:var(--muted); font-size:.9rem; margin-top:2px;}
+  .hint{background:var(--panel2); border-left:3px solid var(--orange); padding:10px 14px; border-radius:0 8px 8px 0; margin:10px 0; font-size:.9rem; color:#d8dcea;}
+  .bookref{display:inline-block; font-size:.75rem; background:#22303f; color:#8fd3ff; border:1px solid #2e4a63; border-radius:10px; padding:1px 9px; margin:2px 2px 2px 0; white-space:nowrap;}
+  .phase{border-left:3px solid var(--accent); padding-left:16px; margin:0 0 22px 6px; position:relative;}
+  .phase::before{content:""; position:absolute; left:-8px; top:4px; width:13px; height:13px; border-radius:50%; background:var(--accent); border:3px solid var(--bg);}
+  .phase h3{color:var(--accent);}
+  .phase .when{font-size:.8rem; color:var(--muted); text-transform:uppercase; letter-spacing:.5px;}
+  a{color:var(--accent);}
+  footer{text-align:center; color:var(--muted); font-size:.8rem; padding:20px; border-top:1px solid var(--border);}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🎯 Data Analyst <span>Roadmap</span></h1>
+  <p>BTech CSE · 2nd year done · Goal: job-ready DA intern, on the way to Medical AI Engineer</p>
+  <div class="journey">
+    <span class="step now">Data Analyst Intern</span><span class="arrow">→</span>
+    <span class="step">AI & DS Engineer</span><span class="arrow">→</span>
+    <span class="step">Medical AI Engineer</span>
+  </div>
+  <div class="progressWrap">
+    <div class="progressBar"><div class="progressFill" id="pfill"></div></div>
+    <div class="progressText" id="ptext">0% complete — your ticks are saved automatically in this browser</div>
+  </div>
+</header>
+
+<nav id="nav">
+  <button data-tab="t0" class="active">📍 Overview</button>
+  <button data-tab="t1">📊 Business Metrics</button>
+  <button data-tab="t2">🧠 Business Sense</button>
+  <button data-tab="t3">🛠️ Projects</button>
+  <button data-tab="t4">🎤 Interview Prep</button>
+  <button data-tab="t5">🔧 Which Tool When</button>
+  <button data-tab="t6">📚 Resources & Pitfalls</button>
+</nav>
+
+<main>
+
+<!-- ============ TAB 0: OVERVIEW ============ -->
+<section class="tab active" id="t0">
+  <h2>Where you are & what to improve</h2>
+  <p class="sub">Honest gap analysis based on your study folder, then a phase-wise plan.</p>
+
+  <div class="card">
+    <h3>Skill status</h3>
+    <table>
+      <tr><th>Skill</th><th>Status</th><th>What to do</th></tr>
+      <tr><td>SQL</td><td><span class="status s-done"></span>Learned (30 days + 1 project)</td><td>Sharpen window functions (RANK, LAG, running totals) + solve interview problems</td></tr>
+      <tr><td>Excel</td><td><span class="status s-done"></span>Learned (6 sets)</td><td>Build 1 dashboard project to prove it</td></tr>
+      <tr><td>Power BI</td><td><span class="status s-done"></span>Learned (masterclass + pbix)</td><td>Learn DAX filter context deeply + publish a dashboard online</td></tr>
+      <tr><td>Python / pandas</td><td><span class="status s-part"></span>Partial (you know Python basics)</td><td>Learn pandas + matplotlib/seaborn for analysis — 2–3 weeks</td></tr>
+      <tr><td>Statistics</td><td><span class="status s-gap"></span>Gap</td><td>Descriptive stats, distributions, hypothesis testing, A/B basics</td></tr>
+      <tr><td>Business metrics & sense</td><td><span class="status s-gap"></span>Gap (you said it yourself)</td><td>Tabs 2 & 3 of this roadmap</td></tr>
+      <tr><td>Portfolio (GitHub)</td><td><span class="status s-gap"></span>Gap</td><td>3–4 own projects — Tab 4. Course project alone is not enough</td></tr>
+      <tr><td>Communication of insights</td><td><span class="status s-gap"></span>Gap</td><td>Every project must end with a written "insights & recommendations" section</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Phase-wise plan (July 2026 → internship applications)</h3>
+    <div style="margin-top:14px">
+      <div class="phase">
+        <div class="when">Phase 1 · ~4–5 weeks (July)</div>
+        <h3>Fill the knowledge gaps</h3>
+        <ul class="plain">
+          <li><label class="check"><input type="checkbox" data-id="p1a"> Learn pandas: read/clean data, groupby, merge, pivot, datetime <span class="bookref">📖 McKinney ch 5–8 · p.141–297</span> <span class="bookref">groupby ch 10 · p.337</span> <span class="bookref">datetime ch 11 · p.375</span></label></li>
+          <li><label class="check"><input type="checkbox" data-id="p1b"> Learn statistics: mean/median/std, distributions, correlation, hypothesis testing, p-value, A/B test idea <span class="bookref">📖 Practical Stats ch 1–3 · p.19–157</span></label></li>
+          <li><label class="check"><input type="checkbox" data-id="p1c"> Learn the core business metrics (Tab 2) — flashcard level, with formulas</label></li>
+          <li><label class="check"><input type="checkbox" data-id="p1d"> Revise SQL window functions: ROW_NUMBER, RANK, DENSE_RANK, LAG/LEAD, running SUM</label></li>
+        </ul>
+      </div>
+      <div class="phase">
+        <div class="when">Phase 2 · ~8–10 weeks (Aug–Sep)</div>
+        <h3>Build the portfolio (Tab 4)</h3>
+        <ul class="plain">
+          <li><label class="check"><input type="checkbox" data-id="p2a"> Project 1 — Excel sales dashboard</label></li>
+          <li><label class="check"><input type="checkbox" data-id="p2b"> Project 2 — SQL e-commerce deep-dive</label></li>
+          <li><label class="check"><input type="checkbox" data-id="p2c"> Project 3 — Power BI interactive dashboard (published online)</label></li>
+          <li><label class="check"><input type="checkbox" data-id="p2d"> Project 4 — pandas + statistics churn analysis</label></li>
+          <li><label class="check"><input type="checkbox" data-id="p2e"> Capstone — end-to-end (SQL → pandas → Power BI → written report)</label></li>
+          <li><label class="check"><input type="checkbox" data-id="p2f"> Push everything to GitHub with proper README for each project</label></li>
+        </ul>
+      </div>
+      <div class="phase">
+        <div class="when">Phase 3 · ~3 weeks (Oct)</div>
+        <h3>Package yourself</h3>
+        <ul class="plain">
+          <li><label class="check"><input type="checkbox" data-id="p3a"> 1-page resume: projects on top (you're a student — projects ARE your experience)</label></li>
+          <li><label class="check"><input type="checkbox" data-id="p3b"> LinkedIn: headline "Aspiring Data Analyst | SQL · Power BI · Python", post your dashboards</label></li>
+          <li><label class="check"><input type="checkbox" data-id="p3c"> Practice explaining each project out loud in 2 minutes (problem → method → insight → impact)</label></li>
+        </ul>
+      </div>
+      <div class="phase">
+        <div class="when">Phase 4 · ongoing (Nov onwards)</div>
+        <h3>Interview prep + apply</h3>
+        <ul class="plain">
+          <li><label class="check"><input type="checkbox" data-id="p4a"> Solve 50+ SQL problems (LeetCode SQL 50, StrataScratch, DataLemur)</label></li>
+          <li><label class="check"><input type="checkbox" data-id="p4b"> Practice 10 business-case questions from Tab 5</label></li>
+          <li><label class="check"><input type="checkbox" data-id="p4c"> Apply: internships via LinkedIn, Internshala, company career pages, college T&P</label></li>
+        </ul>
+      </div>
+    </div>
+    <div class="hint">💡 Since your end goal is <b>Medical AI</b>, one of your projects (capstone or the pandas one) should use a <b>healthcare dataset</b>. It becomes your story in interviews: "I'm building toward healthcare analytics" — memorable and genuine.</div>
+  </div>
+</section>
+
+<!-- ============ TAB 1: BUSINESS METRICS ============ -->
+<section class="tab" id="t1">
+  <h2>Business metrics you must know</h2>
+  <p class="sub">Learn these like formulas in maths — definition, formula, and <b>why a company cares</b>. Tick when you can explain one to a friend without looking.</p>
+
+  <details open>
+    <summary>💰 Revenue & Growth metrics</summary>
+    <div class="body">
+      <table>
+        <tr><th>Metric</th><th>Formula / Meaning</th><th>Why it matters</th></tr>
+        <tr><td><b>Revenue</b></td><td>Total money earned from sales (before costs)</td><td>The top line. Almost every dashboard starts here.</td></tr>
+        <tr><td><b>MoM / YoY Growth</b></td><td>(This period − Last period) ÷ Last period × 100</td><td>Trends matter more than absolute numbers. YoY removes seasonality.</td></tr>
+        <tr><td><b>AOV</b> (Average Order Value)</td><td>Revenue ÷ Number of orders</td><td>Grow revenue by more orders OR bigger orders — AOV tells which lever.</td></tr>
+        <tr><td><b>ARPU</b> (Avg Revenue Per User)</td><td>Revenue ÷ Active users</td><td>Core for SaaS/telecom/apps.</td></tr>
+        <tr><td><b>MRR / ARR</b></td><td>Monthly / Annual Recurring Revenue (subscriptions)</td><td>The #1 SaaS health metric.</td></tr>
+        <tr><td><b>GMV</b></td><td>Total value of goods sold on a marketplace</td><td>Flipkart/Amazon-style metric; not the same as revenue (they keep only commission).</td></tr>
+      </table>
+      <label class="check"><input type="checkbox" data-id="m1"> I can explain all revenue metrics with formulas</label>
+    </div>
+  </details>
+
+  <details>
+    <summary>📈 Profitability metrics</summary>
+    <div class="body">
+      <table>
+        <tr><th>Metric</th><th>Formula</th><th>Why it matters</th></tr>
+        <tr><td><b>Gross Profit / Margin</b></td><td>(Revenue − COGS) ÷ Revenue × 100</td><td>"We sold ₹100, product cost ₹60 → 40% gross margin." High revenue can still mean losses.</td></tr>
+        <tr><td><b>Net Profit Margin</b></td><td>Net profit ÷ Revenue × 100</td><td>After ALL costs. The real bottom line.</td></tr>
+        <tr><td><b>Contribution Margin</b></td><td>Revenue − variable costs (per unit or %)</td><td>Which product/region actually makes money — a classic analyst question.</td></tr>
+      </table>
+      <div class="hint">Interview trap: "Sales are up but profit is down — why?" → discounts too deep, product mix shifted to low-margin items, or costs (shipping, ads) grew faster than sales.</div>
+      <label class="check"><input type="checkbox" data-id="m2"> I understand revenue vs profit vs margin</label>
+    </div>
+  </details>
+
+  <details>
+    <summary>👥 Customer metrics (most asked in interviews)</summary>
+    <div class="body">
+      <table>
+        <tr><th>Metric</th><th>Formula</th><th>Why it matters</th></tr>
+        <tr><td><b>Churn Rate</b></td><td>Customers lost in period ÷ Customers at start × 100</td><td>THE classic DA interview topic. Losing customers silently kills growth.</td></tr>
+        <tr><td><b>Retention Rate</b></td><td>100 − churn rate (or cohort-based)</td><td>Retaining is 5–7× cheaper than acquiring. Cohort retention charts are analyst bread-and-butter.</td></tr>
+        <tr><td><b>CAC</b> (Customer Acquisition Cost)</td><td>Total sales+marketing spend ÷ New customers acquired</td><td>"We spend ₹500 to get one customer."</td></tr>
+        <tr><td><b>LTV / CLV</b> (Lifetime Value)</td><td>Avg order value × purchase frequency × customer lifespan</td><td>Total money one customer brings over their lifetime.</td></tr>
+        <tr><td><b>LTV : CAC ratio</b></td><td>LTV ÷ CAC (healthy ≈ 3:1 or more)</td><td>If it costs ₹500 to acquire someone worth ₹400 → business is burning money.</td></tr>
+        <tr><td><b>Repeat Purchase Rate</b></td><td>Customers with 2+ orders ÷ total customers</td><td>Loyalty signal for retail/e-commerce.</td></tr>
+        <tr><td><b>NPS</b></td><td>% Promoters (9–10) − % Detractors (0–6) on "would you recommend us?"</td><td>Standard satisfaction metric; ranges −100 to +100.</td></tr>
+      </table>
+      <label class="check"><input type="checkbox" data-id="m3"> I can explain churn, retention, CAC, LTV and the 3:1 rule</label>
+    </div>
+  </details>
+
+  <details>
+    <summary>🎯 Marketing & Funnel metrics</summary>
+    <div class="body">
+      <table>
+        <tr><th>Metric</th><th>Formula</th><th>Why it matters</th></tr>
+        <tr><td><b>Conversion Rate</b></td><td>Conversions ÷ Visitors × 100</td><td>The universal funnel metric — site visit → purchase, ad view → signup, etc.</td></tr>
+        <tr><td><b>CTR</b></td><td>Clicks ÷ Impressions × 100</td><td>Is the ad/email/button attractive?</td></tr>
+        <tr><td><b>CPC / CPA</b></td><td>Ad spend ÷ clicks / acquisitions</td><td>Cost efficiency of marketing channels.</td></tr>
+        <tr><td><b>ROAS</b></td><td>Revenue from ads ÷ Ad spend</td><td>"₹1 of ads → ₹4 of sales" = ROAS 4. Below 1 = losing money on ads.</td></tr>
+        <tr><td><b>Funnel drop-off</b></td><td>% of users lost at each step (view → cart → checkout → pay)</td><td>Analysts find WHERE the leak is; that's the whole job sometimes.</td></tr>
+      </table>
+      <label class="check"><input type="checkbox" data-id="m4"> I can draw a funnel and compute conversion at each step</label>
+    </div>
+  </details>
+
+  <details>
+    <summary>📱 Product & Engagement metrics</summary>
+    <div class="body">
+      <table>
+        <tr><th>Metric</th><th>Formula</th><th>Why it matters</th></tr>
+        <tr><td><b>DAU / WAU / MAU</b></td><td>Daily / Weekly / Monthly active users</td><td>Basic health of any app.</td></tr>
+        <tr><td><b>Stickiness</b></td><td>DAU ÷ MAU × 100</td><td>20%+ means users come back often. WhatsApp ≈ very high, tax-filing app ≈ very low (and that's OK — context matters!).</td></tr>
+        <tr><td><b>Activation Rate</b></td><td>% of signups who reach the "aha moment" (first key action)</td><td>Signups mean nothing if users never actually use the product.</td></tr>
+        <tr><td><b>Feature Adoption</b></td><td>Users using a feature ÷ total active users</td><td>Should we keep investing in this feature?</td></tr>
+      </table>
+      <label class="check"><input type="checkbox" data-id="m5"> I understand DAU/MAU, stickiness and activation</label>
+    </div>
+  </details>
+
+  <details>
+    <summary>🏭 Operations & Healthcare metrics (your future domain)</summary>
+    <div class="body">
+      <table>
+        <tr><th>Metric</th><th>Meaning</th><th>Where used</th></tr>
+        <tr><td><b>Inventory Turnover</b></td><td>COGS ÷ average inventory — how fast stock sells</td><td>Retail, e-commerce</td></tr>
+        <tr><td><b>On-time Delivery %</b></td><td>Orders delivered by promised date ÷ total</td><td>Logistics, e-commerce</td></tr>
+        <tr><td><b>Bed Occupancy Rate</b></td><td>Occupied bed-days ÷ available bed-days</td><td rowspan="4">🏥 Hospitals & healthcare — <b>learn these; they connect to your medical AI goal</b></td></tr>
+        <tr><td><b>Average Length of Stay (ALOS)</b></td><td>Total inpatient days ÷ admissions</td></tr>
+        <tr><td><b>Readmission Rate</b></td><td>% patients readmitted within 30 days — quality-of-care signal</td></tr>
+        <tr><td><b>No-show Rate</b></td><td>% of appointments where patient didn't come — huge cost problem</td></tr>
+      </table>
+      <label class="check"><input type="checkbox" data-id="m6"> I know 3–4 operations metrics + the 4 healthcare metrics</label>
+    </div>
+  </details>
+</section>
+
+<!-- ============ TAB 2: BUSINESS SENSE ============ -->
+<section class="tab" id="t2">
+  <h2>How to build business sense</h2>
+  <p class="sub">Business sense = knowing <b>which question matters</b>, not just how to query. It's learnable like any skill.</p>
+
+  <div class="card">
+    <h3>🧩 The investigation framework (memorize this)</h3>
+    <p style="color:var(--muted); font-size:.9rem; margin-bottom:8px;">When any metric moves ("sales dropped 15% last month"), walk these steps — this is also the model answer for the most common DA interview question:</p>
+    <table>
+      <tr><th>Step</th><th>What you do</th><th>Example</th></tr>
+      <tr><td>1. Clarify</td><td>Which metric exactly? Compared to what — last month, last year, target?</td><td>"15% vs last month, or vs same month last year?"</td></tr>
+      <tr><td>2. Check data first</td><td>Is the drop even real? Tracking bug, pipeline failure, missing data?</td><td>"Did one region's data fail to load?"</td></tr>
+      <tr><td>3. Segment (MECE)</td><td>Break by time, region, product, channel, customer type — find WHERE the drop is concentrated</td><td>"All regions or just South? All products or one category?"</td></tr>
+      <tr><td>4. Internal causes</td><td>Price change, stockout, site outage, campaign ended, UX change</td><td>"Did the discount season end?"</td></tr>
+      <tr><td>5. External causes</td><td>Competitor move, seasonality, festival timing, economy, weather</td><td>"Diwali was in this month last year, not this year"</td></tr>
+      <tr><td>6. Quantify & recommend</td><td>Size each cause, propose an action, define metric to verify the fix</td><td>"70% of drop = South stockout → fix supply, track weekly"</td></tr>
+    </table>
+    <label class="check"><input type="checkbox" data-id="b1"> I can walk through this framework from memory</label>
+  </div>
+
+  <div class="card">
+    <h3>🗺️ Frameworks worth knowing (light, not MBA-level)</h3>
+    <ul class="disc">
+      <li><b>AARRR (Pirate metrics):</b> Acquisition → Activation → Retention → Referral → Revenue. A mental map of any product's funnel.</li>
+      <li><b>North Star Metric:</b> the ONE metric that best captures product value (Airbnb: nights booked; Spotify: time listening). Ask "what's this company's north star?" for any app you use.</li>
+      <li><b>MECE segmentation:</b> when splitting data, categories should be Mutually Exclusive, Collectively Exhaustive — no overlap, nothing missed.</li>
+      <li><b>Correlation ≠ causation:</b> ice cream sales and drownings both rise in summer. Always ask "what third factor could drive both?"</li>
+    </ul>
+    <label class="check"><input type="checkbox" data-id="b2"> I know AARRR, North Star, MECE</label>
+  </div>
+
+  <div class="card">
+    <h3>🏢 Business domains to keep in mind (and how each one thinks)</h3>
+    <table>
+      <tr><th>Domain</th><th>How it makes money</th><th>Metrics it obsesses over</th><th>Typical analyst task</th></tr>
+      <tr><td><b>E-commerce / Retail</b> ⭐ best for portfolio</td><td>Sell products, margin per item</td><td>Revenue, AOV, conversion, repeat rate, inventory turnover</td><td>"Which category/region is underperforming and why?"</td></tr>
+      <tr><td><b>SaaS / Subscriptions</b></td><td>Monthly recurring fees</td><td>MRR, churn, LTV:CAC, activation</td><td>"Which user behaviours predict churn?"</td></tr>
+      <tr><td><b>Banking / Fintech</b></td><td>Interest spread, fees</td><td>Default rate, fraud rate, customer lifetime value</td><td>"Segment customers by risk / value"</td></tr>
+      <tr><td><b>Telecom</b></td><td>Plans & data packs</td><td>ARPU, churn (the classic churn industry)</td><td>"Why are prepaid users leaving?"</td></tr>
+      <tr><td><b>Healthcare / Hospitals</b> 🏥 your future</td><td>Treatments, insurance, beds</td><td>Occupancy, readmission, no-show rate, cost per patient</td><td>"Which patients are likely to miss appointments?"</td></tr>
+    </table>
+    <div class="hint">Strategy for you: go <b>deep on e-commerce</b> (most DA intern openings + best datasets) and keep <b>healthcare as your second domain</b> (your differentiator + your destination).</div>
+    <label class="check"><input type="checkbox" data-id="b3"> For each domain I can name how it earns + 3 metrics</label>
+  </div>
+
+  <div class="card">
+    <h3>📅 Daily habits that build business sense (15–20 min/day)</h3>
+    <ul class="plain">
+      <li><label class="check"><input type="checkbox" data-id="b4"> Pick an app you use (Zomato, Spotify, PhonePe...) and ask: how does it earn? What's its north star metric? What would its dashboard show? — 1 app/week</label></li>
+      <li><label class="check"><input type="checkbox" data-id="b5"> After EVERY chart you make, force yourself to write one "so what?" sentence — an insight, not a description ("Sales peaked in Nov" ❌ → "Nov drives 30% of annual sales; stock up and advertise in Oct" ✅)</label></li>
+      <li><label class="check"><input type="checkbox" data-id="b6"> Read case-study content: Think School / business YouTube, company blogs (Swiggy Bytes, Zomato blog), or one annual-report summary per month</label></li>
+      <li><label class="check"><input type="checkbox" data-id="b7"> Browse r/dataanalysis or LinkedIn DA posts to see what real analysts struggle with</label></li>
+      <li><label class="check"><input type="checkbox" data-id="b8"> Practice guesstimates aloud: "How many food orders does Zomato get per day in your city?" — structure > accuracy</label></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ TAB 3: PROJECTS ============ -->
+<section class="tab" id="t3">
+  <h2>Portfolio projects (build in this order)</h2>
+  <p class="sub">Each project = dataset + business questions + tool work + <b>written insights</b>. The insights part is what makes you different from every other fresher. Put all on GitHub with READMEs.</p>
+
+  <details open>
+    <summary>📗 Project 1 — Excel: Retail Sales Dashboard <span class="tag excel">Excel</span><span class="tag biz">Business</span><span class="tag level">~1 week</span></summary>
+    <div class="body">
+      <p><b>Dataset:</b> "Superstore Sales" (Kaggle — search <i>Superstore dataset</i>) or any coffee-shop/retail sales CSV.</p>
+      <p><b>Business questions to answer:</b></p>
+      <ul class="disc">
+        <li>Monthly revenue & profit trend — which months are strong/weak (seasonality)?</li>
+        <li>Top 10 products by revenue vs by <i>profit</i> (they differ — why? margins!)</li>
+        <li>Which region/segment is losing money after discounts?</li>
+        <li>Does higher discount actually increase quantity sold enough to be worth it?</li>
+      </ul>
+      <p><b>Skills to show:</b> Power Query cleaning, pivot tables, XLOOKUP/INDEX-MATCH, conditional formatting, slicers, one dashboard sheet with 4–5 charts + KPI cards.</p>
+      <p><b>Deliverable:</b> dashboard sheet + a 5-line "Executive Summary" box with recommendations.</p>
+      <div class="formula">Resume bullet: "Built Excel dashboard analyzing 10K-row retail data; found discounts >20% destroyed profit in Furniture category, recommended cap saving est. 8% margin."</div>
+      <label class="check"><input type="checkbox" data-id="pr1"> Project 1 done & on GitHub</label>
+    </div>
+  </details>
+
+  <details>
+    <summary>📘 Project 2 — SQL: E-commerce Deep-Dive <span class="tag sql">SQL</span><span class="tag biz">Business</span><span class="tag level">~2 weeks</span></summary>
+    <div class="body">
+      <p><b>Dataset:</b> <i>Olist Brazilian E-commerce</i> (Kaggle) — 100K real orders across 8 related tables. Perfect for JOIN-heavy analysis. Load into MySQL/PostgreSQL.</p>
+      <p><b>Business questions (write one query per question, save as .sql with comments):</b></p>
+      <ul class="disc">
+        <li>Monthly revenue trend & MoM growth % (window function: LAG)</li>
+        <li>Top categories by revenue; top sellers with ranking (RANK / DENSE_RANK)</li>
+        <li>Repeat purchase rate — what % of customers ordered twice+? (harder than it sounds)</li>
+        <li>Average delivery time vs review score — do late deliveries cause bad reviews?</li>
+        <li>Cohort analysis: of customers acquired each month, how many returned? (CTE + window)</li>
+        <li>RFM segmentation: score customers by Recency, Frequency, Monetary (NTILE)</li>
+      </ul>
+      <p><b>Deliverable:</b> GitHub repo — schema diagram, 10–15 documented queries, and a README that states the top 5 insights in plain business language.</p>
+      <label class="check"><input type="checkbox" data-id="pr2"> Project 2 done & on GitHub</label>
+    </div>
+  </details>
+
+  <details>
+    <summary>📙 Project 3 — Power BI: Interactive HR / Sales Dashboard <span class="tag pbi">Power BI</span><span class="tag level">~2 weeks</span></summary>
+    <div class="body">
+      <p><b>Dataset:</b> "IBM HR Analytics Employee Attrition" (Kaggle) or the AdventureWorks sales data.</p>
+      <p><b>Build:</b></p>
+      <ul class="disc">
+        <li>Proper <b>star schema</b> data model (fact + dimension tables) — interviewers ask about this</li>
+        <li>DAX measures: Total, YoY %, running total, <code>CALCULATE</code> with filters, a time-intelligence measure</li>
+        <li>3-page report: Overview (KPI cards) → Deep-dive (drill-through) → Details (table with tooltips)</li>
+        <li>Slicers, bookmarks, and at least one drill-through page</li>
+      </ul>
+      <p><b>Business angle (HR version):</b> Who is leaving? (attrition by dept, overtime, salary band, distance from home) → "Overtime workers churn 3×; recommend workload review."</p>
+      <p><b>Deliverable:</b> Publish via Power BI Service "Publish to web" and paste the live link on your resume/LinkedIn. A clickable link beats a screenshot.</p>
+      <label class="check"><input type="checkbox" data-id="pr3"> Project 3 done & published online</label>
+    </div>
+  </details>
+
+  <details>
+    <summary>📕 Project 4 — Pandas + Statistics: Customer Churn Analysis <span class="tag py">pandas</span><span class="tag stat">Statistics</span><span class="tag level">~2 weeks</span></summary>
+    <div class="body">
+      <p><b>Dataset:</b> "Telco Customer Churn" (Kaggle) — THE classic churn dataset.</p>
+      <p><b>Do (in a Jupyter notebook):</b></p>
+      <ul class="disc">
+        <li>Clean with pandas: types, missing values, feature columns</li>
+        <li>EDA with matplotlib/seaborn: churn rate by contract type, tenure, payment method, monthly charges</li>
+        <li><b>Statistics (this is what makes it stand out):</b> chi-square test — is churn independent of contract type? <span class="bookref">📖 Practical Stats p.142</span> t-test — do churners pay more per month? <span class="bookref">p.128</span> Confidence intervals on churn rate <span class="bookref">p.83</span></li>
+        <li>Optional (+1 step toward AI&DS): a simple logistic regression to predict churn — keep it interpretable, explain coefficients in business words <span class="bookref">📖 Practical Stats p.226</span> <span class="bookref">scikit-learn intro: McKinney p.438</span></li>
+      </ul>
+      <p><b>Deliverable:</b> notebook that reads top-to-bottom like a story, ending with "3 actions to reduce churn" (e.g., push month-to-month users toward annual contracts).</p>
+      <label class="check"><input type="checkbox" data-id="pr4"> Project 4 done & on GitHub</label>
+    </div>
+  </details>
+
+  <details>
+    <summary>🏆 Capstone — End-to-End Healthcare Analytics <span class="tag sql">SQL</span><span class="tag py">pandas</span><span class="tag pbi">Power BI</span><span class="tag stat">Stats</span><span class="tag biz">Business</span><span class="tag level">~3 weeks</span></summary>
+    <div class="body">
+      <p><b>Dataset:</b> "Medical Appointment No-Shows" (Kaggle, 110K Brazil appointments) or a hospital admissions dataset. <b>This is your medical-AI story project.</b></p>
+      <p><b>Simulate a real company workflow:</b></p>
+      <table>
+        <tr><th>Stage</th><th>Tool</th><th>What you do</th></tr>
+        <tr><td>1. Store</td><td>SQL</td><td>Load raw CSV into a database, design the tables</td></tr>
+        <tr><td>2. Clean + extract</td><td>SQL</td><td>Fix bad ages/dates, dedupe, write extraction queries</td></tr>
+        <tr><td>3. Analyze</td><td>pandas + stats</td><td>No-show rate by age, gender, day-of-week, SMS reminder, waiting time between booking & appointment; hypothesis test: do SMS reminders reduce no-shows?</td></tr>
+        <tr><td>4. Visualize</td><td>Power BI</td><td>Hospital ops dashboard: no-show KPI, trends, patient-segment drill-down</td></tr>
+        <tr><td>5. Communicate</td><td>1-page report</td><td>"No-shows cost X appointment slots/month; targeting reminders at long-wait patients could recover ~Y%"</td></tr>
+      </table>
+      <p>This one project demonstrates every tool + business sense + your healthcare direction. Lead with it in interviews.</p>
+      <label class="check"><input type="checkbox" data-id="pr5"> Capstone done — repo + dashboard + report</label>
+    </div>
+  </details>
+
+  <div class="hint">📁 GitHub structure per project: <code>README.md</code> (problem → data → method → <b>insights</b> → screenshots) + code/queries + a short <code>insights.md</code>. Recruiters read READMEs, not code.</div>
+</section>
+
+<!-- ============ TAB 4: INTERVIEW PREP ============ -->
+<section class="tab" id="t4">
+  <h2>Interview questions you will face</h2>
+  <p class="sub">DA intern interviews = SQL live coding + metrics definitions + one "investigate this" case + project walkthrough + basics of Excel/Power BI/stats.</p>
+
+  <details open>
+    <summary>🟦 SQL (live coding — the #1 filter)</summary>
+    <div class="body">
+      <div class="qa"><div class="q">Q: Find the 2nd highest salary per department.</div><div class="a">DENSE_RANK() OVER (PARTITION BY dept ORDER BY salary DESC), filter rank = 2. Know why RANK vs DENSE_RANK differs with ties.</div></div>
+      <div class="qa"><div class="q">Q: Month-over-month revenue growth %.</div><div class="a">LAG(revenue) OVER (ORDER BY month), then (curr − prev)/prev.</div></div>
+      <div class="qa"><div class="q">Q: Customers who purchased in Jan but NOT in Feb.</div><div class="a">LEFT JOIN + IS NULL, or NOT IN / NOT EXISTS — know all three and the NULL trap in NOT IN.</div></div>
+      <div class="qa"><div class="q">Q: Remove duplicate rows keeping the latest.</div><div class="a">ROW_NUMBER() OVER (PARTITION BY key ORDER BY updated_at DESC) = 1.</div></div>
+      <div class="qa"><div class="q">Q: Running total of sales by date.</div><div class="a">SUM(sales) OVER (ORDER BY date).</div></div>
+      <div class="qa"><div class="q">Q: WHERE vs HAVING? Order of execution?</div><div class="a">WHERE filters rows before grouping, HAVING after. FROM → JOIN → WHERE → GROUP BY → HAVING → SELECT → ORDER BY → LIMIT.</div></div>
+      <div class="qa"><div class="q">Q: Types of JOINs + what happens to row counts with duplicates.</div><div class="a">INNER/LEFT/RIGHT/FULL/CROSS/SELF; duplicate keys multiply rows — classic gotcha.</div></div>
+      <label class="check"><input type="checkbox" data-id="i1"> Solved 50+ problems (LeetCode SQL 50 / DataLemur / StrataScratch)</label>
+    </div>
+  </details>
+
+  <details>
+    <summary>🟪 Business case & guesstimates</summary>
+    <div class="body">
+      <div class="qa"><div class="q">Q: "App orders dropped 20% this week — investigate."</div><div class="a">Use the Tab-3 framework: clarify → data check → segment (platform, city, user type) → internal (app update? payment failures?) → external (competitor offer, holiday) → quantify + recommend. Say the structure OUT LOUD.</div></div>
+      <div class="qa"><div class="q">Q: "Which metrics would you track for [Zomato / a hospital / an ed-tech app]?"</div><div class="a">Pick a north star + 3–4 supporting metrics across the AARRR funnel. For hospital: occupancy, ALOS, readmission, no-show.</div></div>
+      <div class="qa"><div class="q">Q: "Estimate the number of daily Ola rides in Bengaluru."</div><div class="a">Population → % using ride-hailing → rides/user/week → market share. Numbers can be rough; structure must be clean.</div></div>
+      <div class="qa"><div class="q">Q: "Revenue is up but profit is down. Possible reasons?"</div><div class="a">Deeper discounts, shift to low-margin products, rising CAC/logistics costs, returns increase.</div></div>
+      <div class="qa"><div class="q">Q: "How would you measure the success of a new feature?"</div><div class="a">Define success metric BEFORE launch (adoption %, retention lift), compare with control group / pre-post, watch guardrail metrics (crash rate, uninstalls).</div></div>
+      <label class="check"><input type="checkbox" data-id="i2"> Practiced 10 case questions out loud</label>
+    </div>
+  </details>
+
+  <details>
+    <summary>🟩 Excel</summary>
+    <div class="body">
+      <div class="qa"><div class="q">Q: VLOOKUP vs INDEX-MATCH vs XLOOKUP?</div><div class="a">VLOOKUP: only looks right, breaks on column insert. INDEX-MATCH: any direction, robust. XLOOKUP: modern replacement, defaults to exact match.</div></div>
+      <div class="qa"><div class="q">Q: Absolute vs relative references? ($A$1 vs A1)</div><div class="a">$ locks row/column when copying formulas.</div></div>
+      <div class="qa"><div class="q">Q: What can pivot tables do? What is Power Query?</div><div class="a">Pivot: aggregate/slice without formulas. Power Query: repeatable ETL — clean once, refresh forever.</div></div>
+      <div class="qa"><div class="q">Q: COUNTIF vs COUNTIFS vs SUMPRODUCT?</div><div class="a">Single vs multiple conditions; SUMPRODUCT for weighted sums / array-style logic.</div></div>
+      <label class="check"><input type="checkbox" data-id="i3"> Comfortable with all Excel interview answers</label>
+    </div>
+  </details>
+
+  <details>
+    <summary>🟨 Power BI</summary>
+    <div class="body">
+      <div class="qa"><div class="q">Q: Calculated column vs measure?</div><div class="a">Column: computed row-by-row at refresh, stored, increases model size. Measure: computed at query time based on filter context. Prefer measures for aggregations.</div></div>
+      <div class="qa"><div class="q">Q: What is filter context? What does CALCULATE do?</div><div class="a">The set of filters active on a calculation (from slicers, rows, visuals). CALCULATE modifies/overrides that context — the most important DAX concept.</div></div>
+      <div class="qa"><div class="q">Q: Star schema vs one flat table?</div><div class="a">Fact table (transactions) + dimension tables (product, customer, date). Faster, cleaner DAX, standard practice.</div></div>
+      <div class="qa"><div class="q">Q: Import vs DirectQuery?</div><div class="a">Import: data copied in, fast, scheduled refresh. DirectQuery: queries source live, real-time but slower.</div></div>
+      <div class="qa"><div class="q">Q: What is Power Query vs DAX?</div><div class="a">Power Query (M): shaping/cleaning BEFORE load. DAX: calculations AFTER load. Clean early, calculate late.</div></div>
+      <label class="check"><input type="checkbox" data-id="i4"> Comfortable with all Power BI interview answers</label>
+    </div>
+  </details>
+
+  <details>
+    <summary>🟥 Statistics & Python</summary>
+    <div class="body">
+      <div class="qa"><div class="q">Q: Mean vs median — when does median matter?</div><div class="a">With skewed data/outliers (salaries!). Always ask "is this distribution skewed?" <span class="bookref">📖 Practical Stats p.25</span></div></div>
+      <div class="qa"><div class="q">Q: What is a p-value? What does p &lt; 0.05 mean?</div><div class="a">Probability of seeing data this extreme if the null hypothesis were true. Small p → evidence against null. It is NOT "probability the hypothesis is true." <span class="bookref">📖 Practical Stats p.121</span></div></div>
+      <div class="qa"><div class="q">Q: Explain A/B testing to a non-technical manager.</div><div class="a">Show two versions to random user groups, measure the metric, use a statistical test to check the difference isn't luck. <span class="bookref">📖 Practical Stats p.106</span></div></div>
+      <div class="qa"><div class="q">Q: Correlation vs causation example?</div><div class="a">Have one ready (ice cream & drownings → summer). <span class="bookref">📖 Practical Stats p.48</span></div></div>
+      <div class="qa"><div class="q">Q: pandas — merge vs concat? groupby? how to handle missing values?</div><div class="a">merge = SQL-style join; concat = stacking. groupby ≈ GROUP BY. Missing: drop, fill (mean/median/mode), or flag — justify the choice. <span class="bookref">📖 McKinney: missing p.221 · merge p.271 · groupby p.338</span></div></div>
+      <label class="check"><input type="checkbox" data-id="i5"> Comfortable with stats + pandas answers</label>
+    </div>
+  </details>
+
+  <details>
+    <summary>🗣️ Project walkthrough & HR</summary>
+    <div class="body">
+      <div class="qa"><div class="q">"Walk me through a project." (guaranteed question)</div><div class="a">2-minute structure: <b>Problem</b> ("hospital loses slots to no-shows") → <b>Data</b> ("110K appointments, 14 columns") → <b>Method</b> ("SQL cleaning, pandas EDA, chi-square test, Power BI dashboard") → <b>Insight</b> ("long booking-to-visit gap doubles no-show rate") → <b>Impact/recommendation</b>. Practice out loud until smooth.</div></div>
+      <div class="qa"><div class="q">"Why data analyst?" (you have a genuinely good answer)</div><div class="a">Your real story: aiming for medical AI, building the data foundation first — analysis, metrics, communicating insights — before deep ML. Honest + shows long-term thinking.</div></div>
+      <div class="qa"><div class="q">"Tell me about messy data you handled."</div><div class="a">Keep a real example from your projects (e.g., the error CSV in your SQL folder — bad dates, duplicates, wrong types and how you fixed them).</div></div>
+      <label class="check"><input type="checkbox" data-id="i6"> Can walk through every project in 2 min without notes</label>
+    </div>
+  </details>
+</section>
+
+<!-- ============ TAB 5: WHICH TOOL WHEN ============ -->
+<section class="tab" id="t5">
+  <h2>Which tool in which situation</h2>
+  <p class="sub">Interviewers ask this directly ("when would you use Excel vs Power BI?") and it shows maturity.</p>
+
+  <div class="card">
+    <h3>The real-world pipeline (how companies actually work)</h3>
+    <div class="formula">Data lives in a database → <b>SQL</b> extracts & aggregates → <b>pandas/Power Query</b> cleans & transforms → <b>Excel/pandas</b> analyzes ad-hoc → <b>Power BI</b> serves recurring dashboards → <b>You</b> write the insight & recommendation</div>
+    <p style="color:var(--muted); font-size:.9rem;">The analyst's real product is the last step. Tools are just the pipeline.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3><span class="tag excel">Excel</span> Use when…</h3>
+      <ul class="disc">
+        <li>Small data (&lt; ~100K rows)</li>
+        <li>Quick one-off / ad-hoc analysis ("check this by EOD")</li>
+        <li>Stakeholder wants to edit or annotate the file</li>
+        <li>Financial models, quick pivots, sanity checks</li>
+      </ul>
+      <p style="color:var(--muted); font-size:.85rem; margin-top:6px;">Avoid when: data is big, task repeats monthly (automate instead), or many people need live access.</p>
+    </div>
+    <div class="card">
+      <h3><span class="tag sql">SQL</span> Use when…</h3>
+      <ul class="disc">
+        <li>Data lives in a database (it almost always does)</li>
+        <li>Millions of rows — filter/aggregate at the source, never export raw</li>
+        <li>Joining multiple tables</li>
+        <li>A query someone will re-run repeatedly</li>
+      </ul>
+      <p style="color:var(--muted); font-size:.85rem; margin-top:6px;">Rule: push heavy lifting (filters, joins, aggregation) to SQL; bring only the result out.</p>
+    </div>
+    <div class="card">
+      <h3><span class="tag pbi">Power BI</span> Use when…</h3>
+      <ul class="disc">
+        <li>Recurring report (daily/weekly/monthly) — build once, auto-refresh</li>
+        <li>Stakeholders need to self-serve with slicers & drill-downs</li>
+        <li>KPIs must be monitored continuously</li>
+        <li>Combining multiple sources into one model</li>
+      </ul>
+      <p style="color:var(--muted); font-size:.85rem; margin-top:6px;">Avoid when: it's a one-time question (Excel/SQL is faster) or heavy statistics is needed.</p>
+    </div>
+    <div class="card">
+      <h3><span class="tag py">pandas / Python</span> Use when…</h3>
+      <ul class="disc">
+        <li>Complex cleaning Excel can't handle (text parsing, fuzzy logic)</li>
+        <li>Statistics: hypothesis tests, correlations, regressions</li>
+        <li>Automation: same analysis on a new file every week → script it</li>
+        <li>Anything heading toward ML (your stage-2 career step)</li>
+      </ul>
+      <p style="color:var(--muted); font-size:.85rem; margin-top:6px;">This is the bridge from DA to AI&DS engineer — invest here steadily.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Scenario cheat-sheet (interview-ready answers)</h3>
+    <table>
+      <tr><th>Situation</th><th>Tool</th><th>Why</th></tr>
+      <tr><td>"Manager needs sales numbers for one meeting tomorrow"</td><td>SQL → Excel</td><td>Query it, drop in Excel, quick chart. One-off = fastest path.</td></tr>
+      <tr><td>"Leadership wants sales visibility every Monday"</td><td>SQL → Power BI</td><td>Recurring = build once, schedule refresh.</td></tr>
+      <tr><td>"Is churn different between plan A and plan B — really?"</td><td>SQL → pandas</td><td>Needs a statistical test, not just a chart.</td></tr>
+      <tr><td>"Clean this 5M-row messy log file"</td><td>pandas (or SQL)</td><td>Excel dies; scriptable & repeatable.</td></tr>
+      <tr><td>"Finance wants to tweak assumptions themselves"</td><td>Excel</td><td>They need to touch the numbers.</td></tr>
+      <tr><td>"Why did revenue drop 15%?"</td><td>SQL to segment, brain to reason</td><td>Framework first (Tab 3); tools second.</td></tr>
+    </table>
+    <label class="check"><input type="checkbox" data-id="w1"> I can justify tool choice for any scenario</label>
+  </div>
+</section>
+
+<!-- ============ TAB 6: RESOURCES & PITFALLS ============ -->
+<section class="tab" id="t6">
+  <h2>Where to learn each thing (all free) + traps to avoid</h2>
+  <p class="sub">Curated, minimal list — one main resource per skill so you don't fall into "collecting resources" mode. Finish, don't hoard.</p>
+
+  <div class="card">
+    <h3>📖 Your three books — reading strategy (10–20 pages/day)</h3>
+    <table>
+      <tr><th>Book</th><th>Serves</th><th>When & how</th></tr>
+      <tr><td><b>Python for Data Analysis</b> (McKinney)</td><td>Phase 1 — pandas</td><td><b>Read FIRST.</b> Focus ch 5–10 <span class="bookref">p.141–373</span>. Always with Jupyter open — type the code. Skim the NumPy internals chapters (ch 4 <span class="bookref">p.101</span>, App. A) on first pass.</td></tr>
+      <tr><td><b>Practical Statistics for Data Scientists</b> (Bruce)</td><td>Phase 1 — statistics</td><td><b>Read SECOND</b> (or alternate days with McKinney). Ch 1–3 <span class="bookref">p.19–157</span> are the core for DA; regression ch 4 <span class="bookref">p.159</span> bridges to ML.</td></tr>
+      <tr><td><b>Hands-On Machine Learning</b> (Géron)</td><td>Stage 2 — AI&DS engineer</td><td><b>Pause until the first two are done + 1–2 projects built.</b> Then Part I (ch 1–9 <span class="bookref">p.27–461</span>) at your daily pace. It will land 10× better once you've fought real data yourself. Deep learning (Part II <span class="bookref">p.462+</span>) → stage 2/3.</td></tr>
+    </table>
+    <div class="hint">Rule for all three: these are <b>hands-on</b> books. 10 pages with code typed and tweaked beats 20 pages read passively. If you finish a session without running any code, it didn't count.<br>📄 All page numbers in this roadmap are <b>your PDFs' page numbers</b> (the number your PDF reader shows), extracted from your actual files — not the printed book's numbering.</div>
+    <label class="check"><input type="checkbox" data-id="r0"> Reading in the right order, code-along style</label>
+  </div>
+
+  <details open>
+    <summary>🐼 Pandas & Python for analysis (Phase 1)</summary>
+    <div class="body">
+      <ul class="disc">
+        <li><b>📖 You already own the best book: <i>Python for Data Analysis</i> (Wes McKinney)</b> — written by the creator of pandas. Priority chapters for the DA goal (your PDF's page numbers):
+          <div class="pill-row" style="margin-top:6px">
+            <span class="bookref">ch 5 pandas basics · p.141</span>
+            <span class="bookref">ch 6 loading data · p.193</span>
+            <span class="bookref">ch 7 cleaning · p.221</span>
+            <span class="bookref">ch 8 merge/reshape · p.265</span>
+            <span class="bookref">ch 9 plotting · p.299</span>
+            <span class="bookref">ch 10 groupby/agg · p.337</span>
+            <span class="bookref">ch 11 time series · p.375</span>
+            <span class="bookref">ch 13 worked examples · p.443</span>
+          </div>
+          Read WITH Jupyter open — type every example. Ch 13's real-dataset walkthroughs are mini-projects; do at least one.</li>
+        <li><b>Kaggle Learn — "Pandas" + "Data Cleaning"</b> (kaggle.com/learn) — quick hands-on practice alongside the book.</li>
+        <li>Then stop learning and start Project 4 — you learn pandas by fighting real messy data, not by reading more pages.</li>
+      </ul>
+      <label class="check"><input type="checkbox" data-id="r1"> McKinney ch 5–10 done (with code typed, not just read)</label>
+    </div>
+  </details>
+
+  <details>
+    <summary>📈 Statistics (Phase 1)</summary>
+    <div class="body">
+      <ul class="disc">
+        <li><b>📖 You already own the perfect book: <i>Practical Statistics for Data Scientists</i> (Bruce & Gedeck)</b> — stats specifically for data work, exactly your gap. Priority topics (your PDF's page numbers):
+          <div class="pill-row" style="margin-top:6px">
+            <span class="bookref">ch 1 EDA · p.19</span>
+            <span class="bookref">mean/median/variability · p.25–37</span>
+            <span class="bookref">correlation · p.48</span>
+            <span class="bookref">ch 2 sampling & distributions · p.65</span>
+            <span class="bookref">confidence intervals · p.83</span>
+            <span class="bookref">ch 3 A/B testing · p.106</span>
+            <span class="bookref">p-values · p.121</span>
+            <span class="bookref">t-tests · p.128</span>
+            <span class="bookref">chi-square test · p.142</span>
+          </div>
+          Run its Python examples yourself. Ch 4 regression <span class="bookref">p.159</span> and logistic regression <span class="bookref">p.226</span> when you reach Project 4's optional step.</li>
+        <li><b>StatQuest with Josh Starmer</b> (YouTube) — when a book concept doesn't click (p-values, chi-square, confidence intervals), watch the matching StatQuest video. Book + video together beats either alone.</li>
+        <li>Scope check: you need <i>analyst</i> statistics (describe data, test differences, avoid wrong conclusions) — NOT measure theory. Chapters 1–3 + regression basics are enough for the DA stage.</li>
+      </ul>
+      <label class="check"><input type="checkbox" data-id="r2"> Practical Stats ch 1–3 done & can explain p-value in plain words</label>
+    </div>
+  </details>
+
+  <details>
+    <summary>🟦 SQL practice (Phase 4, but start anytime)</summary>
+    <div class="body">
+      <ul class="disc">
+        <li><b>LeetCode SQL 50</b> — free study plan; you're already comfortable on LeetCode, so this is your main track.</li>
+        <li><b>DataLemur</b> — real FAANG DA interview questions, good difficulty tags.</li>
+        <li><b>StrataScratch</b> — questions from real companies, business-flavored.</li>
+      </ul>
+      <label class="check"><input type="checkbox" data-id="r3"> LeetCode SQL 50 completed</label>
+    </div>
+  </details>
+
+  <details>
+    <summary>🟨 Power BI depth + optional certification</summary>
+    <div class="body">
+      <ul class="disc">
+        <li><b>Microsoft Learn — PL-300 learning path</b> — free, official, fills gaps your masterclass may have skipped (data modeling, RLS, deployment).</li>
+        <li><b>SQLBI (sqlbi.com)</b> — when DAX confuses you (it will), Marco & Alberto's articles on filter context are the gold standard.</li>
+        <li><b>PL-300 certification (optional, paid exam):</b> the one cert with real signal for Power BI-heavy DA roles in India. Consider it AFTER projects are done — portfolio first, cert second. Skip generic "data analytics certificates"; they carry little weight.</li>
+      </ul>
+      <label class="check"><input type="checkbox" data-id="r4"> Comfortable with filter context / gone through PL-300 path</label>
+    </div>
+  </details>
+
+  <details>
+    <summary>🧠 Business sense & datasets</summary>
+    <div class="body">
+      <ul class="disc">
+        <li><b>Think School (YouTube)</b> — Indian business case studies; trains the "how does this company make money" muscle.</li>
+        <li><b>Company engineering/data blogs</b> — Swiggy Bytes, Zomato blog, Netflix Tech Blog (data articles).</li>
+        <li><b>Datasets:</b> Kaggle (start here), data.gov.in (Indian government data), PhysioNet (healthcare — anonymized & legal to use).</li>
+        <li><b>Guesstimate practice:</b> search "market sizing questions" — do one aloud per week.</li>
+      </ul>
+      <label class="check"><input type="checkbox" data-id="r5"> Following 2+ business/data blogs regularly</label>
+    </div>
+  </details>
+
+  <div class="card">
+    <h3>⚠️ Traps that catch people on exactly your path</h3>
+    <table>
+      <tr><th>Trap</th><th>Reality check</th></tr>
+      <tr><td><b>The certificate trap</b></td><td>After finishing courses, the itch is to start another one. Don't. Every hour in a course is now worth less than an hour on a project. Recruiters have seen 1000 identical certificates; they haven't seen your analysis.</td></tr>
+      <tr><td><b>The copied-portfolio trap</b></td><td>Thousands have the same Superstore project. Common dataset is fine — your questions and insights must be yours. Write READMEs like a report to a manager, not like tutorial homework.</td></tr>
+      <tr><td><b>AI-tool honesty</b></td><td>Using AI to work faster is a respected skill — but never present AI output you can't explain. The follow-up question in an interview will expose it. Verify, understand, then use.</td></tr>
+      <tr><td><b>Dropping DSA & degree</b></td><td>The DA→AI&DS jump often goes through regular CS hiring (DSA rounds, CGPA, campus placements). Keep LeetCode ticking a few problems/week — never zero for a month.</td></tr>
+      <tr><td><b>Narrow job search</b></td><td>"Data Analyst Intern" postings are flooded. Also apply: Business Analyst, MIS Analyst, Operations Analyst, Reporting Analyst, Analytics Intern — same job, less competition. Referrals &gt; portals; posting dashboards on LinkedIn is how referrals find you.</td></tr>
+      <tr><td><b>Healthcare data rules</b></td><td>Real patient data is legally protected (HIPAA in US, DPDP Act in India). Only use public anonymized datasets (Kaggle, PhysioNet) on GitHub. Mentioning this awareness in interviews is itself a differentiator.</td></tr>
+      <tr><td><b>Momentum &gt; perfection</b></td><td>The timeline WILL slip when college reopens — that's fine. Failure mode is stopping for a month, not moving slowly. If you must cut, cut project count (3 great &gt; 5 rushed), never cut the written-insights part.</td></tr>
+      <tr><td><b>Too many tracks</b></td><td>DA prep + DSA + backend + AI libs = burnout. For the next 3 months: DA roadmap (primary) + light LeetCode (maintenance). The rest waits till November.</td></tr>
+    </table>
+  </div>
+</section>
+
+</main>
+
+<footer>Made for Ryuga's DA-intern → AI&DS → Medical AI journey · progress saved locally in this browser (localStorage)</footer>
+
+<script>
+  // Tabs
+  const nav = document.getElementById('nav');
+  nav.addEventListener('click', e => {
+    if(e.target.tagName !== 'BUTTON') return;
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    e.target.classList.add('active');
+    document.getElementById(e.target.dataset.tab).classList.add('active');
+    window.scrollTo({top:0});
+  });
+
+  // Checkbox persistence
+  const KEY = 'da-roadmap-v1';
+  const saved = JSON.parse(localStorage.getItem(KEY) || '{}');
+  const boxes = document.querySelectorAll('input[type=checkbox][data-id]');
+  boxes.forEach(box => {
+    if(saved[box.dataset.id]) { box.checked = true; box.closest('label').classList.add('done'); }
+    box.addEventListener('change', () => {
+      saved[box.dataset.id] = box.checked;
+      localStorage.setItem(KEY, JSON.stringify(saved));
+      box.closest('label').classList.toggle('done', box.checked);
+      updateProgress();
+    });
+  });
+  function updateProgress(){
+    const total = boxes.length;
+    const done = [...boxes].filter(b => b.checked).length;
+    const pct = total ? Math.round(done/total*100) : 0;
+    document.getElementById('pfill').style.width = pct + '%';
+    document.getElementById('ptext').textContent = pct + '% complete (' + done + '/' + total + ' items) — ticks are saved automatically in this browser';
+  }
+  updateProgress();
+</script>
+</body>
+</html>

@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Power BI / Data Analytics — Interactive Notes</title>
+<style>
+  :root{
+    --bg:#0b0f14;
+    --bg-elev:#11161d;
+    --card:#141b23;
+    --card-hover:#182029;
+    --border:#26303a;
+    --text:#e6edf3;
+    --muted:#8b95a1;
+    --accent:#58a6ff;
+    --da:#4f9dff;
+    --ds:#c792ea;
+    --ml:#3ddc97;
+    --warn:#f0b429;
+    --da-bg:rgba(79,157,255,.12);
+    --ds-bg:rgba(199,146,234,.12);
+    --ml-bg:rgba(61,220,151,.12);
+    --radius:10px;
+    --shadow:0 4px 18px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.55;
+  }
+  a{color:var(--accent);}
+
+  /* ---------- Layout ---------- */
+  .app{display:flex; min-height:100vh;}
+  .sidebar{
+    width:280px; flex:0 0 280px;
+    background:var(--bg-elev);
+    border-right:1px solid var(--border);
+    position:sticky; top:0; height:100vh; overflow-y:auto;
+    padding:20px 14px 40px;
+  }
+  .sidebar h1{
+    font-size:15px; margin:4px 6px 2px; color:var(--text);
+    letter-spacing:.3px;
+  }
+  .sidebar .sub{font-size:11.5px; color:var(--muted); margin:0 6px 16px;}
+  .nav-list{list-style:none; margin:0; padding:0;}
+  .nav-item{margin-bottom:2px;}
+  .nav-link{
+    display:flex; align-items:center; gap:8px;
+    padding:8px 10px; border-radius:8px; text-decoration:none;
+    color:var(--muted); font-size:13px; cursor:pointer;
+    transition:background .15s, color .15s;
+  }
+  .nav-link:hover{background:var(--card-hover); color:var(--text);}
+  .nav-link.active{background:var(--card-hover); color:var(--text); font-weight:600;}
+  .nav-num{
+    font-size:10.5px; width:20px; height:20px; border-radius:50%;
+    background:var(--card); border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center; flex:0 0 20px;
+    color:var(--muted);
+  }
+  .nav-dots{display:flex; gap:3px; margin-left:auto;}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--border);}
+  .dot.on-da{background:var(--da);}
+  .dot.on-ds{background:var(--ds);}
+  .dot.on-ml{background:var(--ml);}
+
+  .main{flex:1; min-width:0;}
+  .topbar{
+    position:sticky; top:0; z-index:5;
+    background:rgba(11,15,20,.92); backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--border);
+    padding:14px 28px;
+  }
+  .topbar-row{display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between;}
+  .search-box{
+    flex:1 1 260px; max-width:420px;
+    background:var(--card); border:1px solid var(--border); border-radius:8px;
+    padding:8px 12px; color:var(--text); font-size:13.5px; outline:none;
+  }
+  .search-box:focus{border-color:var(--accent);}
+  .role-filters{display:flex; gap:6px; flex-wrap:wrap;}
+  .chip{
+    border:1px solid var(--border); background:var(--card); color:var(--muted);
+    border-radius:20px; padding:6px 13px; font-size:12.5px; cursor:pointer;
+    transition:all .15s; user-select:none;
+  }
+  .chip:hover{color:var(--text); border-color:var(--muted);}
+  .chip.active[data-role="all"]{background:var(--accent); color:#04101d; border-color:var(--accent); font-weight:600;}
+  .chip.active[data-role="da"]{background:var(--da); color:#04101d; border-color:var(--da); font-weight:600;}
+  .chip.active[data-role="ds"]{background:var(--ds); color:#1a0b23; border-color:var(--ds); font-weight:600;}
+  .chip.active[data-role="ml"]{background:var(--ml); color:#04241a; border-color:var(--ml); font-weight:600;}
+
+  .progress-wrap{display:flex; align-items:center; gap:10px; margin-top:10px;}
+  .progress-track{flex:1; height:6px; background:var(--card); border-radius:4px; overflow:hidden; border:1px solid var(--border);}
+  .progress-fill{height:100%; width:0%; background:linear-gradient(90deg,var(--da),var(--ml)); transition:width .3s;}
+  .progress-label{font-size:11.5px; color:var(--muted); white-space:nowrap;}
+
+  .hero{padding:26px 28px 6px;}
+  .hero h1{margin:0 0 8px; font-size:26px;}
+  .hero p{color:var(--muted); font-size:14px; max-width:820px; margin:0 0 6px;}
+  .legend{display:flex; gap:18px; flex-wrap:wrap; margin:14px 0 4px; font-size:12.5px; color:var(--muted);}
+  .legend-item{display:flex; align-items:center; gap:6px;}
+  .legend-swatch{width:10px;height:10px;border-radius:3px;}
+
+  .content{padding:8px 28px 60px;}
+  .topic-card{
+    background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+    margin-bottom:20px; scroll-margin-top:90px; overflow:hidden;
+    box-shadow:var(--shadow);
+  }
+  .topic-head{
+    padding:18px 20px 14px; display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap;
+    border-bottom:1px solid var(--border);
+  }
+  .topic-title-row{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .topic-num{
+    font-size:12px; color:var(--muted); background:var(--bg-elev);
+    border:1px solid var(--border); border-radius:6px; padding:2px 8px;
+  }
+  .topic-title{font-size:18px; font-weight:650; margin:0;}
+  .badges{display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;}
+  .badge{
+    font-size:11px; padding:3px 9px; border-radius:20px; font-weight:600;
+    display:flex; align-items:center; gap:5px; border:1px solid transparent;
+  }
+  .badge.da{color:var(--da); background:var(--da-bg); border-color:rgba(79,157,255,.3);}
+  .badge.ds{color:var(--ds); background:var(--ds-bg); border-color:rgba(199,146,234,.3);}
+  .badge.ml{color:var(--ml); background:var(--ml-bg); border-color:rgba(61,220,151,.3);}
+  .badge .lvl-dots{display:flex; gap:2px;}
+  .badge .lvl-dots span{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.25;}
+  .badge .lvl-dots span.filled{opacity:1;}
+
+  .mark-done{display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--muted); cursor:pointer; white-space:nowrap;}
+  .mark-done input{accent-color:var(--ml); width:16px; height:16px; cursor:pointer;}
+  .topic-card.done{border-color:rgba(61,220,151,.4);}
+  .topic-card.done .topic-title::after{content:" ✓"; color:var(--ml);}
+
+  .tabs{display:flex; gap:2px; padding:10px 20px 0; flex-wrap:wrap;}
+  .tab-btn{
+    background:transparent; border:none; color:var(--muted); font-size:12.5px;
+    padding:9px 14px; cursor:pointer; border-bottom:2px solid transparent; font-weight:600;
+  }
+  .tab-btn:hover{color:var(--text);}
+  .tab-btn.active{color:var(--accent); border-bottom-color:var(--accent);}
+  .tab-panels{padding:16px 20px 22px;}
+  .tab-panel{display:none; font-size:13.8px; color:#d6dee6;}
+  .tab-panel.active{display:block;}
+  .tab-panel p{margin:0 0 10px;}
+  .tab-panel ul{margin:0 0 10px; padding-left:20px;}
+  .tab-panel li{margin-bottom:5px;}
+  code{
+    background:var(--bg-elev); border:1px solid var(--border); border-radius:4px;
+    padding:1px 6px; font-size:12.5px; color:#ffcb6b; font-family:'SF Mono',Consolas,'Courier New',monospace;
+  }
+  pre{
+    background:var(--bg-elev); border:1px solid var(--border); border-radius:8px;
+    padding:12px 14px; overflow-x:auto; margin:8px 0 12px;
+  }
+  pre code{background:none; border:none; padding:0; color:#a5d6ff; display:block; line-height:1.6;}
+  .q{
+    background:var(--bg-elev); border-left:3px solid var(--warn); border-radius:6px;
+    padding:9px 12px; margin-bottom:8px; font-style:italic; color:#e8d8b0;
+  }
+  .q::before{content:"\201C"; }
+  .q::after{content:"\201D"; }
+
+  .empty-state{text-align:center; padding:60px 20px; color:var(--muted);}
+
+  .hamburger{display:none;}
+
+  @media (max-width:880px){
+    .sidebar{position:fixed; left:-300px; z-index:20; transition:left .2s; box-shadow:0 0 40px rgba(0,0,0,.5);}
+    .sidebar.open{left:0;}
+    .hamburger{
+      display:flex; align-items:center; justify-content:center;
+      width:34px; height:34px; border-radius:8px; border:1px solid var(--border);
+      background:var(--card); color:var(--text); cursor:pointer; font-size:16px;
+    }
+    .hero, .content, .topbar{padding-left:16px; padding-right:16px;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar" id="sidebar">
+    <h1>📊 Power BI Notes</h1>
+    <p class="sub">Cleaned course notes + job-context, mapped to DA / DS / ML roles</p>
+    <ul class="nav-list" id="navList"></ul>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-row">
+        <button class="hamburger" id="hamburger">☰</button>
+        <input class="search-box" id="searchBox" type="text" placeholder="Search topics, DAX, keywords…">
+        <div class="role-filters" id="roleFilters">
+          <button class="chip active" data-role="all">All Topics</button>
+          <button class="chip" data-role="da">📈 Data Analyst</button>
+          <button class="chip" data-role="ds">🔬 Data Scientist</button>
+          <button class="chip" data-role="ml">🤖 ML Engineer</button>
+        </div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <span class="progress-label" id="progressLabel">0 / 0 studied</span>
+      </div>
+    </div>
+
+    <div class="hero">
+      <h1>Power BI &amp; Data Analytics — Interactive Notes</h1>
+      <p>Built from raw course notes (Power BI Masterclass, day-by-day + DAX section) and rewritten with workplace context: what each concept is, why companies actually use it, the business need behind it, how it works mechanically, and the kind of question a manager throws at you about it. Every topic is tagged by relevance to <strong>Data Analyst</strong>, <strong>Data Scientist</strong>, and <strong>ML Engineer</strong> roles — Power BI is analyst-first tooling, but the underlying skills (ETL, data modeling, aggregation logic, time-based features) reappear across DS/ML work in pandas, SQL, and feature pipelines.</p>
+      <div class="legend">
+        <div class="legend-item"><span class="legend-swatch" style="background:var(--da)"></span> Data Analyst — dashboards, reporting, stakeholder self-service</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:var(--ds)"></span> Data Scientist — EDA, data wrangling, metric definition</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:var(--ml)"></span> ML Engineer — feature engineering, pipeline hygiene, production data</div>
+      </div>
+      <div class="legend">
+        <span>Dots per badge = relevance: <strong style="color:var(--text)">●●●</strong> High &nbsp; <strong style="color:var(--text)">●●○</strong> Medium &nbsp; <strong style="color:var(--text)">●○○</strong> Low</span>
+      </div>
+    </div>
+
+    <div class="content" id="content"></div>
+  </main>
+</div>
+
+<script>
+const topics = [
+  {
+    id:"intro-bi",
+    title:"What is Power BI &amp; Business Intelligence",
+    roles:{da:"high", ds:"medium", ml:"low"},
+    whatWhy:`
+      <p><strong>What it is:</strong> Microsoft Power BI is a Business Intelligence (BI) tool — currently the #1 BI platform — used to turn raw data into interactive dashboards and reports. It connects to 100+ data sources (Excel, SQL, text files, cloud apps, APIs) and can handle far larger datasets than Excel without crawling to a halt.</p>
+      <p><strong>Why companies use it:</strong> Every team eventually needs one trusted place to see "how is the business doing" — sales, operations, HR, finance. Power BI gives non-technical stakeholders a self-service window into that data (filter, drill, export) without needing to ask an analyst to re-run a spreadsheet every time.</p>
+    `,
+    need:`
+      <p>Excel is where most companies start, but it breaks down at scale: row limits, slow recalculation, manual refresh, no real interactivity, and version-control chaos (whose "Sales_Final_v3.xlsx" is correct?). The business need is a <strong>single source of truth</strong> that updates automatically and that leadership can view without waiting on an analyst.</p>
+      <ul>
+        <li>Leadership wants trends, not raw tables.</li>
+        <li>Multiple teams need the same numbers without reconciling different spreadsheets.</li>
+        <li>Reports need to refresh on a schedule, not be rebuilt by hand monthly.</li>
+      </ul>
+    `,
+    how:`
+      <p>The Power BI workflow has five stages:</p>
+      <ul>
+        <li><strong>Connect</strong> — Get Data from a source (SQL, Excel, folder, web, API).</li>
+        <li><strong>Transform</strong> — clean/reshape in Power Query.</li>
+        <li><strong>Model</strong> — define relationships between tables.</li>
+        <li><strong>Visualize</strong> — build the report canvas (charts, cards, slicers).</li>
+        <li><strong>Publish &amp; Share</strong> — push to Power BI Service, schedule refresh, share with the team.</li>
+      </ul>
+    `,
+    manager:[
+      "Can you build a dashboard that refreshes automatically every morning with yesterday's numbers?",
+      "Why are we paying for Power BI instead of just using Excel pivot tables?",
+      "Can stakeholders filter this themselves instead of pinging you for every cut of the data?"
+    ]
+  },
+  {
+    id:"data-import",
+    title:"Importing Data from Multiple Sources",
+    roles:{da:"high", ds:"high", ml:"medium"},
+    whatWhy:`
+      <p><strong>What it is:</strong> Power BI's "Get Data" connects to 100+ source types — Excel, CSV/TXT, SQL Server, SharePoint folders, web pages, cloud services. A "folder" connector can auto-combine many files (e.g. one workbook per month) into a single table.</p>
+      <p><strong>Why companies use it:</strong> Real business data never lives in one place — it's scattered across an ERP, a CRM, some flat files finance emails around, and a folder someone drops monthly extracts into. Consolidating all of that manually every reporting cycle doesn't scale.</p>
+    `,
+    need:`
+      <p>Files often arrive named or dropped inconsistently — not in chronological order. If January, February, March and April sales files get combined in whatever order the OS lists them, your trend chart silently shows the wrong sequence.</p>
+      <ul>
+        <li>Need to append data correctly regardless of file drop order.</li>
+        <li>Need to tag each row with its source (which file/month it came from) for traceability.</li>
+        <li>Need the pipeline to pick up a brand-new file automatically next refresh, with no manual rework.</li>
+      </ul>
+    `,
+    how:`
+      <p>When combining files from a folder, Power BI uses the M function <code>Excel.Workbook([Content])</code> to parse each file's binary content into tables, then appends them together. Before loading into the model, you add a <strong>custom column</strong> tagging the source (file name or extracted date) so records can be correctly ordered/grouped later — and you always run "Transform Data" first rather than loading raw.</p>
+    `,
+    manager:[
+      "The new month's file just landed in the shared folder — will the report pick it up automatically?",
+      "Why is March showing before January in the trend chart?",
+      "Can you add a column showing which source file each row came from?"
+    ]
+  },
+  {
+    id:"power-query",
+    title:"Power Query &amp; Data Transformation (ETL)",
+    roles:{da:"high", ds:"high", ml:"high"},
+    whatWhy:`
+      <p><strong>What it is:</strong> Power Query Editor is Power BI's ETL layer (Extract → Transform → Load). "Transform Data" cleans and reshapes data <em>before</em> it lands in the model: removing duplicates, fixing types, splitting/merging columns, appending or merging queries, adding calculated custom columns.</p>
+      <p><strong>Why companies use it:</strong> Garbage in, garbage out. Raw exports are almost never analysis-ready — mixed data types, blank rows, first/last names in separate columns, inconsistent casing. Cleaning needs to happen once, centrally, and repeat automatically on every refresh instead of being redone by hand in Excel each month.</p>
+    `,
+    need:`
+      <p>This is the single highest-leverage skill shared across Data Analyst, Data Scientist, and ML Engineer roles — it's the same job as <code>pandas</code> cleaning or a SQL staging layer, just done visually with recorded, replayable steps.</p>
+      <ul>
+        <li>Business needs consistent, trustworthy fields (e.g. one "Full Name" column, not two half-columns).</li>
+        <li>Cleaning logic must survive a refresh without someone re-doing it manually.</li>
+        <li>Downstream visuals/models are only as reliable as this step.</li>
+      </ul>
+    `,
+    how:`
+      <p>Every transform in Power Query is recorded as an "Applied Step" in the M language, forming a re-runnable pipeline. Example — combining first and last name into one custom column:</p>
+      <pre><code>[CONTACTFIRSTNAME]&amp;" "&amp;[CONTACTLASTNAME]</code></pre>
+      <p>On every refresh, this whole step list replays automatically against the new data — no manual rework required.</p>
+    `,
+    manager:[
+      "Why does the full name column look wrong for some customers?",
+      "Can you combine first and last name into a single column?",
+      "If the source file structure changes next quarter, will this report just break?"
+    ]
+  },
+  {
+    id:"data-model",
+    title:"Data Modeling &amp; Relationships (Cardinality)",
+    roles:{da:"high", ds:"high", ml:"medium"},
+    whatWhy:`
+      <p><strong>What it is:</strong> Power BI models relate multiple tables together like a database schema (ideally a star schema: fact table + dimension tables). Relationship <strong>cardinality</strong> types: one-to-many (1→*), many-to-one (*→1), one-to-one (1–1), and many-to-many (*–*). Filters flow through these relationships in a defined direction.</p>
+      <p><strong>Why companies use it:</strong> Business data lives in separate tables — Orders, Customers, Products, Dates. Correct relationships let a single filter (e.g. Region) ripple correctly across every visual on the page.</p>
+    `,
+    need:`
+      <p>Get cardinality wrong and numbers silently inflate or disappear — a classic "why does revenue look 3x too high" bug caused by an unintended many-to-many join.</p>
+      <ul>
+        <li>Need one filter to correctly affect every related visual.</li>
+        <li>Need to avoid double-counting when joining fact + dimension tables.</li>
+        <li>Need the model to stay correct as new tables/sources get added later.</li>
+      </ul>
+    `,
+    how:`
+      <p>In Model View, you drag matching key columns between tables to define a relationship, then set its cardinality and cross-filter direction (single vs. both). Many-to-many relationships are best avoided by inserting a bridge/dimension table rather than joining two fact tables directly.</p>
+    `,
+    manager:[
+      "Why did total sales double when I added the Customer table?",
+      "If I filter by Region, does it affect every visual on the page?",
+      "Is this data model going to hold up if we add another source table next quarter?"
+    ]
+  },
+  {
+    id:"viz-core",
+    title:"Core Visuals — Bar/Column, Line &amp; Area Charts",
+    roles:{da:"high", ds:"medium", ml:"low"},
+    whatWhy:`
+      <p><strong>What it is:</strong> Column/bar charts compare values across categories (Category → X-axis, Value → Y-axis, Legend for sub-groups, Tooltip for on-hover context). Line/area charts show a trend across a continuous axis, usually time.</p>
+      <p><strong>Why companies use it:</strong> Decision-makers process a shape faster than a table of numbers — "which region is falling behind" or "is this trending up" needs to be visible in two seconds, not derived from a pivot table.</p>
+    `,
+    need:`
+      <p>The business need is fast, correct comparison and trend-spotting without misleading the viewer.</p>
+      <ul>
+        <li>Rule of thumb: put the <strong>category or time field on the X-axis</strong>, the numeric aggregation on the Y-axis.</li>
+        <li>Wrong axis choice or unsorted categories actively misleads viewers.</li>
+      </ul>
+    `,
+    how:`
+      <p>Drag the category field to X-axis, the measure to Y-axis. Format axis scale, legend placement, tooltip fields, and data labels for readability. For trends over time, a line/area chart with a continuous date axis reads better than a bar chart with many categories.</p>
+    `,
+    manager:[
+      "Can you show me the monthly sales trend by region?",
+      "Why is the category ordering wrong on the X-axis?",
+      "Add data labels so I can see exact numbers without hovering."
+    ]
+  },
+  {
+    id:"viz-advanced",
+    title:"Advanced Visuals — Waterfall, Funnel, Scatter, Pie/Donut, Gauge &amp; KPI",
+    roles:{da:"high", ds:"medium", ml:"low"},
+    whatWhy:`
+      <p><strong>What it is:</strong> Purpose-built chart types for specific business questions:</p>
+      <ul>
+        <li><strong>Waterfall</strong> — sequential increases/decreases (profit bridge). <em>Requires positive and negative values.</em></li>
+        <li><strong>Funnel</strong> — stage-wise drop-off (sales pipeline). <em>Requires an ordered "stage/funnel type" field.</em></li>
+        <li><strong>Scatter</strong> — correlation between two numeric variables.</li>
+        <li><strong>Pie / Donut</strong> — part-to-whole proportions (best with few categories).</li>
+        <li><strong>Gauge / KPI</strong> — progress against a target.</li>
+      </ul>
+      <p><strong>Why companies use it:</strong> Each business question maps to a specific chart shape — using the wrong one (e.g. a 15-slice pie chart) actively hides the insight instead of revealing it.</p>
+    `,
+    need:`
+      <ul>
+        <li>"Where do we lose deals?" → Funnel chart.</li>
+        <li>"Is spend correlated with revenue?" → Scatter chart.</li>
+        <li>"Are we on track vs. target this quarter?" → Gauge / KPI.</li>
+        <li>"What moved profit from budget to actual?" → Waterfall.</li>
+      </ul>
+    `,
+    how:`
+      <p>Each visual has a specific data-shape requirement: Waterfall needs a running total column with +/- values; Funnel needs a category field representing ordered stages (e.g. Lead → Qualified → Proposal → Closed). Scatter needs two numeric measures assigned to X and Y. Choosing the wrong visual for the data shape is the most common formatting complaint from stakeholders.</p>
+    `,
+    manager:[
+      "Show me the conversion funnel from Lead to Closed-Won.",
+      "Are we hitting our quarterly target?",
+      "This pie chart looks cluttered with all these categories — can we use a bar chart instead?"
+    ]
+  },
+  {
+    id:"cards-slicers",
+    title:"Cards, Multi-row Cards &amp; Slicers (Interactivity)",
+    roles:{da:"high", ds:"low", ml:"low"},
+    whatWhy:`
+      <p><strong>What it is:</strong> Cards display a single headline KPI (Total Sales, Avg Order Value). Multi-row cards list several KPIs together. Slicers are on-report filter controls (dropdown, list, date range) that let the viewer interactively filter the whole page.</p>
+      <p><strong>Why companies use it:</strong> Executives want the one big number front and center. Different stakeholders (regional managers, product owners) want to self-serve their own slice of the same report instead of requesting a custom version each time.</p>
+    `,
+    need:`
+      <ul>
+        <li>Leadership scans headline metrics before anything else — they need to be immediate and unmissable.</li>
+        <li>One report needs to serve many audiences without duplicating it per team.</li>
+        <li>Filter state should ideally persist/sync across report pages so users don't re-filter each page.</li>
+      </ul>
+    `,
+    how:`
+      <p>Card visuals bind to a single aggregated measure. Slicers bind to a field and can be configured with "Sync Slicers" (same filter across pages) and "Edit Interactions" (control exactly which visuals a given slicer affects).</p>
+    `,
+    manager:[
+      "Put total revenue and total quantity as big numbers at the top of the page.",
+      "Can each regional manager filter to see only their own region?",
+      "Can the slicer selection carry across all the report pages?"
+    ]
+  },
+  {
+    id:"dax-implicit-explicit",
+    title:"DAX Fundamentals — Implicit vs. Explicit Measures",
+    roles:{da:"high", ds:"medium", ml:"low"},
+    whatWhy:`
+      <p><strong>What it is:</strong> <strong>Implicit DAX</strong> — Power BI auto-aggregates a numeric field the moment you drag it into a visual (Sum, Average, Count) with zero formula written. <strong>Explicit DAX</strong> — you write the calculation yourself using DAX functions (SUM, SUMX, AVERAGE, CALCULATE…) for full control.</p>
+      <p><strong>Why companies use it:</strong> Implicit aggregation is fine for quick exploration, but production reporting needs one <em>official, reusable</em> measure (e.g. "Total Sales") that every analyst and every report references — instead of five people quietly building five slightly different definitions of "revenue."</p>
+    `,
+    need:`
+      <p>Implicit measures can't express real business logic: sales only for VIP customers, a weighted average, or a row-by-row calculation before aggregating. That requires explicit DAX.</p>
+    `,
+    how:`
+      <p><code>SUM([Qty])</code> is implicit-style — a straight column aggregation. Compare that with an <strong>iterator (X-suffix)</strong> function like <code>SUMX</code>, which evaluates an expression row-by-row before summing — required whenever the metric isn't a plain column total:</p>
+      <pre><code>-- Example: Qty × Unit Price, computed per row, then summed
+Total_Revenue = SUMX(Sales, Sales[Qty] * Sales[UnitPrice])
+
+-- e.g. 4.325 x 9.554 = 41.321 per row
+-- x = 41.321 / 9.554 = 4.325 (back-solving a per-row rate)</code></pre>
+    `,
+    manager:[
+      "Why is Total Revenue wrong — did you just sum the unit price column directly?",
+      "Can we have one official 'Total Sales' measure everyone reuses instead of everyone building their own?",
+      "Does this number change correctly when I apply a filter?"
+    ]
+  },
+  {
+    id:"columns-vs-measures",
+    title:"Calculated Columns vs. Measures",
+    roles:{da:"high", ds:"medium", ml:"low"},
+    whatWhy:`
+      <p><strong>What it is:</strong> A <strong>calculated column</strong> computes a value per row and is physically stored in the table (uses row context, grows the model size). A <strong>measure</strong> computes dynamically at query time based on whatever filter context is active (not stored, lightweight, always aggregate-aware).</p>
+      <p><strong>Why companies use it:</strong> Misusing columns where a measure would do bloats the data model and slows every report that touches it. Companies need dashboards to stay fast even as the underlying data keeps growing — so scalable measures are preferred wherever the same result can be achieved either way.</p>
+    `,
+    need:`
+      <ul>
+        <li>Row-level static attributes (e.g. "which day of week was this order placed") → calculated column, computed once at refresh.</li>
+        <li>Metrics that must respond live to slicers/filters (e.g. "Total Sales for the selected year") → measure, computed on the fly.</li>
+      </ul>
+    `,
+    how:`
+      <p>Example calculated columns (row-level, computed once per row at refresh):</p>
+      <pre><code>Day     = DAY(Employee_Data[Date of Birth])
+Month   = MONTH(Employee_Data[Date of Birth])
+Year    = YEAR(Employee_Data[Date of Birth])</code></pre>
+      <p>Example measure (recalculates per filter context — e.g. changes when a year slicer is applied):</p>
+      <pre><code>Total Sales = SUM(Sales[Amount])</code></pre>
+    `,
+    manager:[
+      "Why did the file size double after you added those extra columns?",
+      "Does this number update automatically when I filter by year?",
+      "Should this calculation be a column or a measure?"
+    ]
+  },
+  {
+    id:"dax-dates",
+    title:"Date &amp; Time DAX Functions",
+    roles:{da:"high", ds:"medium", ml:"medium"},
+    whatWhy:`
+      <p><strong>What it is:</strong> DAX functions that extract parts of a date — <code>DAY()</code>, <code>MONTH()</code>, <code>YEAR()</code>, <code>WEEKDAY()</code> (with a return-type argument controlling which day the week starts on) — plus range functions like <code>DATESBETWEEN</code> for filtering a custom date window.</p>
+      <p><strong>Why companies use it:</strong> Businesses report seasonally — weekday sales patterns, birthday/anniversary campaigns, custom fiscal windows. A raw date column alone can't answer "which weekday sells best"; you need derived date parts.</p>
+    `,
+    need:`
+      <p>This is functionally the same skill as <code>pandas</code>' <code>.dt</code> accessor or SQL's <code>EXTRACT()</code> — date-derived features show up constantly in both BI reporting and ML feature engineering (day-of-week, month, is-weekend flags, etc.).</p>
+    `,
+    how:`
+      <pre><code>Weekday = WEEKDAY(Employee_Data[Date of Birth].[Date], 1)
+-- return type 1 = Sunday(1)...Saturday(7)
+
+10Days_Sales = CALCULATE(
+    [Total_Sales_Amount],
+    DATESBETWEEN(
+        'TechyStore Sales_Data'[Sales Date].[Date],
+        DATE(2023,10,01),
+        DATE(2023,10,10)
+    )
+)</code></pre>
+    `,
+    manager:[
+      "Which day of the week has the highest footfall?",
+      "Can you show total sales just for the first 10 days of the month?",
+      "Are more employees born in a particular month — useful for a wellness campaign?"
+    ]
+  },
+  {
+    id:"time-intelligence",
+    title:"Time Intelligence — Custom Calendar, MTD / QTD / YTD",
+    roles:{da:"high", ds:"medium", ml:"low"},
+    whatWhy:`
+      <p><strong>What it is:</strong> A <strong>custom calendar table</strong> (a clean, continuous list of dates, independent of gaps in the transactional data) that powers reliable time-intelligence math. <strong>MTD / QTD / YTD</strong> (Month/Quarter/Year-to-Date) use <code>TOTALMTD</code>, <code>TOTALQTD</code>, <code>TOTALYTD</code> to compute a running total from the start of the period up to the selected date.</p>
+      <p><strong>Why companies use it:</strong> Leadership constantly asks "how are we doing this month/quarter/year vs. plan?" — that comparison requires a gapless date dimension and one standardized running-total definition, not ad hoc SUMIFS formulas that quietly break when a day of data is missing.</p>
+    `,
+    need:`
+      <ul>
+        <li>Finance and leadership need YTD numbers that always tie back to the same official calendar.</li>
+        <li>Without a dedicated date table, MTD/QTD/YTD math silently breaks whenever transactional data has a missing day.</li>
+      </ul>
+    `,
+    how:`
+      <pre><code>-- Custom calendar: 731 consecutive days starting Jan 1, 2023
+Custom_Calendar = List.Dates(#date(2023,1,1), 731, #duration(1,0,0,0))
+
+MTD = TOTALMTD([Total_Sales_Amount], Custom_calender[Date].[Date])
+QTD = TOTALQTD([Total_Sales_Amount], 'Custom_calender'[Date].[Date])
+YTD = TOTALYTD([Total_Sales_Amount], 'Custom_calender'[Date].[Date])</code></pre>
+    `,
+    manager:[
+      "What's our revenue month-to-date vs. the same time last month?",
+      "Can Finance see YTD numbers that always reconcile with the official calendar?",
+      "Why do the MTD numbers look off when yesterday's data hasn't loaded yet?"
+    ]
+  },
+  {
+    id:"capstone-dashboard",
+    title:"Building &amp; Publishing Interactive Dashboards (Capstone)",
+    roles:{da:"high", ds:"medium", ml:"low"},
+    whatWhy:`
+      <p><strong>What it is:</strong> The final step that ties everything together — multiple visuals, slicers, and KPIs laid out on a canvas, with cross-filtering ("edit interactions"), consistent theming/icons, then published to Power BI Service for sharing and scheduled refresh.</p>
+      <p><strong>Why companies use it:</strong> A dashboard is the company's actual decision-making interface. It needs to be self-service, accurate, fast, and refreshed on schedule — so leadership always makes decisions on current data, not a stale export from three weeks ago.</p>
+    `,
+    need:`
+      <ul>
+        <li>Stakeholders stop pinging analysts for one-off numbers once they can self-serve.</li>
+        <li>Row-level security may be required so, e.g., the Sales team only sees their own region.</li>
+        <li>Scheduled refresh (with a gateway for on-prem sources) keeps the report current without manual intervention.</li>
+      </ul>
+    `,
+    how:`
+      <p>Design the layout → apply a consistent color theme and icons → configure cross-visual interactions → set up scheduled refresh → publish the workspace → share via an app/link, with row-level security applied if different teams should see different slices of the same report.</p>
+    `,
+    manager:[
+      "Is this refreshing automatically every night?",
+      "Can everyone on the team view this without a licensing headache?",
+      "Can you restrict the Sales team to only see their own region's data (row-level security)?"
+    ]
+  }
+];
+
+const TAB_DEFS = [
+  {key:"whatWhy", label:"What &amp; Why (Company Use)"},
+  {key:"need", label:"The Need"},
+  {key:"how", label:"What It Does"},
+  {key:"manager", label:"Manager Might Ask"}
+];
+
+const LEVEL_MAP = {high:3, medium:2, low:1};
+const ROLE_LABEL = {da:"DA", ds:"DS", ml:"ML"};
+
+function levelDots(level){
+  const n = LEVEL_MAP[level] || 1;
+  let out = "";
+  for(let i=1;i<=3;i++){
+    out += `<span class="${i<=n ? "filled":""}"></span>`;
+  }
+  return out;
+}
+
+function renderBadge(role, level){
+  return `<span class="badge ${role}">${ROLE_LABEL[role]} <span class="lvl-dots">${levelDots(level)}</span></span>`;
+}
+
+function renderManagerList(items){
+  return items.map(q => `<div class="q">${q}</div>`).join("");
+}
+
+function renderNav(){
+  const navList = document.getElementById("navList");
+  navList.innerHTML = topics.map((t, i) => `
+    <li class="nav-item">
+      <a class="nav-link" data-id="${t.id}" href="#${t.id}">
+        <span class="nav-num">${i+1}</span>
+        <span class="nav-text">${t.title.replace(/<[^>]+>/g,'')}</span>
+        <span class="nav-dots">
+          <span class="dot ${LEVEL_MAP[t.roles.da]>=2 ? "on-da":""}"></span>
+          <span class="dot ${LEVEL_MAP[t.roles.ds]>=2 ? "on-ds":""}"></span>
+          <span class="dot ${LEVEL_MAP[t.roles.ml]>=2 ? "on-ml":""}"></span>
+        </span>
+      </a>
+    </li>
+  `).join("");
+}
+
+function renderCards(){
+  const content = document.getElementById("content");
+  content.innerHTML = topics.map((t, i) => `
+    <section class="topic-card" id="${t.id}" data-title="${t.title.replace(/<[^>]+>/g,'').toLowerCase()}"
+        data-da="${t.roles.da}" data-ds="${t.roles.ds}" data-ml="${t.roles.ml}"
+        data-search="${(t.whatWhy + t.need + t.how + t.manager.join(' ')).replace(/<[^>]+>/g,'').toLowerCase().replace(/"/g,'&quot;')}">
+      <div class="topic-head">
+        <div>
+          <div class="topic-title-row">
+            <span class="topic-num">${String(i+1).padStart(2,'0')}</span>
+            <h2 class="topic-title">${t.title}</h2>
+          </div>
+          <div class="badges">
+            ${renderBadge("da", t.roles.da)}
+            ${renderBadge("ds", t.roles.ds)}
+            ${renderBadge("ml", t.roles.ml)}
+          </div>
+        </div>
+        <label class="mark-done">
+          <input type="checkbox" class="done-checkbox" data-id="${t.id}"> Mark as studied
+        </label>
+      </div>
+      <div class="tabs">
+        ${TAB_DEFS.map((tab, ti) => `<button class="tab-btn ${ti===0?'active':''}" data-topic="${t.id}" data-tab="${tab.key}">${tab.label}</button>`).join("")}
+      </div>
+      <div class="tab-panels">
+        <div class="tab-panel active" data-topic="${t.id}" data-panel="whatWhy">${t.whatWhy}</div>
+        <div class="tab-panel" data-topic="${t.id}" data-panel="need">${t.need}</div>
+        <div class="tab-panel" data-topic="${t.id}" data-panel="how">${t.how}</div>
+        <div class="tab-panel" data-topic="${t.id}" data-panel="manager">${renderManagerList(t.manager)}</div>
+      </div>
+    </section>
+  `).join("") + `<div class="empty-state" id="emptyState" style="display:none;">No topics match your search/filter.</div>`;
+}
+
+// ---------- State ----------
+const STORAGE_KEY = "pbi_notes_progress_v1";
+function getProgress(){
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch(e){ return []; }
+}
+function setProgress(arr){ localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
+
+function updateProgressBar(){
+  const done = getProgress();
+  const total = topics.length;
+  const count = done.length;
+  document.getElementById("progressFill").style.width = (total ? (count/total*100) : 0) + "%";
+  document.getElementById("progressLabel").textContent = `${count} / ${total} studied`;
+}
+
+function applyDoneStates(){
+  const done = getProgress();
+  document.querySelectorAll(".done-checkbox").forEach(cb => {
+    const isDone = done.includes(cb.dataset.id);
+    cb.checked = isDone;
+    cb.closest(".topic-card").classList.toggle("done", isDone);
+  });
+  updateProgressBar();
+}
+
+let currentRole = "all";
+let currentSearch = "";
+
+function applyFilters(){
+  let visibleCount = 0;
+  document.querySelectorAll(".topic-card").forEach(card => {
+    const matchesSearch = !currentSearch || card.dataset.title.includes(currentSearch) || card.dataset.search.includes(currentSearch);
+    const roleLevel = currentRole === "all" ? 3 : LEVEL_MAP[card.dataset[currentRole]];
+    const matchesRole = currentRole === "all" || roleLevel >= 2;
+    const visible = matchesSearch && matchesRole;
+    card.style.display = visible ? "" : "none";
+    if(visible) visibleCount++;
+  });
+  document.getElementById("emptyState").style.display = visibleCount === 0 ? "block" : "none";
+
+  document.querySelectorAll(".nav-link").forEach(link => {
+    const card = document.getElementById(link.dataset.id);
+    link.parentElement.style.display = card.style.display === "none" ? "none" : "";
+  });
+}
+
+// ---------- Events ----------
+document.addEventListener("click", (e) => {
+  const tabBtn = e.target.closest(".tab-btn");
+  if(tabBtn){
+    const topicId = tabBtn.dataset.topic;
+    document.querySelectorAll(`.tab-btn[data-topic="${topicId}"]`).forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(`.tab-panel[data-topic="${topicId}"]`).forEach(p => p.classList.remove("active"));
+    tabBtn.classList.add("active");
+    document.querySelector(`.tab-panel[data-topic="${topicId}"][data-panel="${tabBtn.dataset.tab}"]`).classList.add("active");
+    return;
+  }
+
+  const chip = e.target.closest(".chip");
+  if(chip){
+    document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+    chip.classList.add("active");
+    currentRole = chip.dataset.role;
+    applyFilters();
+    return;
+  }
+
+  const navLink = e.target.closest(".nav-link");
+  if(navLink){
+    document.getElementById("sidebar").classList.remove("open");
+  }
+});
+
+document.addEventListener("change", (e) => {
+  if(e.target.classList.contains("done-checkbox")){
+    const id = e.target.dataset.id;
+    let done = getProgress();
+    if(e.target.checked){
+      if(!done.includes(id)) done.push(id);
+    } else {
+      done = done.filter(x => x !== id);
+    }
+    setProgress(done);
+    applyDoneStates();
+  }
+});
+
+document.getElementById("searchBox").addEventListener("input", (e) => {
+  currentSearch = e.target.value.trim().toLowerCase();
+  applyFilters();
+});
+
+document.getElementById("hamburger").addEventListener("click", () => {
+  document.getElementById("sidebar").classList.toggle("open");
+});
+
+// Active section highlight on scroll
+function setupScrollSpy(){
+  const links = document.querySelectorAll(".nav-link");
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if(entry.isIntersecting){
+        links.forEach(l => l.classList.remove("active"));
+        const active = document.querySelector(`.nav-link[data-id="${entry.target.id}"]`);
+        if(active) active.classList.add("active");
+      }
+    });
+  }, {rootMargin: "-20% 0px -70% 0px", threshold: 0});
+  document.querySelectorAll(".topic-card").forEach(card => observer.observe(card));
+}
+
+// ---------- Init ----------
+renderNav();
+renderCards();
+applyDoneStates();
+applyFilters();
+setupScrollSpy();
+</script>
+</body>
+</html>
