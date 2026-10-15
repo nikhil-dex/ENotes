@@ -54,6 +54,7 @@ export default function HomePage() {
   const [theme, setTheme] = useState('light');
   const [noteDialog, setNoteDialog] = useState(false);
   const [editingNote, setEditingNote] = useState(null);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [subjectDialog, setSubjectDialog] = useState(false);
   const [readerNote, setReaderNote] = useState(null);
   const [studyOpen, setStudyOpen] = useState(false);
@@ -117,7 +118,7 @@ export default function HomePage() {
   useEffect(() => {
     function onKeyDown(event) {
       if (event.key !== 'Escape') return;
-      setNoteDialog(false); setSubjectDialog(false); setReaderNote(null); setStudyOpen(false);
+      setNoteDialog(false); setSubjectDialog(false); setReaderNote(null); setStudyOpen(false); setMobileNavOpen(false);
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
@@ -247,15 +248,17 @@ export default function HomePage() {
 
   return (
     <main className="shell">
-      <header className="topbar">
+      <header className={`topbar dashboard-topbar ${mobileNavOpen ? 'nav-open' : ''}`}>
         <a className="brand" href="/" aria-label="Notes dashboard home"><span className="brand-mark">N</span><span>Study<span className="brand-light">Notes</span></span></a>
-        <div className="topbar-right"><a className="import-guide-link" href="/html-library">HTML files</a><a className="import-guide-link" href="/import-guide">Import guide</a><button className="theme-button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>{theme === 'dark' ? '☼' : '◐'} <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span></button><span className="status-dot"/><span>{active?.file || 'MongoDB'}</span></div>
+        <button className="mobile-nav-toggle" type="button" aria-controls="dashboard-navigation" aria-expanded={mobileNavOpen} onClick={() => setMobileNavOpen((open) => !open)}><span className="mobile-nav-icon" aria-hidden="true"><i/><i/><i/></span><span>{mobileNavOpen ? 'Close' : 'Menu'}</span></button>
+        <div className={`dashboard-nav-panel ${mobileNavOpen ? 'open' : ''}`} id="dashboard-navigation">
+          <div className="topbar-right"><a className="import-guide-link" href="/html-library">HTML files</a><a className="import-guide-link" href="/import-guide">Import guide</a><button className="theme-button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>{theme === 'dark' ? '☼' : '◐'} <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span></button><span className="status-dot"/><span>{active?.file || 'MongoDB'}</span></div>
+          <nav className="subject-nav" aria-label="Note subjects">
+            {subjects.map((subject) => <span className="subject-item" key={subject.slug}><button className={`subject-tab ${subject.slug === activeSubject ? 'active' : ''}`} onClick={() => { setActiveSubject(subject.slug); setMobileNavOpen(false); }}>{subject.name}</button><button className="delete-subject" onClick={() => deleteSubject(subject)} aria-label={`Delete ${subject.name} subject`} title="Delete subject">×</button></span>)}
+            <button className="subject-add" onClick={() => { setSubjectError(''); setSubjectDialog(true); setMobileNavOpen(false); }}><span>+</span> Add more</button>
+          </nav>
+        </div>
       </header>
-
-      <nav className="subject-nav" aria-label="Note subjects">
-        {subjects.map((subject) => <span className="subject-item" key={subject.slug}><button className={`subject-tab ${subject.slug === activeSubject ? 'active' : ''}`} onClick={() => setActiveSubject(subject.slug)}>{subject.name}</button><button className="delete-subject" onClick={() => deleteSubject(subject)} aria-label={`Delete ${subject.name} subject`} title="Delete subject">×</button></span>)}
-        <button className="subject-add" onClick={() => { setSubjectError(''); setSubjectDialog(true); }}><span>+</span> Add more</button>
-      </nav>
 
       <section className="intro">
         <div><p className="eyebrow">YOUR PERSONAL KNOWLEDGE BASE</p><h1>{active?.name || 'Your'} notes<span className="period">.</span></h1><p className="subtitle">A clear place for the commands, concepts, and things you learn.</p></div>
