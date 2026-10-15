@@ -139,6 +139,14 @@ export default function HomePage() {
     localStorage.setItem(`learnedNotes:${activeSubject}`, JSON.stringify([...next]));
   }
 
+  async function lockSession() {
+    try {
+      await fetch('/api/access/logout', { method: 'POST', credentials: 'same-origin', cache: 'no-store' });
+    } finally {
+      window.location.replace('/access');
+    }
+  }
+
   async function reloadNotes(slug = activeSubject) {
     const data = await responseJson(await fetch(`/api/notes?subject=${encodeURIComponent(slug)}`));
     setNotes(data);
@@ -260,7 +268,7 @@ export default function HomePage() {
     <main className="shell">
       <header className="topbar">
         <a className="brand" href="/" aria-label="Notes dashboard home"><span className="brand-mark">N</span><span>Study<span className="brand-light">Notes</span></span></a>
-        <div className="topbar-right"><a className="import-guide-link" href="/html-library">HTML files</a><a className="import-guide-link" href="/import-guide">Import guide</a><button className="theme-button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>{theme === 'dark' ? '☼' : '◐'} <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span></button><span className="status-dot"/><span>{active?.file || 'MongoDB'}</span></div>
+        <div className="topbar-right"><a className="import-guide-link" href="/html-library">HTML files</a><a className="import-guide-link" href="/import-guide">Import guide</a><button className="theme-button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>{theme === 'dark' ? '☼' : '◐'} <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span></button><span className="status-dot"/><span>{active?.file || 'MongoDB'}</span><button className="theme-button" type="button" onClick={lockSession} aria-label="Lock ENotes and end this session">Lock</button></div>
       </header>
 
       <nav className="subject-nav" aria-label="Main navigation" ref={subjectNavRef}>
