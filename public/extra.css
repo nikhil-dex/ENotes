@@ -11,6 +11,17 @@ button{font-family:inherit}
 .subject-add{border:1px dashed #cbd5ce;padding:7px 11px}
 .subject-add span{font-size:17px;vertical-align:-1px;margin-right:4px}
 .note-card{width:100%;text-align:left;color:inherit;font-family:inherit;cursor:pointer}
+.note-card{position:relative;display:block;padding:0;overflow:hidden}
+.card-open{display:flex;flex-direction:column;align-items:stretch;text-align:left;width:100%;height:100%;min-height:175px;padding:19px 42px 16px 18px;border:0;background:transparent;color:inherit;cursor:pointer}
+.card-open:focus-visible{outline:3px solid #8caf98;outline-offset:-3px;border-radius:8px}
+.card-open .card-bottom{margin-top:auto}
+.delete-note,.delete-subject{border:0;background:transparent;color:#9ba69f;cursor:pointer;font-size:20px;line-height:1;display:grid;place-items:center}
+.delete-note{position:absolute;right:12px;top:13px;width:27px;height:27px;border-radius:5px;opacity:.55}
+.delete-note:hover,.delete-subject:hover{background:#f8e9e8;color:#b94e46;opacity:1}
+.subject-item{position:relative;display:inline-flex;align-items:center}
+.subject-item .subject-tab{padding-right:29px}
+.delete-subject{position:absolute;right:5px;top:50%;transform:translateY(-50%);height:22px;width:22px;border-radius:4px;font-size:17px;opacity:.55}
+.subject-item:hover .delete-subject,.delete-subject:focus-visible{opacity:1}
 .note-card:focus-visible,.subject-tab:focus-visible,.subject-add:focus-visible,.theme-button:focus-visible{outline:3px solid #8caf98;outline-offset:2px}
 .note-title{font:600 14px/1.45 var(--display);letter-spacing:-.25px;margin:0 0 8px;color:var(--ink)}
 .note-preview{font:12px/1.65 var(--sans);color:var(--muted);margin:0 0 14px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap}
@@ -24,6 +35,7 @@ button{font-family:inherit}
 [data-theme="dark"] .subject-tab:hover,[data-theme="dark"] .subject-add:hover{background:#29382e}
 [data-theme="dark"] .subject-tab.active{background:var(--green);color:#142019}
 [data-theme="dark"] .subject-add{border-color:#48574d}
+[data-theme="dark"] .delete-note:hover,[data-theme="dark"] .delete-subject:hover{background:#482d2b;color:#f08a80}
 [data-theme="dark"] .modal-backdrop{background:#080d0abf}
 .reader-backdrop{position:fixed;inset:0;z-index:8;background:#111a15c7;display:grid;place-items:center;padding:28px;backdrop-filter:blur(5px)}
 .reader-backdrop[hidden]{display:none}

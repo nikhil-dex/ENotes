@@ -41,8 +41,9 @@ function markdownHtml(value) {
 }
 
 function renderSubjects() {
-  subjectNav.innerHTML = subjects.map((subject) => `<button class="subject-tab ${subject.slug === activeSubject ? 'active' : ''}" data-subject="${escapeHtml(subject.slug)}" aria-current="${subject.slug === activeSubject ? 'page' : 'false'}">${escapeHtml(subject.name)}</button>`).join('') + '<button class="subject-add" id="addSubjectButton"><span>+</span> Add more</button>';
+  subjectNav.innerHTML = subjects.map((subject) => `<span class="subject-item"><button class="subject-tab ${subject.slug === activeSubject ? 'active' : ''}" data-subject="${escapeHtml(subject.slug)}" aria-current="${subject.slug === activeSubject ? 'page' : 'false'}">${escapeHtml(subject.name)}</button><button class="delete-subject" data-delete-subject="${escapeHtml(subject.slug)}" aria-label="Delete ${escapeHtml(subject.name)} subject" title="Delete subject">×</button></span>`).join('') + '<button class="subject-add" id="addSubjectButton"><span>+</span> Add more</button>';
   subjectNav.querySelectorAll('[data-subject]').forEach((button) => button.addEventListener('click', () => selectSubject(button.dataset.subject)));
+  subjectNav.querySelectorAll('[data-delete-subject]').forEach((button) => button.addEventListener('click', () => deleteSubject(button.dataset.deleteSubject)));
   document.querySelector('#addSubjectButton').addEventListener('click', openSubjectForm);
   const subject = subjects.find((item) => item.slug === activeSubject);
   if (subject) {
@@ -53,12 +54,15 @@ function renderSubjects() {
 
 function render() {
   const query = search.value.trim().toLowerCase();
-  const shown = notes.filter((note) => `${note.heading} ${note.answer}`.toLowerCase().includes(query).sort((a, b) => b.number - a.number);
+  const shown = notes
+    .filter((note) => `${note.heading} ${note.answer}`.toLowerCase().includes(query))
+    .sort((a, b) => b.number - a.number);
   count.textContent = String(notes.length).padStart(2, '0');
   visibleCount.textContent = shown.length;
   empty.hidden = shown.length > 0;
-  grid.innerHTML = shown.map((note) => `<button class="note-card" data-note-number="${note.number}" aria-label="Open note: ${escapeHtml(note.heading)}"><span class="card-top"><span class="note-index">NO. ${String(note.number).padStart(2, '0')}</span><span class="note-mark" aria-hidden="true">↗</span></span><span class="note-title">${escapeHtml(note.heading)}</span><span class="note-preview">${escapeHtml(note.answer)}</span><span class="card-bottom">◷ <span>${escapeHtml(note.saved)}</span></span></button>`).join('');
+  grid.innerHTML = shown.map((note) => `<article class="note-card"><button class="card-open" data-note-number="${note.number}" aria-label="Open note: ${escapeHtml(note.heading)}"><span class="card-top"><span class="note-index">NO. ${String(note.number).padStart(2, '0')}</span><span class="note-mark" aria-hidden="true">↗</span></span><span class="note-title">${escapeHtml(note.heading)}</span><span class="note-preview">${escapeHtml(note.answer)}</span><span class="card-bottom">◷ <span>${escapeHtml(note.saved)}</span></span></button><button class="delete-note" data-delete-note="${note.number}" aria-label="Delete note: ${escapeHtml(note.heading)}" title="Delete note">×</button></article>`).join('');
   grid.querySelectorAll('[data-note-number]').forEach((card) => card.addEventListener('click', () => openReader(Number(card.dataset.noteNumber))));
+  grid.querySelectorAll('[data-delete-note]').forEach((button) => button.addEventListener('click', () => deleteNote(Number(button.dataset.deleteNote))));
 }
 
 async function loadSubjects() {
@@ -105,6 +109,33 @@ function openReader(number) {
   document.body.style.overflow = 'hidden';
 }
 function closeReader() { reader.hidden = true; document.body.style.overflow = ''; }
+
+async function deleteNote(number) {
+  const note = notes.find((item) => item.number === number);
+  if (!note || !window.confirm(`Delete “${note.heading}” from ${subjects.find((item) => item.slug === activeSubject)?.name || activeSubject}? This cannot be undone.`)) return;
+  const response = await fetch(`/api/notes?subject=${encodeURIComponent(activeSubject)}&number=${number}`, { method: 'DELETE' });
+  const result = await response.json();
+  if (!response.ok) return window.alert(result.error || 'Could not delete note.');
+  notes = notes.filter((item) => item.number !== number);
+  render();
+}
+
+async function deleteSubject(slug) {
+  const subject = subjects.find((item) => item.slug === slug);
+  if (!subject || !window.confirm(`Delete the ${subject.name} subject and all notes in ${subject.file}? This cannot be undone.`)) return;
+  const response = await fetch(`/api/subjects?slug=${encodeURIComponent(slug)}`, { method: 'DELETE' });
+  const result = await response.json();
+  if (!response.ok) return window.alert(result.error || 'Could not delete subject.');
+  subjects = subjects.filter((item) => item.slug !== slug);
+  if (activeSubject === slug) {
+    activeSubject = subjects[0].slug;
+    localStorage.setItem('activeSubject', activeSubject);
+    search.value = '';
+  }
+  renderSubjects();
+  if (activeSubject === slug) return;
+  await loadNotes();
+}
 
 document.querySelector('#addButton').addEventListener('click', openForm);
 document.querySelector('#closeButton').addEventListener('click', closeForm);
