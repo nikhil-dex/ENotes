@@ -263,11 +263,12 @@ export default function HomePage() {
         <div className="topbar-right"><a className="import-guide-link" href="/html-library">HTML files</a><a className="import-guide-link" href="/import-guide">Import guide</a><button className="theme-button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>{theme === 'dark' ? '☼' : '◐'} <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span></button><span className="status-dot"/><span>{active?.file || 'MongoDB'}</span></div>
       </header>
 
-      <nav className="subject-nav" aria-label="Note subjects" ref={subjectNavRef}>
+      <nav className="subject-nav" aria-label="Main navigation" ref={subjectNavRef}>
         <button className="mobile-nav-toggle" type="button" aria-controls="subject-menu" aria-expanded={mobileNavOpen} aria-label={mobileNavOpen ? 'Close subject menu' : 'Open subject menu'} onClick={() => setMobileNavOpen((open) => !open)}><span className="mobile-nav-icon" aria-hidden="true"><i/><i/><i/></span><span>Subjects</span></button>
         <div className={`subject-dropdown ${mobileNavOpen ? 'open' : ''}`} id="subject-menu">
           {subjects.map((subject) => <span className="subject-item" key={subject.slug}><button className={`subject-tab ${subject.slug === activeSubject ? 'active' : ''}`} onClick={() => { setActiveSubject(subject.slug); setMobileNavOpen(false); }}>{subject.name}</button><button className="delete-subject" onClick={() => { setMobileNavOpen(false); deleteSubject(subject); }} aria-label={`Delete ${subject.name} subject`} title="Delete subject">×</button></span>)}
           <button className="subject-add" onClick={() => { setSubjectError(''); setSubjectDialog(true); setMobileNavOpen(false); }}><span>+</span> Add more</button>
+          <div className="dropdown-page-links"><a className="dropdown-page-link" href="/html-library">HTML files <span aria-hidden="true">↗</span></a><a className="dropdown-page-link" href="/import-guide">Import guide <span aria-hidden="true">↗</span></a></div>
         </div>
       </nav>
 
