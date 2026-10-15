@@ -18,6 +18,12 @@ function isPlainObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
+function hasValidOptionalDate(value) {
+  return value === undefined || value === null || (
+    typeof value === 'string' && value.length <= 64 && !Number.isNaN(Date.parse(value))
+  );
+}
+
 function validateBackup(backup) {
   if (!isPlainObject(backup) || backup.format !== 'enotes-backup' || backup.version !== 1) {
     return 'This is not a supported ENotes backup file.';
@@ -41,6 +47,15 @@ function validateBackup(backup) {
     }
     if (subjectSlugs.has(slug)) return `The backup contains duplicate subject “${slug}”.`;
     subjectSlugs.add(slug);
+    if (subject.createdAt !== undefined && !hasValidOptionalDate(subject.createdAt)) {
+      return `Subject “${slug}” has an invalid creation date.`;
+    }
+    if (subject.order !== undefined && (!Number.isInteger(subject.order) || subject.order < 0)) {
+      return `Subject “${slug}” has an invalid order value.`;
+    }
+    if (subject.file !== undefined && (typeof subject.file !== 'string' || subject.file.length > 256)) {
+      return `Subject “${slug}” has an invalid file reference.`;
+    }
     if (subject.nextNumber !== undefined && (!Number.isInteger(subject.nextNumber) || subject.nextNumber < 1)) {
       return `Subject “${slug}” has an invalid next note number.`;
     }
@@ -62,7 +77,8 @@ function validateBackup(backup) {
     const id = `${note.subject}:${note.number}`;
     if (noteIds.has(id)) return `The backup contains duplicate note ${id}.`;
     noteIds.add(id);
-    if (note.saved !== undefined && typeof note.saved !== 'string') return `Note ${id} has an invalid saved timestamp.`;
+    if (note.saved !== undefined && (typeof note.saved !== 'string' || note.saved.length > 100)) return `Note ${id} has an invalid saved timestamp.`;
+    if (note.createdAt !== undefined && !hasValidOptionalDate(note.createdAt)) return `Note ${id} has an invalid creation date.`;
   }
 
   return null;
