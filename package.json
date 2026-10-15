@@ -10,7 +10,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "migrate:notes": "node scripts/migrate-notes.mjs"
+    "migrate:notes": "node scripts/migrate-notes.mjs",
+    "access:setup": "node scripts/set-access-key.mjs"
   },
   "dependencies": {
     "mongodb": "^6.21.0",
