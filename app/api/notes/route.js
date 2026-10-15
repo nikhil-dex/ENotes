@@ -67,6 +67,37 @@ export async function POST(request) {
   }
 }
 
+export async function PUT(request) {
+  try {
+    const data = await request.json();
+    const slug = String(data.subject || 'linux');
+    const number = Number(data.number);
+    const heading = String(data.heading || '').trim();
+    const answer = String(data.answer || '').trim();
+    if (!Number.isInteger(number) || number < 1) return json({ error: 'Choose a valid note.' }, 400);
+    if (!heading || !answer || heading.length > 160 || answer.length > 10000) {
+      return json({ error: 'Add a heading and answer within the allowed length.' }, 400);
+    }
+
+    const db = await getDatabase();
+    const result = await db.collection('notes').findOneAndUpdate(
+      { _id: `${slug}:${number}`, subject: slug },
+      { $set: {
+        heading: heading.replace(/[\r\n]+/g, ' '),
+        answer: answer.replace(/\r\n/g, '\n'),
+        saved: savedTime(),
+        updatedAt: new Date(),
+      } },
+      { returnDocument: 'after', includeResultMetadata: false },
+    );
+    if (!result) return json({ error: 'Note not found.' }, 404);
+    return json(result);
+  } catch (error) {
+    console.error('PUT /api/notes failed:', error);
+    return json({ error: 'Could not update this note.' }, 500);
+  }
+}
+
 export async function DELETE(request) {
   try {
     const url = new URL(request.url);

@@ -53,6 +53,7 @@ export default function HomePage() {
   const [query, setQuery] = useState('');
   const [theme, setTheme] = useState('light');
   const [noteDialog, setNoteDialog] = useState(false);
+  const [editingNote, setEditingNote] = useState(null);
   const [subjectDialog, setSubjectDialog] = useState(false);
   const [readerNote, setReaderNote] = useState(null);
   const [studyOpen, setStudyOpen] = useState(false);
@@ -136,13 +137,23 @@ export default function HomePage() {
     event.preventDefault(); setFormError(''); setSaving(true);
     try {
       const note = await responseJson(await fetch('/api/notes', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ heading, answer, subject: activeSubject }),
+        method: editingNote ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ heading, answer, subject: activeSubject, ...(editingNote ? { number: editingNote.number } : {}) }),
       }));
-      setNotes((current) => [...current, note]);
-      setHeading(''); setAnswer(''); setPreview(false); setNoteDialog(false);
+      if (editingNote) {
+        setNotes((current) => current.map((item) => item.number === note.number ? note : item));
+        setReaderNote((current) => current?.number === note.number ? note : current);
+      } else {
+        setNotes((current) => [...current, note]);
+      }
+      setHeading(''); setAnswer(''); setPreview(false); setNoteDialog(false); setEditingNote(null);
     } catch (error) { setFormError(error.message); }
     finally { setSaving(false); }
+  }
+
+  function editNote(note) {
+    setEditingNote(note); setHeading(note.heading); setAnswer(note.answer);
+    setPreview(false); setFormError(''); setNoteDialog(true);
   }
 
   async function createSubject(event) {
@@ -238,7 +249,7 @@ export default function HomePage() {
     <main className="shell">
       <header className="topbar">
         <a className="brand" href="/" aria-label="Notes dashboard home"><span className="brand-mark">N</span><span>Study<span className="brand-light">Notes</span></span></a>
-        <div className="topbar-right"><button className="theme-button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>{theme === 'dark' ? '☼' : '◐'} <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span></button><span className="status-dot"/><span>{active?.file || 'MongoDB'}</span></div>
+        <div className="topbar-right"><a className="import-guide-link" href="/import-guide">Import guide</a><button className="theme-button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>{theme === 'dark' ? '☼' : '◐'} <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span></button><span className="status-dot"/><span>{active?.file || 'MongoDB'}</span></div>
       </header>
 
       <nav className="subject-nav" aria-label="Note subjects">
@@ -248,22 +259,22 @@ export default function HomePage() {
 
       <section className="intro">
         <div><p className="eyebrow">YOUR PERSONAL KNOWLEDGE BASE</p><h1>{active?.name || 'Your'} notes<span className="period">.</span></h1><p className="subtitle">A clear place for the commands, concepts, and things you learn.</p></div>
-        <div className="intro-actions"><button className="study-button" onClick={startStudy} disabled={!notes.length}><span aria-hidden="true">◉</span> Study notes</button><button className="add-button" onClick={() => { setFormError(''); setNoteDialog(true); }}><span aria-hidden="true">+</span> Add a note</button></div>
+        <div className="intro-actions"><button className="study-button" onClick={startStudy} disabled={!notes.length}><span aria-hidden="true">◉</span> Study notes</button><button className="add-button" onClick={() => { setEditingNote(null); setHeading(''); setAnswer(''); setFormError(''); setNoteDialog(true); }}><span aria-hidden="true">+</span> Add a note</button></div>
       </section>
 
       <section className="stats" aria-label="Note statistics"><div className="stat"><span className="stat-number">{String(notes.length).padStart(2, '0')}</span><span className="stat-label">TOTAL NOTES</span></div><div className="stat-divider"/><div className="stat"><span className="stat-number">{String(subjects.length).padStart(2, '0')}</span><span className="stat-label">SUBJECTS</span></div><div className="stat-spacer"/><div className="search-wrap"><span aria-hidden="true">⌕</span><input type="search" placeholder="Search your notes…" aria-label="Search notes" value={query} onChange={(event) => setQuery(event.target.value)}/></div></section>
 
       <section className="notes-section"><div className="section-heading"><div><p className="eyebrow">THE LIBRARY</p><h2>All notes <span className="count-pill">{shownNotes.length}</span></h2></div><span className="sort-label">LATEST FIRST <span aria-hidden="true">↕</span></span></div>
-        {shownNotes.length ? <div className="notes-grid">{shownNotes.map((note) => <article className="note-card" key={note.number}><button className="card-open" onClick={() => setReaderNote(note)} aria-label={`Open note: ${note.heading}`}><span className="card-top"><span className="note-index">NO. {String(note.number).padStart(2, '0')}</span><span className="note-mark" aria-hidden="true">↗</span></span><span className="note-title">{note.heading}</span><span className="note-preview">{note.answer}</span><span className="card-bottom">◷ <span>{note.saved}</span></span></button><button className="delete-note" onClick={() => deleteNote(note)} aria-label={`Delete note: ${note.heading}`} title="Delete note">×</button></article>)}</div> : <div className="empty-state"><span className="empty-icon">⌕</span><h3>{query ? 'No notes found' : 'Start your collection'}</h3><p>{query ? 'Try another search, or add a new note.' : 'Add a note to this subject, then come back to study it.'}</p></div>}
+        {shownNotes.length ? <div className="notes-grid">{shownNotes.map((note) => <article className="note-card" key={note.number}><button className="card-open" onClick={() => setReaderNote(note)} aria-label={`Open note: ${note.heading}`}><span className="card-top"><span className="note-index">NO. {String(note.number).padStart(2, '0')}</span><span className="note-mark" aria-hidden="true">↗</span></span><span className="note-title">{note.heading}</span><span className="note-preview">{note.answer}</span><span className="card-bottom">◷ <span>{note.saved}</span></span></button><button className="edit-note" onClick={() => editNote(note)} aria-label={`Edit note: ${note.heading}`} title="Edit note">✎</button><button className="delete-note" onClick={() => deleteNote(note)} aria-label={`Delete note: ${note.heading}`} title="Delete note">×</button></article>)}</div> : <div className="empty-state"><span className="empty-icon">⌕</span><h3>{query ? 'No notes found' : 'Start your collection'}</h3><p>{query ? 'Try another search, or add a new note.' : 'Add a note to this subject, then come back to study it.'}</p></div>}
       </section>
       <footer><span>Built for learning, one note at a time.</span><span>MONGODB · SUBJECT BASED</span></footer>
 
       {formError && !noteDialog && !subjectDialog && <p className="page-error" role="alert">{formError}</p>}
 
-      {noteDialog && <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setNoteDialog(false); }}><section className="dialog" role="dialog" aria-modal="true" aria-labelledby="formTitle"><button className="close-button" onClick={() => setNoteDialog(false)} aria-label="Close form">×</button><p className="eyebrow">GROW YOUR LIBRARY</p><h2 id="formTitle">Add a note<span className="period">.</span></h2><p className="form-subtitle">Give it a clear heading and capture what you learned.</p>
+      {noteDialog && <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setNoteDialog(false); }}><section className="dialog" role="dialog" aria-modal="true" aria-labelledby="formTitle"><button className="close-button" onClick={() => setNoteDialog(false)} aria-label="Close form">×</button><p className="eyebrow">{editingNote ? `EDIT NOTE ${String(editingNote.number).padStart(2, '0')}` : 'GROW YOUR LIBRARY'}</p><h2 id="formTitle">{editingNote ? 'Edit note' : 'Add a note'}<span className="period">.</span></h2><p className="form-subtitle">{editingNote ? 'Update the heading or answer. Its serial number will stay the same.' : 'Give it a clear heading and capture what you learned.'}</p>
         <form onSubmit={saveNote}><label htmlFor="heading">HEADING</label><input id="heading" maxLength={160} placeholder="e.g. What does chmod do?" value={heading} onChange={(event) => setHeading(event.target.value)} required/><div className="label-row"><label htmlFor="answer">ANSWER</label><span>Markdown is okay</span></div><div className="editor-toolbar" aria-label="Answer formatting"><button type="button" onClick={() => insertFormatting('bold')} title="Bold">B</button><button type="button" onClick={() => insertFormatting('code')} title="Inline code">&lt;/&gt;</button><button type="button" onClick={() => insertFormatting('list')} title="Bullet list">• List</button><button type="button" onClick={() => insertFormatting('codeblock')} title="Code block">{'{ }'}</button><span>Formatting shortcuts</span></div><div className="editor-tabs"><button type="button" className={!preview ? 'active' : ''} onClick={() => setPreview(false)}>Write</button><button type="button" className={preview ? 'active' : ''} onClick={() => setPreview(true)}>Preview</button></div>
           {!preview ? <textarea ref={answerRef} id="answer" rows={6} maxLength={10000} placeholder="Write your explanation here…" value={answer} onChange={(event) => setAnswer(event.target.value)} required/> : <div className="answer-preview">{answer ? <div dangerouslySetInnerHTML={{ __html: markdownHtml(answer) }}/> : <p className="preview-placeholder">Nothing to preview yet.</p>}</div>}
-          {formError && <p className="form-error" role="alert">{formError}</p>}<button className="submit-button" type="submit" disabled={saving}><span>{saving ? 'Saving…' : 'Save note'}</span><span aria-hidden="true">→</span></button></form>
+          {formError && <p className="form-error" role="alert">{formError}</p>}<button className="submit-button" type="submit" disabled={saving}><span>{saving ? 'Saving…' : editingNote ? 'Save changes' : 'Save note'}</span><span aria-hidden="true">→</span></button></form>
       </section></div>}
 
       {subjectDialog && <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setSubjectDialog(false); }}><section className="dialog subject-dialog" role="dialog" aria-modal="true" aria-labelledby="subjectFormTitle"><button className="close-button" onClick={() => setSubjectDialog(false)} aria-label="Close form">×</button><p className="eyebrow">MAKE ROOM TO LEARN</p><h2 id="subjectFormTitle">Add a subject<span className="period">.</span></h2><p className="form-subtitle">Create a separate notes collection for another topic.</p><form onSubmit={createSubject}><label htmlFor="subjectName">SUBJECT NAME</label><input id="subjectName" maxLength={40} placeholder="e.g. Networking" value={subjectName} onChange={(event) => setSubjectName(event.target.value)} required/>{subjectError && <p className="form-error" role="alert">{subjectError}</p>}<button className="submit-button" type="submit" disabled={saving}><span>{saving ? 'Creating…' : 'Create subject'}</span><span aria-hidden="true">→</span></button></form></section></div>}
