@@ -76,8 +76,8 @@ export async function POST(request) {
         _id: `${slug}:${number}`,
         subject: slug,
         number,
-        heading: heading.replace(/[\\r\\n]+/g, ' '),
-        answer: answer.replace(/\\r\\n/g, '\\n'),
+        heading: heading.replace(/[\r\n]+/g, ' '),
+        answer: answer.replace(/\r\n/g, '\n'),
         saved: savedTime(),
         createdAt: new Date(),
       };
