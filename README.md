@@ -203,7 +203,11 @@ Do not expose database credentials in client-side code or commit them to source 
 
 ## Security notes
 
-The dashboard uses a shared access string, not individual user accounts. Anyone who knows the string can access the same notes. Keep the string and session-signing secret private; use a strong unique value and keep MongoDB credentials server-side.
+The dashboard uses a shared access string, not individual user accounts. Anyone who knows the string can access the same notes. Successful access sessions expire after one hour, and the dashboard has a **Lock** control to clear the current browser's session cookie.
+
+Keep the access string and `ENOTES_SESSION_SECRET` private; use a strong unique session secret (at least 32 characters) and keep MongoDB credentials server-side. Rotating `ENOTES_SESSION_SECRET` invalidates all existing sessions. If you change the shared access string in MongoDB, also rotate `ENOTES_SESSION_SECRET` in your hosting environment and redeploy to force everyone to unlock again. The shared-key setup script is for trusted local use only; do not expose its generated hash/configuration or the original access string in client code.
+
+The proxy protects application pages and API routes unless a route is explicitly public. Security response headers are added at the proxy layer. Keep `/api/access/verify` and `/api/access/logout` as the only public access API endpoints.
 
 Also restrict MongoDB network access and database permissions appropriately.
 
