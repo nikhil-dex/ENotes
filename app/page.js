@@ -70,6 +70,7 @@ export default function HomePage() {
   const [studyRevealed, setStudyRevealed] = useState(false);
   const [learnedNotes, setLearnedNotes] = useState(new Set());
   const answerRef = useRef(null);
+  const subjectNavRef = useRef(null);
 
   const active = subjects.find((subject) => subject.slug === activeSubject);
   const shownNotes = useMemo(() => notes
@@ -123,6 +124,15 @@ export default function HomePage() {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
+
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    function closeOnOutsideClick(event) {
+      if (!subjectNavRef.current?.contains(event.target)) setMobileNavOpen(false);
+    }
+    document.addEventListener('pointerdown', closeOnOutsideClick);
+    return () => document.removeEventListener('pointerdown', closeOnOutsideClick);
+  }, [mobileNavOpen]);
 
   function saveLearned(next) {
     setLearnedNotes(next);
@@ -248,17 +258,18 @@ export default function HomePage() {
 
   return (
     <main className="shell">
-      <header className={`topbar dashboard-topbar ${mobileNavOpen ? 'nav-open' : ''}`}>
+      <header className="topbar">
         <a className="brand" href="/" aria-label="Notes dashboard home"><span className="brand-mark">N</span><span>Study<span className="brand-light">Notes</span></span></a>
-        <button className="mobile-nav-toggle" type="button" aria-controls="dashboard-navigation" aria-expanded={mobileNavOpen} onClick={() => setMobileNavOpen((open) => !open)}><span className="mobile-nav-icon" aria-hidden="true"><i/><i/><i/></span><span>{mobileNavOpen ? 'Close' : 'Menu'}</span></button>
-        <div className={`dashboard-nav-panel ${mobileNavOpen ? 'open' : ''}`} id="dashboard-navigation">
-          <div className="topbar-right"><a className="import-guide-link" href="/html-library">HTML files</a><a className="import-guide-link" href="/import-guide">Import guide</a><button className="theme-button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>{theme === 'dark' ? '☼' : '◐'} <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span></button><span className="status-dot"/><span>{active?.file || 'MongoDB'}</span></div>
-          <nav className="subject-nav" aria-label="Note subjects">
-            {subjects.map((subject) => <span className="subject-item" key={subject.slug}><button className={`subject-tab ${subject.slug === activeSubject ? 'active' : ''}`} onClick={() => { setActiveSubject(subject.slug); setMobileNavOpen(false); }}>{subject.name}</button><button className="delete-subject" onClick={() => deleteSubject(subject)} aria-label={`Delete ${subject.name} subject`} title="Delete subject">×</button></span>)}
-            <button className="subject-add" onClick={() => { setSubjectError(''); setSubjectDialog(true); setMobileNavOpen(false); }}><span>+</span> Add more</button>
-          </nav>
-        </div>
+        <div className="topbar-right"><a className="import-guide-link" href="/html-library">HTML files</a><a className="import-guide-link" href="/import-guide">Import guide</a><button className="theme-button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>{theme === 'dark' ? '☼' : '◐'} <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span></button><span className="status-dot"/><span>{active?.file || 'MongoDB'}</span></div>
       </header>
+
+      <nav className="subject-nav" aria-label="Note subjects" ref={subjectNavRef}>
+        <button className="mobile-nav-toggle" type="button" aria-controls="subject-menu" aria-expanded={mobileNavOpen} aria-label={mobileNavOpen ? 'Close subject menu' : 'Open subject menu'} onClick={() => setMobileNavOpen((open) => !open)}><span className="mobile-nav-icon" aria-hidden="true"><i/><i/><i/></span><span>Subjects</span></button>
+        <div className={`subject-dropdown ${mobileNavOpen ? 'open' : ''}`} id="subject-menu">
+          {subjects.map((subject) => <span className="subject-item" key={subject.slug}><button className={`subject-tab ${subject.slug === activeSubject ? 'active' : ''}`} onClick={() => { setActiveSubject(subject.slug); setMobileNavOpen(false); }}>{subject.name}</button><button className="delete-subject" onClick={() => { setMobileNavOpen(false); deleteSubject(subject); }} aria-label={`Delete ${subject.name} subject`} title="Delete subject">×</button></span>)}
+          <button className="subject-add" onClick={() => { setSubjectError(''); setSubjectDialog(true); setMobileNavOpen(false); }}><span>+</span> Add more</button>
+        </div>
+      </nav>
 
       <section className="intro">
         <div><p className="eyebrow">YOUR PERSONAL KNOWLEDGE BASE</p><h1>{active?.name || 'Your'} notes<span className="period">.</span></h1><p className="subtitle">A clear place for the commands, concepts, and things you learn.</p></div>
