@@ -110,3 +110,16 @@ button{font-family:inherit}
 @media(max-width:700px){.subject-nav{position:relative;display:flex;overflow:visible;padding:12px 0 0}.mobile-nav-toggle{display:flex;align-items:center;gap:8px;padding:8px 11px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);font:500 12px var(--sans);cursor:pointer}.mobile-nav-toggle:focus-visible{outline:3px solid #8caf98;outline-offset:2px}.mobile-nav-icon{width:15px;display:grid;gap:3px}.mobile-nav-icon i{height:1.5px;width:15px;border-radius:2px;background:currentColor}.subject-dropdown{display:none;position:absolute;top:calc(100% + 7px);left:0;z-index:7;min-width:min(100%,340px);max-height:65vh;overflow:auto;padding:8px;background:var(--paper);border:1px solid var(--line);border-radius:8px;box-shadow:0 14px 32px #10201624}.subject-dropdown.open{display:flex;flex-direction:column;align-items:stretch;gap:3px}.subject-dropdown .subject-item{width:100%;justify-content:space-between}.subject-dropdown .subject-tab{width:100%;padding:10px 34px 10px 12px;text-align:left}.subject-dropdown .subject-add{width:100%;padding:10px 12px;text-align:left}.subject-dropdown .delete-subject{right:5px}.subject-dropdown .subject-item+.subject-item{border-top:1px solid var(--line)}[data-theme="dark"] .subject-dropdown{box-shadow:0 14px 32px #0008}}
 .dropdown-page-links{display:none}
 @media(max-width:700px){.topbar-right>.import-guide-link{display:none}.dropdown-page-links{display:flex;flex-direction:column;border-top:1px solid var(--line);margin-top:5px;padding-top:5px}.dropdown-page-link{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:5px;color:var(--green);font:500 12px var(--sans);text-decoration:none}.dropdown-page-link:hover{background:#edf3ee}[data-theme="dark"] .dropdown-page-link:hover{background:#29382e}}
+
+
+/* Backup and restore controls */
+.backup-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px 0 0}
+.backup-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.backup-button{display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:8px 11px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);font:500 11px var(--sans);cursor:pointer}
+.backup-button:hover:not(:disabled){border-color:var(--green);color:var(--green)}
+.backup-button.primary{background:var(--green);border-color:var(--green);color:#fff}
+.backup-button:disabled{opacity:.6;cursor:wait}
+.backup-file-input{display:none}
+.backup-help,.backup-message{margin:0;color:var(--muted);font:11px/1.5 var(--sans)}
+.backup-message{flex-basis:100%;color:var(--green);overflow-wrap:anywhere}
+@media(max-width:700px){.backup-toolbar{align-items:flex-start;padding-top:12px}.backup-help{flex-basis:100%}.backup-actions{width:100%}.backup-button{flex:1}}
