@@ -45,11 +45,11 @@ export async function POST(request) {
     const subject = await db.collection('subjects').findOneAndUpdate(
       { _id: slug },
       { $inc: { nextNumber: 1 } },
-      { returnDocument: 'before' },
+      { returnDocument: 'before', includeResultMetadata: false },
     );
     if (!subject) return json({ error: 'Choose a valid subject.' }, 404);
 
-    const number = subject.nextNumber || 1;
+    const number = Number.isInteger(subject.nextNumber) && subject.nextNumber > 0 ? subject.nextNumber : 1;
     const note = {
       _id: `${slug}:${number}`,
       subject: slug,
@@ -62,8 +62,11 @@ export async function POST(request) {
     await db.collection('notes').insertOne(note);
     return json(note, 201);
   } catch (error) {
-    console.error('POST /api/notes failed:', error);
-    return json({ error: 'Could not save this note.' }, 500);
+    console.error('POST /api/notes failed:', { name: error?.name, message: error?.message, code: error?.code });
+    if (error?.code === 11000) {
+      return json({ error: 'A note-number conflict occurred. Refresh the page and try saving again.' }, 409);
+    }
+    return json({ error: 'Could not save this note. Please refresh and try again; if it persists, check the deployment logs.' }, 500);
   }
 }
 
