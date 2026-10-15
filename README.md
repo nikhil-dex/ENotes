@@ -124,6 +124,21 @@ MONGODB_DB=linux_notes
 
 Replace the placeholders with your own database credentials and cluster host. **Never commit real credentials or your `.env.local` file.**
 
+## Shared access-string protection
+
+ENotes uses a single shared access string instead of individual user accounts. The access page is available at `/access`; the app checks the submitted string on the server and grants a signed, HTTP-only session cookie for seven days. Application pages and API routes are protected by `proxy.js`.
+
+### Configure the access string
+
+1. Copy `.env.example` to `.env.local` and set `MONGODB_URI` and `MONGODB_DB`.
+2. Set `ENOTES_ACCESS_KEY` to a strong secret string of at least 12 characters. Do not commit the real value.
+3. Generate a separate session-signing secret (at least 32 characters). For example, run `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"` and put the output in `ENOTES_SESSION_SECRET`.
+4. Run `npm run access:setup`. This stores a salted scrypt hash of the access string in the MongoDB `settings` collection; it does not store the plaintext access string.
+5. Keep `ENOTES_SESSION_SECRET` configured in the deployment environment. You can remove `ENOTES_ACCESS_KEY` from the environment after setup; keep it only where you need to rotate the key.
+6. Configure the same MongoDB database and `ENOTES_SESSION_SECRET` in your hosting provider. If you change the access string, update `ENOTES_ACCESS_KEY` locally and run `npm run access:setup` again against the intended database.
+
+The access string is shared by everyone who has it; this is not individual-user authentication. Anyone with the string can access the same notes, and access is not tied to a named person. Use a long, unique secret and keep the deployment protected. The session cookie expires after seven days.
+
 ## Import existing notes
 
 The initial Markdown content is kept in `notes/`, and `subjects.json` defines the starter subjects and their note-number metadata.
