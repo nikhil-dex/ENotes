@@ -18,7 +18,8 @@ A subject-based study notes application built with **Next.js**, **React**, and *
 
 ## Features
 
-- **Subject-based organization** — create, switch between, and delete subjects.
+- **Home hub** — open the Notes library, Settings, HTML resources, or the import guide from a dedicated landing page.
+- **Subject-based organization** — switch between subjects in the Notes library and create or delete subjects from Settings.
 - **Note management** — create, edit, read, and delete notes within a subject.
 - **Markdown-friendly writing** — write note content with supported Markdown formatting and preview it before saving.
 - **Focused reading** — open notes in a full-screen reader.
@@ -27,6 +28,7 @@ A subject-based study notes application built with **Next.js**, **React**, and *
 - **Light and dark themes** — switch themes, with the selected theme saved in the browser.
 - **Remembered study state** — the selected subject and learned-note progress are stored locally in the browser.
 - **MongoDB persistence** — subjects and notes are stored in MongoDB.
+- **Dedicated Settings page** — manage subjects, choose a theme, and access JSON backup and restore outside the note-taking workspace.
 - **JSON backup and restore** — download a full backup and safely merge missing records from a validated backup without overwriting existing notes.
 - **Starter note import** — migrate the Markdown files in `notes/` into MongoDB using the included script.
 - **Additional learning resources** — includes HTML library and import-guide pages.
@@ -157,13 +159,15 @@ Back up your database before making manual data changes. The migration script is
 ```text
 ENotes/
 ├── app/
+│   ├── notes/             # Notes workspace
+│   ├── settings/          # Subject management, appearance, backup/restore
 │   ├── api/
 │   │   ├── notes/          # Note API routes
 │   │   └── subjects/       # Subject API routes
 │   ├── html-library/       # HTML learning-resource page
 │   ├── import-guide/       # Note import guide
 │   ├── layout.js           # Root application layout
-│   └── page.js             # Main notes dashboard
+│   └── page.js             # Home hub / app launcher
 ├── lib/
 │   ├── access-session.js   # Signed session creation and validation
 │   ├── backup-validation.js # Backup schema validation
