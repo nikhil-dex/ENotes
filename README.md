@@ -114,6 +114,8 @@ Set these variables in `.env.local` for local development and in your hosting pr
 |---|---|---|
 | `MONGODB_URI` | Yes | MongoDB connection URI for your cluster |
 | `MONGODB_DB` | No | Database name; defaults to `linux_notes` |
+| `ENOTES_ACCESS_KEY` | Setup only | Shared access string used by `npm run access:setup` to generate a hashed MongoDB document |
+| `ENOTES_SESSION_SECRET` | Yes for protected access | Separate random secret used to sign session cookies; keep stable and private |
 
 Example configuration:
 
@@ -133,9 +135,10 @@ ENotes uses a single shared access string instead of individual user accounts. T
 1. Copy `.env.example` to `.env.local` and set `MONGODB_URI` and `MONGODB_DB`.
 2. Set `ENOTES_ACCESS_KEY` to a strong secret string of at least 12 characters. Do not commit the real value.
 3. Generate a separate session-signing secret (at least 32 characters). For example, run `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"` and put the output in `ENOTES_SESSION_SECRET`.
-4. Run `npm run access:setup`. This stores a salted scrypt hash of the access string in the MongoDB `settings` collection; it does not store the plaintext access string.
-5. Keep `ENOTES_SESSION_SECRET` configured in the deployment environment. You can remove `ENOTES_ACCESS_KEY` from the environment after setup; keep it only where you need to rotate the key.
-6. Configure the same MongoDB database and `ENOTES_SESSION_SECRET` in your hosting provider. If you change the access string, update `ENOTES_ACCESS_KEY` locally and run `npm run access:setup` again against the intended database.
+4. Run `npm run access:setup`. This **does not connect to MongoDB**. It prints a MongoDB Extended JSON document containing a salted scrypt hash of your access string.
+5. In MongoDB Compass or Atlas Data Explorer, open the database named by `MONGODB_DB` (default: `linux_notes`) and the `settings` collection. Insert the generated document. If `settings` does not exist, create it first. If a document with `_id: "shared-access-key"` already exists, update/replace that document instead of inserting a duplicate.
+6. Configure `MONGODB_URI`, `MONGODB_DB`, and `ENOTES_SESSION_SECRET` in Vercel. The database you manually updated must be the same database your Vercel deployment uses. Keep `ENOTES_SESSION_SECRET` stable between deployments. You can remove `ENOTES_ACCESS_KEY` from Vercel after generating the document; it is not used by the runtime verification endpoint.
+7. To rotate the access string, change `ENOTES_ACCESS_KEY` in your local `.env.local`, run `npm run access:setup` again, and replace the MongoDB `shared-access-key` document with the newly generated document.
 
 The access string is shared by everyone who has it; this is not individual-user authentication. Anyone with the string can access the same notes, and access is not tied to a named person. Use a long, unique secret and keep the deployment protected. The session cookie expires after seven days.
 
@@ -200,7 +203,7 @@ Do not expose database credentials in client-side code or commit them to source 
 
 ## Security notes
 
-**The current dashboard does not implement user authentication.** Anyone who can reach an unprotected deployment may be able to read or modify its notes. For a personal deployment, enable hosting-provider access protection (such as Vercel Deployment Protection) or add proper authentication and authorization before making the application publicly accessible.
+The dashboard uses a shared access string, not individual user accounts. Anyone who knows the string can access the same notes. Keep the string and session-signing secret private; use a strong unique value and keep MongoDB credentials server-side.
 
 Also restrict MongoDB network access and database permissions appropriately.
 
