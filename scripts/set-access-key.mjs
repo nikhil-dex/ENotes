@@ -1,18 +1,12 @@
 import { randomBytes, scrypt as scryptCallback } from 'node:crypto';
 import { promisify } from 'node:util';
 import { loadEnvConfig } from '@next/env';
-import { MongoClient } from 'mongodb';
 
 loadEnvConfig(process.cwd());
 
 const scrypt = promisify(scryptCallback);
-const uri = process.env.MONGODB_URI;
 const accessKey = process.env.ENOTES_ACCESS_KEY;
 
-if (!uri) {
-  console.error('Missing MONGODB_URI. Set it in .env.local before configuring the access key.');
-  process.exit(1);
-}
 if (!accessKey || accessKey.length < 12) {
   console.error('Set ENOTES_ACCESS_KEY in .env.local to a string of at least 12 characters.');
   process.exit(1);
@@ -20,28 +14,20 @@ if (!accessKey || accessKey.length < 12) {
 
 const salt = randomBytes(16);
 const keyHash = await scrypt(accessKey, salt, 64);
-const client = new MongoClient(uri, { maxPoolSize: 2, appName: 'enotes-access-key-setup' });
+const document = {
+  _id: 'shared-access-key',
+  salt: salt.toString('base64'),
+  keyHash: keyHash.toString('base64'),
+  updatedAt: { $date: new Date().toISOString() },
+  scheme: 'scrypt',
+};
 
-try {
-  await client.connect();
-  const db = client.db(process.env.MONGODB_DB || 'linux_notes');
-  await db.collection('settings').updateOne(
-    { _id: 'shared-access-key' },
-    {
-      $set: {
-        salt: salt.toString('base64'),
-        keyHash: keyHash.toString('base64'),
-        updatedAt: new Date(),
-        scheme: 'scrypt',
-      },
-    },
-    { upsert: true },
-  );
-  console.log('ENotes shared access key saved as a salted hash in MongoDB.');
-  console.log('Remove ENOTES_ACCESS_KEY from .env.local after setup if you do not need to rotate the key again.');
-} catch (error) {
-  console.error('Could not save the access key:', error.message);
-  process.exitCode = 1;
-} finally {
-  await client.close();
-}
+console.log('\nCopy the following MongoDB Extended JSON document into your database:');
+console.log('Database: value of MONGODB_DB (defaults to linux_notes)');
+console.log('Collection: settings');
+console.log('\n--- DOCUMENT START ---');
+console.log(JSON.stringify(document, null, 2));
+console.log('--- DOCUMENT END ---\n');
+console.log('In MongoDB Compass, open the settings collection and insert this document.');
+console.log('If a document with _id "shared-access-key" already exists, replace/update that document instead of inserting a duplicate.');
+console.log('This script only generates the document locally. It does not connect to MongoDB.');
