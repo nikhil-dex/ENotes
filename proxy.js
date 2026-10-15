@@ -28,6 +28,17 @@ function withSecurityHeaders(response) {
 
 export function proxy(request) {
   const { pathname } = request.nextUrl;
+  // Reject cross-origin browser mutations. Requests without Origin (for example,
+  // trusted server-to-server calls) remain governed by the session gate.
+  if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method)) {
+    const origin = request.headers.get('origin');
+    if (origin && origin !== request.nextUrl.origin) {
+      return withSecurityHeaders(NextResponse.json(
+        { error: 'Cross-origin requests are not allowed.' },
+        { status: 403 },
+      ));
+    }
+  }
   const publicPaths = new Set([
     '/access',
     '/api/access/verify',
