@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 const scrypt = promisify(scryptCallback);
 const COOKIE_NAME = 'enotes_access';
-const SESSION_SECONDS = 60 * 60 * 24 * 7;
+const SESSION_SECONDS = 60 * 60;
 
 function json(data, status = 200) {
   return Response.json(data, { status, headers: { 'Cache-Control': 'no-store' } });
