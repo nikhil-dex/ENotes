@@ -65,6 +65,9 @@ export default function HomePage() {
   const [subjectError, setSubjectError] = useState('');
   const [preview, setPreview] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [backupBusy, setBackupBusy] = useState(false);
+  const [backupMessage, setBackupMessage] = useState('');
+  const backupFileRef = useRef(null);
   const [studyDeck, setStudyDeck] = useState([]);
   const [studyIndex, setStudyIndex] = useState(0);
   const [studyRevealed, setStudyRevealed] = useState(false);
@@ -137,6 +140,75 @@ export default function HomePage() {
   function saveLearned(next) {
     setLearnedNotes(next);
     localStorage.setItem(`learnedNotes:${activeSubject}`, JSON.stringify([...next]));
+  }
+
+  async function downloadBackup() {
+    if (backupBusy) return;
+    setBackupBusy(true);
+    setBackupMessage('');
+    try {
+      const response = await fetch('/api/backup', { cache: 'no-store' });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Could not download the backup.');
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `enotes-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      setBackupMessage('Backup downloaded. Store it somewhere private.');
+    } catch (error) {
+      setBackupMessage(error.message || 'Backup download failed.');
+    } finally {
+      setBackupBusy(false);
+    }
+  }
+
+  async function restoreBackup(event) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    setBackupMessage('');
+    if (file.size > 10 * 1024 * 1024) {
+      setBackupMessage('Choose a backup file no larger than 10 MB.');
+      return;
+    }
+    if (!window.confirm('Restore this backup by adding missing subjects and notes? Existing notes will not be overwritten.')) return;
+
+    setBackupBusy(true);
+    try {
+      const raw = await file.text();
+      try {
+        JSON.parse(raw);
+      } catch {
+        throw new Error('That file is not valid JSON.');
+      }
+      const result = await responseJson(await fetch('/api/backup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store',
+        body: raw,
+      }));
+      const refreshedSubjects = await responseJson(await fetch('/api/subjects', { cache: 'no-store' }));
+      setSubjects(refreshedSubjects);
+      const selectedStillExists = refreshedSubjects.some((subject) => subject.slug === activeSubject);
+      const nextSubject = selectedStillExists ? activeSubject : refreshedSubjects[0]?.slug || '';
+      if (nextSubject) {
+        setActiveSubject(nextSubject);
+        const refreshedNotes = await responseJson(await fetch(`/api/notes?subject=${encodeURIComponent(nextSubject)}`, { cache: 'no-store' }));
+        setNotes(refreshedNotes);
+      }
+      setBackupMessage(`Restore complete: ${result.subjectsAdded} subjects added, ${result.notesAdded} notes added, ${result.notesSkipped} existing notes skipped.`);
+    } catch (error) {
+      setBackupMessage(error.message || 'Restore failed.');
+    } finally {
+      setBackupBusy(false);
+    }
   }
 
   async function lockSession() {
@@ -270,6 +342,20 @@ export default function HomePage() {
         <a className="brand" href="/" aria-label="Notes dashboard home"><span className="brand-mark">N</span><span>Study<span className="brand-light">Notes</span></span></a>
         <div className="topbar-right"><a className="import-guide-link" href="/html-library">HTML files</a><a className="import-guide-link" href="/import-guide">Import guide</a><button className="theme-button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>{theme === 'dark' ? '☼' : '◐'} <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span></button><span className="status-dot"/><span>{active?.file || 'MongoDB'}</span><button className="theme-button" type="button" onClick={lockSession} aria-label="Lock ENotes and end this session">Lock</button></div>
       </header>
+
+      <section className="backup-toolbar" aria-label="Backup and restore">
+        <div className="backup-actions">
+          <button type="button" className="backup-button primary" onClick={downloadBackup} disabled={backupBusy}>
+            {backupBusy ? 'Working…' : '↓ Download backup'}
+          </button>
+          <button type="button" className="backup-button" onClick={() => backupFileRef.current?.click()} disabled={backupBusy}>
+            Restore from JSON
+          </button>
+          <input ref={backupFileRef} className="backup-file-input" type="file" accept="application/json,.json" onChange={restoreBackup} aria-label="Choose an ENotes JSON backup" />
+        </div>
+        <p className="backup-help">Restore adds missing records only; it never replaces existing notes.</p>
+        {backupMessage && <p className="backup-message" role="status" aria-live="polite">{backupMessage}</p>}
+      </section>
 
       <nav className="subject-nav" aria-label="Main navigation" ref={subjectNavRef}>
         <button className="mobile-nav-toggle" type="button" aria-controls="subject-menu" aria-expanded={mobileNavOpen} aria-label={mobileNavOpen ? 'Close subject menu' : 'Open subject menu'} onClick={() => setMobileNavOpen((open) => !open)}><span className="mobile-nav-icon" aria-hidden="true"><i/><i/><i/></span><span>Subjects</span></button>
