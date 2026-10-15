@@ -1,0 +1,17 @@
+[
+  {
+    "name": "Linux",
+    "slug": "linux",
+    "file": "lec_1.md"
+  },
+  {
+    "name": "DevOps",
+    "slug": "devops",
+    "file": "devops.md"
+  },
+  {
+    "name": "ML",
+    "slug": "ml",
+    "file": "ml.md"
+  }
+]

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Notes Dashboard</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/extra.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Linux Notes home"><span class="brand-mark">L</span><span>Linux<span class="brand-light">Notes</span></span></a>
+      <div class="topbar-right"><button class="theme-button" id="themeButton" aria-label="Switch to dark mode" title="Toggle dark mode">◐ <span>Dark mode</span></button><span class="status-dot"></span><span id="saveLocation">Saved to lec_1.md</span></div>
+    </header>
+    <nav class="subject-nav" id="subjectNav" aria-label="Note subjects"></nav>
+    <section class="intro">
+      <div><p class="eyebrow">YOUR PERSONAL KNOWLEDGE BASE</p><h1><span id="subjectTitle">Linux</span> notes<span class="period">.</span></h1><p class="subtitle">A clear place for the commands, concepts, and things you learn.</p></div>
+      <button class="add-button" id="addButton"><span aria-hidden="true">+</span> Add a note</button>
+    </section>
+    <section class="stats" aria-label="Note statistics"><div class="stat"><span class="stat-number" id="noteCount">—</span><span class="stat-label">TOTAL NOTES</span></div><div class="stat-divider"></div><div class="stat"><span class="stat-number">01</span><span class="stat-label">COLLECTION</span></div><div class="stat-spacer"></div><div class="search-wrap"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Search your notes…" aria-label="Search notes"></div></section>
+    <section class="notes-section"><div class="section-heading"><div><p class="eyebrow">THE LIBRARY</p><h2>All notes <span id="visibleCount" class="count-pill"></span></h2></div><span class="sort-label">LATEST FIRST <span aria-hidden="true">↕</span></span></div><div class="notes-grid" id="notesGrid" aria-live="polite"></div><div class="empty-state" id="emptyState" hidden><span class="empty-icon">⌕</span><h3>No notes found</h3><p>Try another search, or add a new note.</p></div></section>
+    <footer><span>Built for learning, one note at a time.</span><span>LOCAL · PRIVATE · YOURS</span></footer>
+  </main>
+
+  <div class="modal-backdrop" id="modal" hidden>
+    <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="formTitle">
+      <button class="close-button" id="closeButton" aria-label="Close form">×</button>
+      <p class="eyebrow">GROW YOUR LIBRARY</p><h2 id="formTitle">Add a note<span class="period">.</span></h2><p class="form-subtitle">Give it a clear heading and capture what you learned.</p>
+      <form id="noteForm"><label for="heading">HEADING</label><input id="heading" name="heading" maxlength="160" placeholder="e.g. What does chmod do?" required><div class="label-row"><label for="answer">ANSWER</label><span>Markdown is okay</span></div><textarea id="answer" name="answer" rows="6" maxlength="10000" placeholder="Write your explanation here…" required></textarea><p class="form-error" id="formError" role="alert"></p><button class="submit-button" type="submit"><span>Save note</span><span aria-hidden="true">→</span></button></form>
+    </section>
+  </div>
+  <div class="modal-backdrop" id="subjectModal" hidden>
+    <section class="dialog subject-dialog" role="dialog" aria-modal="true" aria-labelledby="subjectFormTitle">
+      <button class="close-button" id="closeSubjectButton" aria-label="Close form">×</button>
+      <p class="eyebrow">MAKE ROOM TO LEARN</p><h2 id="subjectFormTitle">Add a subject<span class="period">.</span></h2><p class="form-subtitle">Create a separate notes collection for another topic.</p>
+      <form id="subjectForm"><label for="subjectName">SUBJECT NAME</label><input id="subjectName" maxlength="40" placeholder="e.g. Networking" required><p class="form-error" id="subjectError" role="alert"></p><button class="submit-button" type="submit"><span>Create subject</span><span aria-hidden="true">→</span></button></form>
+    </section>
+  </div>
+  <div class="reader-backdrop" id="reader" hidden>
+    <article class="reader-panel" role="dialog" aria-modal="true" aria-labelledby="readerTitle">
+      <div class="reader-toolbar"><span class="reader-kicker" id="readerNumber"></span><button class="close-button reader-close" id="closeReader" aria-label="Close note">×</button></div>
+      <div class="reader-content"><p class="eyebrow" id="readerSubject"></p><h2 id="readerTitle"></h2><div class="reader-meta" id="readerSaved"></div><div class="reader-answer" id="readerAnswer"></div></div>
+    </article>
+  </div>
+  <script src="/app.js"></script>
+</body>
+</html>
