@@ -59,7 +59,6 @@ export default function HomePage() {
   const [studyOpen, setStudyOpen] = useState(false);
   const [heading, setHeading] = useState('');
   const [answer, setAnswer] = useState('');
-  const [subjectName, setSubjectName] = useState('');
   const [formError, setFormError] = useState('');
   const [preview, setPreview] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -79,11 +78,12 @@ export default function HomePage() {
     const storedTheme = localStorage.getItem('theme');
     if (storedTheme === 'dark' || storedTheme === 'light') setTheme(storedTheme);
     const storedSubject = localStorage.getItem('activeSubject');
+    const requestedSubject = new URLSearchParams(window.location.search).get('subject');
     fetch('/api/subjects')
       .then(responseJson)
       .then((items) => {
         setSubjects(items);
-        const preferred = items.find((item) => item.slug === storedSubject) || items[0];
+        const preferred = items.find((item) => item.slug === requestedSubject) || items.find((item) => item.slug === storedSubject) || items[0];
         if (preferred) setActiveSubject(preferred.slug);
       })
       .catch((error) => setFormError(error.message));
@@ -182,15 +182,6 @@ export default function HomePage() {
     } catch (error) { window.alert(error.message); }
   }
 
-  async function deleteSubject(subject) {
-    if (!window.confirm(`Delete ${subject.name} and all its notes? This cannot be undone.`)) return;
-    try {
-      await responseJson(await fetch(`/api/subjects?slug=${encodeURIComponent(subject.slug)}`, { method: 'DELETE' }));
-      const remaining = subjects.filter((item) => item.slug !== subject.slug);
-      setSubjects(remaining);
-      if (activeSubject === subject.slug) setActiveSubject(remaining[0]?.slug || '');
-    } catch (error) { window.alert(error.message); }
-  }
 
   function startStudy() {
     if (!notes.length) return;
