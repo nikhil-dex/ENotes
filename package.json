@@ -2,11 +2,20 @@
   "name": "linux-notes-dashboard",
   "version": "1.0.0",
   "private": true,
-  "description": "A small subject based Markdown notes dashboard for Vercel.",
+  "description": "A subject-based study notes dashboard built with Next.js and MongoDB.",
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "scripts": {
-    "dev": "node server.js"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "migrate:notes": "node scripts/migrate-notes.mjs"
   },
   "dependencies": {
-    "@vercel/blob": "^2.8.2"
+    "mongodb": "^6.21.0",
+    "next": "^16.4.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
   }
 }
