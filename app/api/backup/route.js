@@ -1,4 +1,4 @@
-import { getDatabase } from '../../../../lib/mongodb.js';
+import { getDatabase } from '../../../lib/mongodb.js';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
