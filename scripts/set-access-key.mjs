@@ -8,8 +8,8 @@ loadEnvConfig(process.cwd());
 const scrypt = promisify(scryptCallback);
 const accessKey = process.env.ENOTES_ACCESS_KEY;
 
-if (!accessKey || accessKey.length < 12) {
-  console.error('Set ENOTES_ACCESS_KEY in .env.local to a string of at least 12 characters.');
+if (!accessKey || accessKey.length !== 9) {
+  console.error('Set ENOTES_ACCESS_KEY in .env.local to exactly 9 characters.');
   process.exit(1);
 }
 
