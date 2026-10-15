@@ -42,51 +42,62 @@ export async function POST(request) {
     }
 
     const db = await getDatabase();
-    // Older data or a previous failed save can leave nextNumber behind the
-    // actual notes. Read the highest existing number, then reserve atomically
-    // above both that value and the stored counter.
-    const latestNote = await db.collection('notes')
-      .find({ subject: slug }, { projection: { number: 1 } })
-      .sort({ number: -1 })
-      .limit(1)
-      .next();
-    const nextAfterExisting = Number.isInteger(latestNote?.number)
-      ? latestNote.number + 1
-      : 1;
+    // Reconcile stale counters and retry duplicate-key conflicts. Reservation is
+    // atomic so concurrent saves normally receive distinct numbers; retries recover
+    // from counters that predate the current numbering rules.
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const latestNote = await db.collection('notes')
+        .find({ subject: slug }, { projection: { number: 1 } })
+        .sort({ number: -1 })
+        .limit(1)
+        .next();
+      const nextAfterExisting = Number.isInteger(latestNote?.number)
+        ? latestNote.number + 1
+        : 1;
 
-    const subject = await db.collection('subjects').findOneAndUpdate(
-      { _id: slug },
-      [{
-        $set: {
-          nextNumber: {
-            $add: [
-              { $max: [{ $ifNull: ['$nextNumber', 1] }, nextAfterExisting, 1] },
-              1,
-            ],
+      const subject = await db.collection('subjects').findOneAndUpdate(
+        { _id: slug },
+        [{
+          $set: {
+            nextNumber: {
+              $add: [
+                { $max: [{ $ifNull: ['$nextNumber', 1] }, nextAfterExisting, 1] },
+                1,
+              ],
+            },
           },
-        },
-      }],
-      { returnDocument: 'after', includeResultMetadata: false },
-    );
-    if (!subject) return json({ error: 'Choose a valid subject.' }, 404);
+        }],
+        { returnDocument: 'after', includeResultMetadata: false },
+      );
+      if (!subject) return json({ error: 'Choose a valid subject.' }, 404);
 
-    const number = subject.nextNumber - 1;
-    const note = {
-      _id: `${slug}:${number}`,
-      subject: slug,
-      number,
-      heading: heading.replace(/[\r\n]+/g, ' '),
-      answer: answer.replace(/\r\n/g, '\n'),
-      saved: savedTime(),
-      createdAt: new Date(),
-    };
-    await db.collection('notes').insertOne(note);
-    return json(note, 201);
+      const number = subject.nextNumber - 1;
+      const note = {
+        _id: `${slug}:${number}`,
+        subject: slug,
+        number,
+        heading: heading.replace(/[\\r\\n]+/g, ' '),
+        answer: answer.replace(/\\r\\n/g, '\\n'),
+        saved: savedTime(),
+        createdAt: new Date(),
+      };
+      try {
+        await db.collection('notes').insertOne(note);
+        return json(note, 201);
+      } catch (error) {
+        if (error?.code !== 11000) throw error;
+        if (attempt === 4) {
+          console.error('POST /api/notes exhausted note-number retries:', {
+            keyPattern: error?.keyPattern,
+            keyValue: error?.keyValue,
+          });
+          return json({ error: 'Could not reserve a unique note number. Please try again; if it continues, contact the app owner.' }, 409);
+        }
+      }
+    }
+    return json({ error: 'Could not reserve a unique note number. Please try again.' }, 409);
   } catch (error) {
     console.error('POST /api/notes failed:', { name: error?.name, message: error?.message, code: error?.code });
-    if (error?.code === 11000) {
-      return json({ error: 'The note number conflicted with an existing record. Please try saving once more; the counter has been repaired for future saves.' }, 409);
-    }
     return json({ error: 'Could not save this note. Please refresh and try again; if it persists, check the deployment logs.' }, 500);
   }
 }
