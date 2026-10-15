@@ -113,28 +113,35 @@ function closeReader() { reader.hidden = true; document.body.style.overflow = ''
 async function deleteNote(number) {
   const note = notes.find((item) => item.number === number);
   if (!note || !window.confirm(`Delete “${note.heading}” from ${subjects.find((item) => item.slug === activeSubject)?.name || activeSubject}? This cannot be undone.`)) return;
-  const response = await fetch(`/api/notes?subject=${encodeURIComponent(activeSubject)}&number=${number}`, { method: 'DELETE' });
-  const result = await response.json();
-  if (!response.ok) return window.alert(result.error || 'Could not delete note.');
-  notes = notes.filter((item) => item.number !== number);
-  render();
+  try {
+    const response = await fetch(`/api/notes?subject=${encodeURIComponent(activeSubject)}&number=${number}`, { method: 'DELETE' });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || 'The notes server did not accept the delete request. Restart it with `node server.js` and reload the dashboard.');
+    notes = notes.filter((item) => item.number !== number);
+    render();
+  } catch (err) {
+    window.alert(err.message || 'Could not reach the notes server. Start it with `node server.js` and reload the dashboard.');
+  }
 }
 
 async function deleteSubject(slug) {
   const subject = subjects.find((item) => item.slug === slug);
   if (!subject || !window.confirm(`Delete the ${subject.name} subject and all notes in ${subject.file}? This cannot be undone.`)) return;
-  const response = await fetch(`/api/subjects?slug=${encodeURIComponent(slug)}`, { method: 'DELETE' });
-  const result = await response.json();
-  if (!response.ok) return window.alert(result.error || 'Could not delete subject.');
-  subjects = subjects.filter((item) => item.slug !== slug);
-  if (activeSubject === slug) {
-    activeSubject = subjects[0].slug;
-    localStorage.setItem('activeSubject', activeSubject);
-    search.value = '';
+  try {
+    const response = await fetch(`/api/subjects?slug=${encodeURIComponent(slug)}`, { method: 'DELETE' });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || 'The notes server did not accept the delete request. Restart it with `node server.js` and reload the dashboard.');
+    subjects = subjects.filter((item) => item.slug !== slug);
+    if (activeSubject === slug) {
+      activeSubject = subjects[0].slug;
+      localStorage.setItem('activeSubject', activeSubject);
+      search.value = '';
+    }
+    renderSubjects();
+    await loadNotes();
+  } catch (err) {
+    window.alert(err.message || 'Could not reach the notes server. Start it with `node server.js` and reload the dashboard.');
   }
-  renderSubjects();
-  if (activeSubject === slug) return;
-  await loadNotes();
 }
 
 document.querySelector('#addButton').addEventListener('click', openForm);

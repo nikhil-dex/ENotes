@@ -1,2 +1,6 @@
 linux-for-devops-key.pem
 linux2_keypair.pem
+node_modules/
+.vercel/
+.env*
+!.env.example

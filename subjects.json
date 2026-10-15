@@ -2,21 +2,19 @@
   {
     "name": "Linux",
     "slug": "linux",
-    "file": "notes/linux.md"
+    "file": "notes/linux.md",
+    "nextNumber": 21
   },
   {
     "name": "DevOps",
     "slug": "devops",
-    "file": "notes/devops.md"
+    "file": "notes/devops.md",
+    "nextNumber": 2
   },
   {
     "name": "ML",
     "slug": "ml",
-    "file": "notes/ml.md"
-  },
-  {
-    "name": "Blender",
-    "slug": "blender",
-    "file": "notes/blender.md"
+    "file": "notes/ml.md",
+    "nextNumber": 1
   }
 ]
