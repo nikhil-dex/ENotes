@@ -11,12 +11,14 @@
     "build": "next build",
     "start": "next start",
     "migrate:notes": "node scripts/migrate-notes.mjs",
-    "access:setup": "node scripts/set-access-key.mjs"
+    "access:setup": "node scripts/set-access-key.mjs",
+    "test": "node --test"
   },
   "dependencies": {
     "mongodb": "^6.21.0",
     "next": "^16.4.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
-  }
+  },
+  "type": "module"
 }

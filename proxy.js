@@ -1,20 +1,5 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
 import { NextResponse } from 'next/server';
-
-const COOKIE_NAME = 'enotes_access';
-
-function isValidSession(token, secret) {
-  if (!token || !secret) return false;
-  const [expiresAtText, signature, ...extra] = token.split('.');
-  if (extra.length || !/^\d+$/.test(expiresAtText || '') || !/^[a-f0-9]{64}$/.test(signature || '')) return false;
-
-  const expiresAt = Number(expiresAtText);
-  if (!Number.isSafeInteger(expiresAt) || expiresAt <= Math.floor(Date.now() / 1000)) return false;
-
-  const expected = createHmac('sha256', secret).update(`enotes-access:${expiresAtText}`).digest();
-  const received = Buffer.from(signature, 'hex');
-  return received.length === expected.length && timingSafeEqual(received, expected);
-}
+import { COOKIE_NAME, isValidSession } from './lib/access-session.js';
 
 function withSecurityHeaders(response) {
   response.headers.set('X-Content-Type-Options', 'nosniff');
@@ -28,6 +13,17 @@ function withSecurityHeaders(response) {
 
 export function proxy(request) {
   const { pathname } = request.nextUrl;
+  // Reject cross-origin browser mutations. Requests without Origin (for example,
+  // trusted server-to-server calls) remain governed by the session gate.
+  if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method)) {
+    const origin = request.headers.get('origin');
+    if (origin && origin !== request.nextUrl.origin) {
+      return withSecurityHeaders(NextResponse.json(
+        { error: 'Cross-origin requests are not allowed.' },
+        { status: 403 },
+      ));
+    }
+  }
   const publicPaths = new Set([
     '/access',
     '/api/access/verify',

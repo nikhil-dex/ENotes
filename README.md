@@ -18,7 +18,8 @@ A subject-based study notes application built with **Next.js**, **React**, and *
 
 ## Features
 
-- **Subject-based organization** — create, switch between, and delete subjects.
+- **Home hub** — open the Notes library, Settings, HTML resources, or the import guide from a dedicated landing page.
+- **Subject-based organization** — switch between subjects in the Notes library and create or delete subjects from Settings.
 - **Note management** — create, edit, read, and delete notes within a subject.
 - **Markdown-friendly writing** — write note content with supported Markdown formatting and preview it before saving.
 - **Focused reading** — open notes in a full-screen reader.
@@ -27,6 +28,7 @@ A subject-based study notes application built with **Next.js**, **React**, and *
 - **Light and dark themes** — switch themes, with the selected theme saved in the browser.
 - **Remembered study state** — the selected subject and learned-note progress are stored locally in the browser.
 - **MongoDB persistence** — subjects and notes are stored in MongoDB.
+- **Dedicated Settings page** — manage subjects, choose a theme, and access JSON backup and restore outside the note-taking workspace.
 - **JSON backup and restore** — download a full backup and safely merge missing records from a validated backup without overwriting existing notes.
 - **Starter note import** — migrate the Markdown files in `notes/` into MongoDB using the included script.
 - **Additional learning resources** — includes HTML library and import-guide pages.
@@ -106,6 +108,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 | `npm run build` | Build the application for production |
 | `npm run start` | Start the production server after building |
 | `npm run migrate:notes` | Import starter Markdown notes into MongoDB |
+| `npm test` | Run security and recovery unit tests |
 
 ## Environment variables
 
@@ -129,7 +132,7 @@ Replace the placeholders with your own database credentials and cluster host. **
 
 ## Shared access-string protection
 
-ENotes uses a single shared access string instead of individual user accounts. The access page is available at `/access`; the app checks the submitted string on the server and grants a signed, HTTP-only session cookie for seven days. Application pages and API routes are protected by `proxy.js`.
+ENotes uses a single shared access string instead of individual user accounts. The access page is available at `/access`; the app checks the submitted string on the server and grants a signed, HTTP-only session cookie for one hour. Application pages and API routes are protected by `proxy.js`.
 
 ### Configure the access string
 
@@ -141,7 +144,7 @@ ENotes uses a single shared access string instead of individual user accounts. T
 6. Configure `MONGODB_URI`, `MONGODB_DB`, and `ENOTES_SESSION_SECRET` in Vercel. The database you manually updated must be the same database your Vercel deployment uses. Keep `ENOTES_SESSION_SECRET` stable between deployments. You can remove `ENOTES_ACCESS_KEY` from Vercel after generating the document; it is not used by the runtime verification endpoint.
 7. To rotate the access string, change `ENOTES_ACCESS_KEY` in your local `.env.local`, run `npm run access:setup` again, and replace the MongoDB `shared-access-key` document with the newly generated document.
 
-The access string is shared by everyone who has it; this is not individual-user authentication. Anyone with the string can access the same notes, and access is not tied to a named person. Use a unique string and keep the deployment protected. A 9-character shared string is weaker than a longer secret. The session cookie expires after seven days.
+The access string is shared by everyone who has it; this is not individual-user authentication. Anyone with the string can access the same notes, and access is not tied to a named person. Use a unique string and keep the deployment protected. A 9-character shared string is weaker than a longer secret. The session cookie expires after one hour.
 
 ## Import existing notes
 
@@ -156,15 +159,22 @@ Back up your database before making manual data changes. The migration script is
 ```text
 ENotes/
 ├── app/
+│   ├── notes/             # Notes workspace
+│   ├── settings/          # Subject management, appearance, backup/restore
 │   ├── api/
 │   │   ├── notes/          # Note API routes
 │   │   └── subjects/       # Subject API routes
 │   ├── html-library/       # HTML learning-resource page
 │   ├── import-guide/       # Note import guide
 │   ├── layout.js           # Root application layout
-│   └── page.js             # Main notes dashboard
+│   └── page.js             # Home hub / app launcher
 ├── lib/
+│   ├── access-session.js   # Signed session creation and validation
+│   ├── backup-validation.js # Backup schema validation
+│   ├── read-limited-body.js # Bounded request-body reader
 │   └── mongodb.js          # MongoDB connection and indexes
+├── tests/
+│   └── security-recovery.test.mjs # Security/recovery unit tests
 ├── notes/
 │   ├── devops.md           # Starter DevOps notes
 │   ├── linux.md            # Starter Linux notes
@@ -214,7 +224,7 @@ The dashboard uses a shared access string, not individual user accounts. Anyone 
 
 Keep the access string and `ENOTES_SESSION_SECRET` private; use a strong unique session secret (at least 32 characters) and keep MongoDB credentials server-side. Rotating `ENOTES_SESSION_SECRET` invalidates all existing sessions. If you change the shared access string in MongoDB, also rotate `ENOTES_SESSION_SECRET` in your hosting environment and redeploy to force everyone to unlock again. The shared-key setup script is for trusted local use only; do not expose its generated hash/configuration or the original access string in client code.
 
-The proxy protects application pages and API routes unless a route is explicitly public. Security response headers are added at the proxy layer. Keep `/api/access/verify` and `/api/access/logout` as the only public access API endpoints.
+The proxy protects application pages and API routes unless a route is explicitly public. Security response headers are added at the proxy layer. Cross-origin browser mutation requests (POST, PUT, PATCH, DELETE) are rejected when their Origin does not match the app origin. Access verification and backup restore request bodies are size-limited while being read, not only after buffering. Keep `/api/access/verify` and `/api/access/logout` as the only public access API endpoints.
 
 Also restrict MongoDB network access and database permissions appropriately.
 
