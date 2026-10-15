@@ -27,6 +27,46 @@ export async function POST(request) {
     }
 
     const db = await getDatabase();
+
+    // Rate-limit attempts per caller using a keyed hash so raw IP addresses are not stored.
+    const callerIp = (
+      request.headers.get('x-vercel-forwarded-for') ||
+      request.headers.get('x-forwarded-for') ||
+      'unknown'
+    ).split(',')[0].trim();
+    const callerId = createHmac('sha256', sessionSecret)
+      .update(`enotes-access-ip:${callerIp}`)
+      .digest('hex');
+    const now = new Date();
+    const windowStart = new Date(now.getTime() - 15 * 60 * 1000);
+    await db.collection('access_attempts').createIndex({ updatedAt: 1 }, { expireAfterSeconds: 86400 });
+    const attempt = await db.collection('access_attempts').findOneAndUpdate(
+      { _id: callerId },
+      [{
+        $set: {
+          attempts: {
+            $cond: [
+              { $gt: [{ $ifNull: ['$windowStartedAt', new Date(0)] }, windowStart] },
+              { $add: [{ $ifNull: ['$attempts', 0] }, 1] },
+              1,
+            ],
+          },
+          windowStartedAt: {
+            $cond: [
+              { $gt: [{ $ifNull: ['$windowStartedAt', new Date(0)] }, windowStart] },
+              '$windowStartedAt',
+              now,
+            ],
+          },
+          updatedAt: now,
+        },
+      }],
+      { upsert: true, returnDocument: 'after', includeResultMetadata: false },
+    );
+    if (attempt.attempts > 10) {
+      return json({ error: 'Too many attempts. Wait 15 minutes before trying again.' }, 429);
+    }
+
     const config = await db.collection('settings').findOne({ _id: 'shared-access-key' });
     if (!config?.salt || !config?.keyHash) {
       return json({ error: 'The access key has not been configured yet.' }, 503);
