@@ -133,14 +133,14 @@ ENotes uses a single shared access string instead of individual user accounts. T
 ### Configure the access string
 
 1. Copy `.env.example` to `.env.local` and set `MONGODB_URI` and `MONGODB_DB`.
-2. Set `ENOTES_ACCESS_KEY` to a strong secret string of at least 12 characters. Do not commit the real value.
+2. Set `ENOTES_ACCESS_KEY` to your chosen access string of exactly 9 characters. Do not commit the real value.
 3. Generate a separate session-signing secret (at least 32 characters). For example, run `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"` and put the output in `ENOTES_SESSION_SECRET`.
 4. Run `npm run access:setup`. This **does not connect to MongoDB**. It prints a MongoDB Extended JSON document containing a salted scrypt hash of your access string.
 5. In MongoDB Compass or Atlas Data Explorer, open the database named by `MONGODB_DB` (default: `linux_notes`) and the `settings` collection. Insert the generated document. If `settings` does not exist, create it first. If a document with `_id: "shared-access-key"` already exists, update/replace that document instead of inserting a duplicate.
 6. Configure `MONGODB_URI`, `MONGODB_DB`, and `ENOTES_SESSION_SECRET` in Vercel. The database you manually updated must be the same database your Vercel deployment uses. Keep `ENOTES_SESSION_SECRET` stable between deployments. You can remove `ENOTES_ACCESS_KEY` from Vercel after generating the document; it is not used by the runtime verification endpoint.
 7. To rotate the access string, change `ENOTES_ACCESS_KEY` in your local `.env.local`, run `npm run access:setup` again, and replace the MongoDB `shared-access-key` document with the newly generated document.
 
-The access string is shared by everyone who has it; this is not individual-user authentication. Anyone with the string can access the same notes, and access is not tied to a named person. Use a long, unique secret and keep the deployment protected. The session cookie expires after seven days.
+The access string is shared by everyone who has it; this is not individual-user authentication. Anyone with the string can access the same notes, and access is not tied to a named person. Use a unique string and keep the deployment protected. A 9-character shared string is weaker than a longer secret. The session cookie expires after seven days.
 
 ## Import existing notes
 
