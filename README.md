@@ -27,6 +27,7 @@ A subject-based study notes application built with **Next.js**, **React**, and *
 - **Light and dark themes** — switch themes, with the selected theme saved in the browser.
 - **Remembered study state** — the selected subject and learned-note progress are stored locally in the browser.
 - **MongoDB persistence** — subjects and notes are stored in MongoDB.
+- **JSON backup and restore** — download a full backup and safely merge missing records from a validated backup without overwriting existing notes.
 - **Starter note import** — migrate the Markdown files in `notes/` into MongoDB using the included script.
 - **Additional learning resources** — includes HTML library and import-guide pages.
 
@@ -200,6 +201,12 @@ ENotes can be deployed as a Next.js application on a platform such as Vercel.
 5. Deploy the application and verify that the dashboard can read and update notes.
 
 Do not expose database credentials in client-side code or commit them to source control.
+
+## Backups and restore
+
+Use **Download backup** in the dashboard to export all subjects and notes to a JSON file. Keep this file somewhere private because it contains your study notes.
+
+To restore, choose a backup JSON file from the dashboard. ENotes validates the file format, record limits, subject slugs, note identifiers, and content lengths before writing. Restore uses **merge-only** behavior: missing subjects and notes are added, existing subject metadata and note contents are not overwritten, and duplicate note IDs are skipped. Uploads are limited to 10 MB. Restore is not a substitute for an independent MongoDB backup; keep multiple copies of important backups.
 
 ## Security notes
 
