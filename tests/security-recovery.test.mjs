@@ -15,7 +15,9 @@ test('signed session is valid before expiry and invalid at expiry', () => {
 
 test('session validation rejects tampering, malformed tokens, and weak secrets', () => {
   const token = createSessionToken(secret, now + SESSION_SECONDS);
-  assert.equal(isValidSession(token.replace(/[a-f0-9]$/, '0'), secret, now), false);
+  const [expiry, signature] = token.split('.');
+  const tampered = `${expiry}.${signature[0] === '0' ? '1' : '0'}${signature.slice(1)}`;
+  assert.equal(isValidSession(tampered, secret, now), false);
   assert.equal(isValidSession('not-a-token', secret, now), false);
   assert.equal(isValidSession(token, 'short', now), false);
 });
