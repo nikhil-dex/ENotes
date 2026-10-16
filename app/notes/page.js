@@ -20,6 +20,8 @@ export default function HomePage() {
   const [notesLoading, setNotesLoading] = useState(false);
   const [deletingNotes, setDeletingNotes] = useState(new Set());
   const [query, setQuery] = useState('');
+  const [globalSearch, setGlobalSearch] = useState(false);
+  const [globalSearchTruncated, setGlobalSearchTruncated] = useState(false);
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [pinnedOnly, setPinnedOnly] = useState(false);
   const [selectedTag, setSelectedTag] = useState('');
@@ -89,7 +91,7 @@ export default function HomePage() {
   }, [noteDialog, readerNote, studyOpen]);
 
   useEffect(() => {
-    if (!activeSubject) return;
+    if (!activeSubject || globalSearch) return;
     const controller = new AbortController();
     localStorage.setItem('activeSubject', activeSubject);
     setNotesLoading(true);
@@ -115,7 +117,44 @@ export default function HomePage() {
     } catch { setLearnedNotes(new Set()); }
     setQuery('');
     return () => controller.abort();
-  }, [activeSubject]);
+  }, [activeSubject, globalSearch]);
+
+  useEffect(() => {
+    if (!globalSearch) {
+      setGlobalSearchTruncated(false);
+      return;
+    }
+    const q = query.trim();
+    if (q.length < 2) {
+      setNotes([]);
+      setNotesLoading(false);
+      setGlobalSearchTruncated(false);
+      return;
+    }
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setNotesLoading(true);
+      setFormError('');
+      try {
+        const data = await responseJson(await fetch(`/api/notes?scope=all&q=${encodeURIComponent(q)}`, {
+          signal: controller.signal,
+          cache: 'no-store',
+        }));
+        if (!controller.signal.aborted) {
+          setNotes(data.notes || []);
+          setGlobalSearchTruncated(data.truncated === true);
+        }
+      } catch (error) {
+        if (!controller.signal.aborted) setFormError(error.message || 'Global search failed.');
+      } finally {
+        if (!controller.signal.aborted) setNotesLoading(false);
+      }
+    }, 250);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [globalSearch, query]);
 
   function requestCloseNoteDialog() {
     if (draftDirty && !window.confirm('Discard your unsaved note changes? The local draft will be removed.')) return;
@@ -231,13 +270,13 @@ export default function HomePage() {
     try {
       const note = await responseJson(await fetch('/api/notes', {
         method: editingNote ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ heading, answer, subject: activeSubject, tags: tagInput.split(',').map((tag) => tag.trim()).filter(Boolean), favorite: favoriteDraft, pinned: pinnedDraft, ...(editingNote ? { number: editingNote.number } : {}) }),
+        body: JSON.stringify({ heading, answer, subject: editingNote?.subject || activeSubject, tags: tagInput.split(',').map((tag) => tag.trim()).filter(Boolean), favorite: favoriteDraft, pinned: pinnedDraft, ...(editingNote ? { number: editingNote.number } : {}) }),
       }));
       if (editingNote) {
-        setNotes((current) => current.map((item) => item.number === note.number ? note : item));
+        setNotes((current) => current.map((item) => item.number === note.number && (item.subject || activeSubject) === (note.subject || activeSubject) ? { ...item, ...note } : item));
         setReaderNote((current) => current?.number === note.number ? note : current);
       } else {
-        setNotes((current) => [...current, note]);
+        setNotes((current) => [...current, { ...note, subjectName: active?.name || activeSubject }]);
       }
       try { localStorage.removeItem(draftStorageKey(activeSubject, editingNote?.number)); } catch {}
       setHeading(''); setAnswer(''); setTagInput(''); setFavoriteDraft(false); setPinnedDraft(false); initialDraftRef.current = { heading: '', answer: '' }; setDraftStatus(''); setPreview(false); setNoteDialog(false); setEditingNote(null);
@@ -249,7 +288,7 @@ export default function HomePage() {
     try {
       const updated = await responseJson(await fetch('/api/notes', {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subject: activeSubject, number: note.number, ...changes }),
+        body: JSON.stringify({ subject: note.subject || activeSubject, number: note.number, ...changes }),
       }));
       setNotes((current) => current.map((item) => item.number === note.number ? { ...item, ...updated } : item));
       setReaderNote((current) => current?.number === note.number ? { ...current, ...updated } : current);
@@ -265,7 +304,7 @@ export default function HomePage() {
     setRevisionsError('');
     try {
       const data = await responseJson(await fetch(
-        `/api/notes?subject=${encodeURIComponent(activeSubject)}&number=${editingNote.number}&history=1`,
+        `/api/notes?subject=${encodeURIComponent(editingNote.subject || activeSubject)}&number=${editingNote.number}&history=1`,
         { cache: 'no-store' },
       ));
       setRevisions(Array.isArray(data.revisions) ? data.revisions : []);
@@ -278,7 +317,7 @@ export default function HomePage() {
 
   function editNote(note) {
     initialDraftRef.current = { heading: note.heading, answer: note.answer };
-    setEditingNote(note); setHeading(note.heading); setAnswer(note.answer);
+    setEditingNote({ ...note, subject: note.subject || activeSubject }); setHeading(note.heading); setAnswer(note.answer);
     setTagInput((note.tags || []).join(', ')); setFavoriteDraft(note.favorite === true); setPinnedDraft(note.pinned === true);
     setRevisions([]); setRevisionsOpen(false); setRevisionsError('');
     setPreview(false); setFormError(''); setNoteDialog(true);
@@ -290,8 +329,8 @@ export default function HomePage() {
     setDeletingNotes((current) => new Set(current).add(note.number));
     setFormError('');
     try {
-      await responseJson(await fetch(`/api/notes?subject=${encodeURIComponent(activeSubject)}&number=${note.number}`, { method: 'DELETE' }));
-      setNotes((current) => current.filter((item) => item.number !== note.number));
+      await responseJson(await fetch(`/api/notes?subject=${encodeURIComponent(note.subject || activeSubject)}&number=${note.number}`, { method: 'DELETE' }));
+      setNotes((current) => current.filter((item) => !(item.number === note.number && (item.subject || activeSubject) === (note.subject || activeSubject))));
       setReaderNote((current) => current?.number === note.number ? null : current);
     } catch (error) {
       setFormError(error.message || 'Could not delete this note. Please try again.');
