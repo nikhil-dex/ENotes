@@ -2,10 +2,14 @@ import { readLimitedBody } from '../../../../lib/read-limited-body.js';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+// Keep this below the observed Vercel gateway timeout so the route can return
+// a controlled JSON error before the platform terminates the function.
+export const maxDuration = 45;
 
 const MAX_BODY_BYTES = 24 * 1024;
 const MAX_HEADING_LENGTH = 160;
 const MAX_ANSWER_LENGTH = 10000;
+const GEMINI_TIMEOUT_MS = 35000;
 
 function json(data, status = 200) {
   return Response.json(data, { status, headers: { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' } });
@@ -35,7 +39,10 @@ export async function POST(request) {
   }
 
   const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return json({ error: 'Gemini is not configured yet. Add GEMINI_API_KEY to the server environment and redeploy.' }, 503);
+  if (!apiKey) {
+    console.error('Gemini cleanup is not configured: GEMINI_API_KEY is missing.');
+    return json({ error: 'Gemini is not configured yet. Add GEMINI_API_KEY to the server environment and redeploy.' }, 503);
+  }
 
   const model = (process.env.GEMINI_MODEL || 'gemini-3.8-flash').trim();
   if (!/^[a-zA-Z0-9._-]+$/.test(model)) return json({ error: 'The configured Gemini model name is invalid.' }, 500);
@@ -57,11 +64,17 @@ export async function POST(request) {
     answer,
   ].join('\n');
 
+  const startedAt = Date.now();
+  const requestId = request.headers.get('x-vercel-id') || 'unavailable';
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 60000);
+  const timeout = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
+  console.info('Gemini cleanup started.', { requestId, model, fallbackModel, headingLength: heading.length, answerLength: answer.length, timeoutMs: GEMINI_TIMEOUT_MS });
+
   try {
     async function callModel(modelName) {
-      return fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(modelName) + ':generateContent', {
+      const modelStartedAt = Date.now();
+      console.info('Gemini request started.', { requestId, model: modelName });
+      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(modelName) + ':generateContent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
         cache: 'no-store',
@@ -81,42 +94,55 @@ export async function POST(request) {
           },
         }),
       });
+      console.info('Gemini response received.', { requestId, model: modelName, status: response.status, elapsedMs: Date.now() - modelStartedAt });
+      return response;
     }
 
     let activeModel = model;
     let response = await callModel(activeModel);
     if (response.status === 429 && fallbackModel !== activeModel) {
-      console.warn('Gemini primary model rate-limited; trying fallback model.', { primaryModel: activeModel, fallbackModel });
+      console.warn('Gemini primary model rate-limited; trying fallback model.', { requestId, primaryModel: activeModel, fallbackModel });
       activeModel = fallbackModel;
       response = await callModel(activeModel);
     }
 
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
-      if (response.status === 429) return json({ error: 'Gemini reached its usage limit on both the primary and fallback models. Please wait for quota to reset and try again.' }, 429);
+      if (response.status === 429) {
+        console.error('Gemini cleanup exhausted model quota.', { requestId, model: activeModel, elapsedMs: Date.now() - startedAt });
+        return json({ error: 'Gemini reached its usage limit on both the primary and fallback models. Please wait for quota to reset and try again.' }, 429);
+      }
       if (response.status === 400 || response.status === 404) {
-        console.error('Gemini cleanup configuration/request rejected:', { status: response.status, model: activeModel });
+        console.error('Gemini cleanup configuration/request rejected.', { requestId, status: response.status, model: activeModel, elapsedMs: Date.now() - startedAt });
         return json({ error: 'Gemini rejected this request. Check GEMINI_MODEL and the API key’s model access.' }, 502);
       }
-      console.error('Gemini cleanup request failed:', { status: response.status, model: activeModel });
+      console.error('Gemini cleanup request failed.', { requestId, status: response.status, model: activeModel, elapsedMs: Date.now() - startedAt });
       return json({ error: 'Gemini could not process this note right now. Please try again later.' }, 502);
     }
 
     const candidate = payload?.candidates?.[0];
     if (candidate?.finishReason === 'SAFETY') return json({ error: 'Gemini could not process this content. You can continue editing manually.' }, 422);
     const output = candidate?.content?.parts?.map((part) => part.text || '').join('').trim();
-    if (!output) return json({ error: 'Gemini returned an empty suggestion. Please try again.' }, 502);
+    if (!output) {
+      console.error('Gemini cleanup returned an empty suggestion.', { requestId, model: activeModel, elapsedMs: Date.now() - startedAt });
+      return json({ error: 'Gemini returned an empty suggestion. Please try again.' }, 502);
+    }
 
     let result;
     try { result = parseModelJson(output); }
     catch {
-      console.error('Gemini cleanup returned invalid structured output:', { model: activeModel });
+      console.error('Gemini cleanup returned invalid structured output.', { requestId, model: activeModel, elapsedMs: Date.now() - startedAt });
       return json({ error: 'Gemini returned an unexpected format. Please try again.' }, 502);
     }
+    console.info('Gemini cleanup completed.', { requestId, model: activeModel, elapsedMs: Date.now() - startedAt });
     return json(result);
   } catch (error) {
-    if (error?.name === 'AbortError') return json({ error: 'Gemini took too long to respond. Please try again.' }, 504);
-    console.error('Gemini cleanup request could not be completed:', { name: error?.name });
+    const elapsedMs = Date.now() - startedAt;
+    if (error?.name === 'AbortError') {
+      console.error('Gemini cleanup timed out.', { requestId, model, fallbackModel, elapsedMs, timeoutMs: GEMINI_TIMEOUT_MS });
+      return json({ error: 'Gemini is taking too long to respond. Please try again with a shorter note.' }, 504);
+    }
+    console.error('Gemini cleanup request could not be completed.', { requestId, name: error?.name || 'UnknownError', elapsedMs });
     return json({ error: 'Could not connect to Gemini. Check your connection and try again.' }, 502);
   } finally {
     clearTimeout(timeout);
