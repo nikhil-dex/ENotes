@@ -1,4 +1,5 @@
 'use client';
+import SiteNavbar from '../components/site-navbar';
 
 import { useEffect, useMemo, useState } from 'react';
 import { markdownHtml } from '../../lib/markdown.js';
@@ -114,10 +115,7 @@ export default function RevisionHistoryPage() {
 
   return (
     <main className="shell revision-shell">
-      <header className="topbar">
-        <a className="brand" href="/" aria-label="ENotes home"><span className="brand-mark">N</span><span>Study<span className="brand-light">Notes</span></span></a>
-        <div className="topbar-right"><a className="import-guide-link" href="/">Home</a><a className="import-guide-link" href="/notes">Notes</a><a className="import-guide-link" href="/settings">Settings</a><a className="import-guide-link" href="/html-library">HTML files</a></div>
-      </header>
+      <SiteNavbar />
 
       <section className="revision-hero">
         <p className="eyebrow">YOUR NOTE ARCHIVE</p>
