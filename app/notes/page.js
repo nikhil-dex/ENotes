@@ -57,10 +57,6 @@ export default function HomePage() {
   const [preview, setPreview] = useState(false);
   const [saving, setSaving] = useState(false);
   const [draftStatus, setDraftStatus] = useState('');
-  const [revisions, setRevisions] = useState([]);
-  const [revisionsOpen, setRevisionsOpen] = useState(false);
-  const [revisionsLoading, setRevisionsLoading] = useState(false);
-  const [revisionsError, setRevisionsError] = useState('');
   const [studyDeck, setStudyDeck] = useState([]);
   const [studyIndex, setStudyIndex] = useState(0);
   const [studyRevealed, setStudyRevealed] = useState(false);
@@ -501,29 +497,10 @@ export default function HomePage() {
     } catch (error) { setFormError(error.message || 'Could not update note properties.'); }
   }
 
-  async function loadRevisionHistory() {
-    if (!editingNote) return;
-    setRevisionsOpen(true);
-    setRevisionsLoading(true);
-    setRevisionsError('');
-    try {
-      const data = await responseJson(await fetch(
-        `/api/notes?subject=${encodeURIComponent(editingNote.subject || activeSubject)}&number=${editingNote.number}&history=1`,
-        { cache: 'no-store' },
-      ));
-      setRevisions(Array.isArray(data.revisions) ? data.revisions : []);
-    } catch (error) {
-      setRevisionsError(error.message || 'Could not load revision history.');
-    } finally {
-      setRevisionsLoading(false);
-    }
-  }
-
   function editNote(note) {
     initialDraftRef.current = { heading: note.heading, answer: note.answer };
     setEditingNote({ ...note, subject: note.subject || activeSubject }); setHeading(note.heading); setAnswer(note.answer);
     setTagInput((note.tags || []).join(', ')); setFavoriteDraft(note.favorite === true); setPinnedDraft(note.pinned === true);
-    setRevisions([]); setRevisionsOpen(false); setRevisionsError('');
     setPreview(false); setFormError(''); setNoteDialog(true);
   }
 
@@ -707,17 +684,7 @@ export default function HomePage() {
       {formError && !noteDialog && <p className="page-error" role="alert">{formError}</p>}
 
       {noteDialog && <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) requestCloseNoteDialog(); }}><section ref={dialogRef} className="dialog" role="dialog" aria-modal="true" aria-labelledby="formTitle" aria-describedby="formDescription"><button className="close-button" onClick={requestCloseNoteDialog} aria-label="Close form">×</button><p className="eyebrow">{editingNote ? `EDIT NOTE ${String(editingNote.number).padStart(2, '0')}` : 'GROW YOUR LIBRARY'}</p><h2 id="formTitle">{editingNote ? 'Edit note' : 'Add a note'}<span className="period">.</span></h2><p id="formDescription" className="form-subtitle">{editingNote ? 'Update the heading or answer. Its serial number will stay the same.' : 'Give it a clear heading and capture what you learned.'}</p>
-        <form onSubmit={saveNote}><label htmlFor="heading">HEADING</label><input ref={headingInputRef} id="heading" maxLength={160} placeholder="e.g. What does chmod do?" value={heading} onChange={(event) => setHeading(event.target.value)} required/><label htmlFor="noteTags">TAGS <span className="field-hint">comma-separated · up to 10</span></label><input id="noteTags" maxLength={260} placeholder="e.g. arrays, exam, important" value={tagInput} onChange={(event) => setTagInput(event.target.value)} /><div className="note-metadata-fields"><label><input type="checkbox" checked={favoriteDraft} onChange={(event) => setFavoriteDraft(event.target.checked)} /> Mark as favorite</label><label><input type="checkbox" checked={pinnedDraft} onChange={(event) => setPinnedDraft(event.target.checked)} /> Pin to top</label></div><div className="label-row"><label htmlFor="answer">ANSWER</label><span>Markdown · link notes with [[Exact note heading]]</span>{editingNote && <button type="button" className="history-button" onClick={loadRevisionHistory}>Revision history</button>}</div><div className="editor-toolbar" aria-label="Answer formatting"><button type="button" onClick={() => insertFormatting('bold')} title="Bold">B</button><button type="button" onClick={() => insertFormatting('code')} title="Inline code">&lt;/&gt;</button><button type="button" onClick={() => insertFormatting('list')} title="Bullet list">• List</button><button type="button" onClick={() => insertFormatting('codeblock')} title="Code block">{'{ }'}</button><span>Formatting shortcuts</span><span className="draft-status" role="status" aria-live="polite">{draftStatus}</span></div>
-          {revisionsOpen && <section className="revision-history" aria-label="Note revision history">
-            <div className="revision-history-heading"><strong>Previous versions</strong><button type="button" onClick={() => setRevisionsOpen(false)}>Close</button></div>
-            {revisionsLoading && <p role="status">Loading versions…</p>}
-            {revisionsError && <p className="form-error" role="alert">{revisionsError}</p>}
-            {!revisionsLoading && !revisionsError && revisions.length === 0 && <p>No previous versions yet. Versions are saved after you edit this note.</p>}
-            <ol>{revisions.map((revision, index) => <li key={`${revision.revisedAt || revision.saved || 'version'}-${index}`}>
-              <div><strong>{revision.saved || 'Previous version'}</strong><p>{revision.heading}</p><span>{String(revision.answer || '').slice(0, 110)}{String(revision.answer || '').length > 110 ? '…' : ''}</span></div>
-              <button type="button" onClick={() => { setHeading(revision.heading || ''); setAnswer(revision.answer || ''); setPreview(false); setFormError(''); setDraftStatus('Previous version restored to editor'); }}>Restore</button>
-            </li>)}</ol>
-          </section>}
+        <form onSubmit={saveNote}><label htmlFor="heading">HEADING</label><input ref={headingInputRef} id="heading" maxLength={160} placeholder="e.g. What does chmod do?" value={heading} onChange={(event) => setHeading(event.target.value)} required/><label htmlFor="noteTags">TAGS <span className="field-hint">comma-separated · up to 10</span></label><input id="noteTags" maxLength={260} placeholder="e.g. arrays, exam, important" value={tagInput} onChange={(event) => setTagInput(event.target.value)} /><div className="note-metadata-fields"><label><input type="checkbox" checked={favoriteDraft} onChange={(event) => setFavoriteDraft(event.target.checked)} /> Mark as favorite</label><label><input type="checkbox" checked={pinnedDraft} onChange={(event) => setPinnedDraft(event.target.checked)} /> Pin to top</label></div><div className="label-row"><label htmlFor="answer">ANSWER</label><span>Markdown · link notes with [[Exact note heading]]</span></div><div className="editor-toolbar" aria-label="Answer formatting"><button type="button" onClick={() => insertFormatting('bold')} title="Bold">B</button><button type="button" onClick={() => insertFormatting('code')} title="Inline code">&lt;/&gt;</button><button type="button" onClick={() => insertFormatting('list')} title="Bullet list">• List</button><button type="button" onClick={() => insertFormatting('codeblock')} title="Code block">{'{ }'}</button><span>Formatting shortcuts</span><span className="draft-status" role="status" aria-live="polite">{draftStatus}</span></div>
           <div className="editor-tabs"><button type="button" className={!preview ? 'active' : ''} onClick={() => setPreview(false)}>Write</button><button type="button" className={preview ? 'active' : ''} onClick={() => setPreview(true)}>Preview</button></div>
           {!preview ? <textarea ref={answerRef} id="answer" rows={6} maxLength={10000} placeholder="Write your explanation here…" value={answer} onChange={(event) => setAnswer(event.target.value)} required/> : <div className="answer-preview">{answer ? <div dangerouslySetInnerHTML={{ __html: markdownHtml(answer) }}/> : <p className="preview-placeholder">Nothing to preview yet.</p>}</div>}
           {formError && <p className="form-error" role="alert">{formError}</p>}<button className="submit-button" type="submit" disabled={saving}><span>{saving ? 'Saving…' : editingNote ? 'Save changes' : 'Save note'}</span><span aria-hidden="true">→</span></button></form>
