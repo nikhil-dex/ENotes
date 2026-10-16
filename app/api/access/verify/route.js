@@ -1,4 +1,4 @@
-import { createHmac, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto';
+import { createHmac, randomUUID, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto';
 import { createSessionToken, COOKIE_NAME, SESSION_SECONDS } from '../../../../lib/access-session.js';
 import { readLimitedBody } from '../../../../lib/read-limited-body.js';
 import { promisify } from 'node:util';
@@ -27,6 +27,7 @@ export async function POST(request) {
       return json({ error: error?.status === 413 ? 'Request body is too large.' : 'Enter a valid access request.' }, error?.status || 400);
     }
     const accessKey = body?.accessKey;
+    const deviceId = body?.deviceId;
     if (typeof accessKey !== 'string' || accessKey.length === 0 || accessKey.length > 256) {
       return json({ error: 'Enter the access string.' }, 400);
     }
@@ -83,8 +84,26 @@ export async function POST(request) {
       return json({ error: 'That access string is incorrect.' }, 401);
     }
 
+    if (typeof deviceId !== 'string' || !/^[a-f0-9-]{36}$/i.test(deviceId)) {
+      return json({ error: 'This browser could not identify its device. Refresh the page and try again.' }, 400);
+    }
+
+    // Keep one active device lease. Re-authentication from the same browser can
+    // renew its session, but a second browser cannot replace the active owner.
+    const sessionId = randomUUID();
+    let activeSession;
+    try {
+      activeSession = await db.collection('settings').findOneAndUpdate(
+        { _id: 'active-device-session', deviceId },
+        { $set: { lastSeenAt: new Date() }, $setOnInsert: { sessionId, deviceId, createdAt: new Date() } },
+        { upsert: true, returnDocument: 'after', includeResultMetadata: false },
+      );
+    } catch (error) {
+      if (error?.code === 11000) return json({ error: 'ENotes is already open on another device. Log out from that device before switching.' }, 409);
+      throw error;
+    }
     const expiresAt = Math.floor(Date.now() / 1000) + SESSION_SECONDS;
-    const token = createSessionToken(sessionSecret, expiresAt);
+    const token = createSessionToken(sessionSecret, expiresAt, activeSession.sessionId);
 
     const response = json({ ok: true });
     response.headers.append(

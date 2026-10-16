@@ -30,7 +30,9 @@ A subject-based study notes application built with **Next.js**, **React**, and *
 - **Light and dark themes** — switch themes, with the selected theme saved in the browser.
 - **Remembered study state** — the selected subject and learned-note progress are stored locally in the browser.
 - **Offline reading** — previously loaded subjects and their notes are cached in this browser and remain readable when the network is unavailable.
-- **Reconnect synchronization** — cached notes refresh from MongoDB when the connection returns; the header shows the current connection/sync state. Offline edits are not uploaded automatically in this phase.
+- **Reconnect synchronization** — cached notes refresh from MongoDB when the connection returns; the header shows the current connection/sync state.
+- **Queued offline edits** — edits to existing notes and favorite/pin changes are stored locally and replayed in order when online again. Failed requests remain queued for retry; creating and deleting notes still require a connection.
+- **Single-device session lock** — only one browser can hold the active ENotes session. Log out to release the lock before switching devices. Pending offline edits must be synced first or explicitly discarded before logout; logging out while offline cannot release the server-side lock.
 - **MongoDB persistence** — subjects and notes are stored in MongoDB.
 - **Dedicated Settings page** — manage subjects, choose a theme, and access JSON backup and restore outside the note-taking workspace.
 - **JSON backup and restore** — download a full backup and safely merge missing records from a validated backup without overwriting existing notes.
