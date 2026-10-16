@@ -7,6 +7,7 @@ import { markdownHtml } from '../../lib/markdown.js';
 import { calculateNextReview } from '../../lib/spaced-repetition.js';
 import { getDailyRevisionState, recordDailyReview, setDailyRevisionGoal } from '../../lib/daily-revision.js';
 import { enqueueOfflineMutation, getPendingOfflineMutations, removePendingOfflineMutation } from '../../lib/offline-mutation-queue.js';
+import GeminiNoteCleanup from '../components/gemini-note-cleanup.js';
 
 function draftStorageKey(subject, number) {
   return `enotes:draft:${subject}:${number ?? 'new'}`;
@@ -707,6 +708,7 @@ export default function HomePage() {
             <div className="editor-tabs"><button type="button" className={!preview ? 'active' : ''} onClick={() => setPreview(false)}>Write</button><button type="button" className={preview ? 'active' : ''} onClick={() => setPreview(true)}>Preview</button></div>
             {!preview ? <textarea ref={answerRef} form="noteForm" id="answer" rows={6} maxLength={10000} placeholder="Write your explanation here…" value={answer} onChange={(event) => setAnswer(event.target.value)} required/> : <div className="answer-preview">{answer ? <div dangerouslySetInnerHTML={{ __html: markdownHtml(answer) }}/> : <p className="preview-placeholder">Nothing to preview yet.</p>}</div>}
           </div>}
+          <GeminiNoteCleanup heading={heading} answer={answer} disabled={saving} onApply={({ heading: nextHeading, answer: nextAnswer }) => { setHeading(nextHeading); setAnswer(nextAnswer); setPreview(false); setDraftStatus('Gemini suggestion applied to draft'); }} />
           {formError && <p className="form-error" role="alert">{formError}</p>}<button className="submit-button" type="submit" disabled={saving}><span>{saving ? 'Saving…' : editingNote ? 'Save changes' : 'Save note'}</span><span aria-hidden="true">→</span></button></form>
       </section></div>}
 
