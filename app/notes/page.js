@@ -147,7 +147,7 @@ export default function HomePage() {
       setLearnedNotes(new Set(saved));
     } catch { setLearnedNotes(new Set()); }
     try {
-      setReviewSchedule(JSON.parse(localStorage.getItem(`reviewSchedule:${activeSubject}`) || '{}'));
+      setReviewSchedule(JSON.parse(localStorage.getItem('reviewSchedule:v1') || '{}'));
     } catch { setReviewSchedule({}); }
     setQuery('');
     return () => controller.abort();
@@ -430,7 +430,7 @@ export default function HomePage() {
       [key]: { dueAt: dueAt.toISOString(), intervalDays, repetitions: (previous.repetitions || 0) + 1, lastReviewedAt: now.toISOString(), rating },
     };
     setReviewSchedule(nextSchedule);
-    localStorage.setItem(`reviewSchedule:${activeSubject}`, JSON.stringify(nextSchedule));
+    localStorage.setItem('reviewSchedule:v1', JSON.stringify(nextSchedule));
     if (rating === 'good' || rating === 'easy') {
       const nextLearned = new Set(learnedNotes);
       nextLearned.add(note.number);
