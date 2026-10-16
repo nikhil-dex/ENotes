@@ -35,24 +35,15 @@ export async function GET(request) {
     }
     const db = await getDatabase();
     if (params.get('scope') === 'all') {
-      const q = (params.get('q') || '').trim().slice(0, 120);
+      const q = (params.get('q') || '').trim().slice(0, 120).toLowerCase();
       if (q.length < 2) return json({ error: 'Enter at least 2 characters to search all subjects.' }, 400);
-      const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&');
-    const subject = await db.collection('subjects').findOne({ _id: slug });');
-      const regex = new RegExp(escapeRegex(q), 'i');
-      const [subjects, matches] = await Promise.all([
+      const [subjects, candidates] = await Promise.all([
         db.collection('subjects').find({}, { projection: { _id: 1, name: 1, slug: 1 } }).toArray(),
-        db.collection('notes').find({
-          $or: [{ heading: regex }, { answer: regex }, { tags: regex }],
-        }, { projection: { _id: 0, subject: 1, number: 1, heading: 1, answer: 1, saved: 1, tags: 1, favorite: 1, pinned: 1 } })
-          .sort({ number: -1 }).limit(100).toArray(),
+        db.collection('notes').find({}, { projection: { _id: 0, subject: 1, number: 1, heading: 1, answer: 1, saved: 1, tags: 1, favorite: 1, pinned: 1 } }).sort({ number: -1 }).limit(5000).toArray(),
       ]);
       const subjectNames = new Map(subjects.map((item) => [item.slug || item._id, item.name || item.slug || item._id]));
-      return json({
-        notes: matches.map((note) => ({ ...note, subjectName: subjectNames.get(note.subject) || note.subject })),
-        limit: 100,
-        query: q,
-      });
+      const matches = candidates.filter((note) => (note.heading + ' ' + note.answer + ' ' + (note.tags || []).join(' ')).toLowerCase().includes(q));
+      return json({ notes: matches.slice(0, 100).map((note) => ({ ...note, subjectName: subjectNames.get(note.subject) || note.subject })), limit: 100, truncated: matches.length > 100, query: q });
     }
     const subject = await db.collection('subjects').findOne({ _id: slug });
     if (!subject) return json({ error: 'Subject not found.' }, 404);
@@ -74,7 +65,6 @@ export async function GET(request) {
     return json({ error: 'Could not load notes. Check the MongoDB connection settings.' }, 500);
   }
 }
-
 export async function POST(request) {
   try {
     let data;
