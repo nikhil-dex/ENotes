@@ -37,7 +37,7 @@ export async function GET(request) {
     if (params.get('scope') === 'all') {
       const q = (params.get('q') || '').trim().slice(0, 120);
       if (q.length < 2) return json({ error: 'Enter at least 2 characters to search all subjects.' }, 400);
-      const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\    const db = await getDatabase();
+      const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&');
     const subject = await db.collection('subjects').findOne({ _id: slug });');
       const regex = new RegExp(escapeRegex(q), 'i');
       const [subjects, matches] = await Promise.all([
