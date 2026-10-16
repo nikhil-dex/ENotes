@@ -200,6 +200,46 @@ export async function PUT(request) {
   }
 }
 
+export async function PATCH(request) {
+  try {
+    let data;
+    try {
+      data = JSON.parse(await readLimitedBody(request, 4 * 1024));
+    } catch (error) {
+      return json({ error: error?.status === 413 ? 'Request body is too large.' : 'Enter valid JSON.' }, error?.status || 400);
+    }
+    const slug = String(data.subject || 'linux');
+    const number = Number(data.number);
+    if (!Number.isInteger(number) || number < 1) return json({ error: 'Choose a valid note.' }, 400);
+    const updates = {};
+    if (Object.hasOwn(data, 'tags')) {
+      const tags = normalizeTags(data.tags);
+      if (tags === null) return json({ error: 'Use up to 10 tags, each no longer than 24 characters.' }, 400);
+      updates.tags = tags;
+    }
+    if (Object.hasOwn(data, 'favorite')) {
+      if (typeof data.favorite !== 'boolean') return json({ error: 'Favorite must be true or false.' }, 400);
+      updates.favorite = data.favorite;
+    }
+    if (Object.hasOwn(data, 'pinned')) {
+      if (typeof data.pinned !== 'boolean') return json({ error: 'Pinned must be true or false.' }, 400);
+      updates.pinned = data.pinned;
+    }
+    if (!Object.keys(updates).length) return json({ error: 'Choose a note property to update.' }, 400);
+    const db = await getDatabase();
+    const result = await db.collection('notes').findOneAndUpdate(
+      { _id: `${slug}:${number}`, subject: slug },
+      { $set: { ...updates, updatedAt: new Date() } },
+      { returnDocument: 'after', includeResultMetadata: false, projection: { _id: 0, subject: 1, number: 1, heading: 1, answer: 1, saved: 1, tags: 1, favorite: 1, pinned: 1 } },
+    );
+    if (!result) return json({ error: 'Note not found.' }, 404);
+    return json(result);
+  } catch (error) {
+    console.error('PATCH /api/notes failed:', error);
+    return json({ error: 'Could not update note properties.' }, 500);
+  }
+}
+
 export async function DELETE(request) {
   try {
     const url = new URL(request.url);
