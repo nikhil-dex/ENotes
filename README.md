@@ -25,6 +25,7 @@ A subject-based study notes application built with **Next.js**, **React**, and *
 - **Markdown-friendly writing** — write note content with supported Markdown formatting and preview it before saving.
 - **Focused reading** — open notes in a full-screen reader.
 - **Flashcard study mode** — review notes, reveal answers, and mark material as learned.
+- **Daily revision queue** — track reviewed cards against a daily goal, prioritize due reviews, and reset the count automatically on the next local calendar day.
 - **Search** — filter notes by heading or content.
 - **Light and dark themes** — switch themes, with the selected theme saved in the browser.
 - **Remembered study state** — the selected subject and learned-note progress are stored locally in the browser.
