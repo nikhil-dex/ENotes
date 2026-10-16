@@ -62,6 +62,7 @@ export default function HomePage() {
   const [studyIndex, setStudyIndex] = useState(0);
   const [studyRevealed, setStudyRevealed] = useState(false);
   const [learnedNotes, setLearnedNotes] = useState(new Set());
+  const [reviewSchedule, setReviewSchedule] = useState({});
   const answerRef = useRef(null);
   const dialogRef = useRef(null);
   const headingInputRef = useRef(null);
@@ -145,6 +146,9 @@ export default function HomePage() {
       const saved = JSON.parse(localStorage.getItem(`learnedNotes:${activeSubject}`) || '[]');
       setLearnedNotes(new Set(saved));
     } catch { setLearnedNotes(new Set()); }
+    try {
+      setReviewSchedule(JSON.parse(localStorage.getItem(`reviewSchedule:${activeSubject}`) || '{}'));
+    } catch { setReviewSchedule({}); }
     setQuery('');
     return () => controller.abort();
   }, [activeSubject, globalSearch]);
@@ -374,9 +378,20 @@ export default function HomePage() {
   }
 
 
-  function startStudy() {
+  function noteReviewKey(note) { return `${note.subject || activeSubject}:${note.number}`; }
+
+  function isReviewDue(note) {
+    const dueAt = reviewSchedule[noteReviewKey(note)]?.dueAt;
+    return !dueAt || new Date(dueAt).getTime() <= Date.now();
+  }
+
+  const dueReviewCount = notes.filter(isReviewDue).length;
+
+  function startStudy(dueOnly = false) {
     if (!notes.length) return;
-    setStudyDeck([...notes].sort((a, b) => b.number - a.number));
+    const dueNotes = notes.filter(isReviewDue);
+    const deck = dueOnly && dueNotes.length ? dueNotes : notes;
+    setStudyDeck([...deck].sort((a, b) => Number(isReviewDue(b)) - Number(isReviewDue(a)) || b.number - a.number));
     setStudyIndex(0); setStudyRevealed(false);
     const stillPresent = new Set([...learnedNotes].filter((number) => notes.some((note) => note.number === number)));
     saveLearned(stillPresent);
@@ -387,6 +402,41 @@ export default function HomePage() {
     if (index >= studyDeck.length) { setStudyOpen(false); return; }
     if (index < 0) return;
     setStudyIndex(index); setStudyRevealed(false);
+  }
+
+  function rateReview(rating) {
+    const note = studyDeck[studyIndex];
+    if (!note) return;
+    const key = noteReviewKey(note);
+    const previous = reviewSchedule[key] || { intervalDays: 0, repetitions: 0 };
+    const now = new Date();
+    let intervalDays = previous.intervalDays || 0;
+    let dueAt;
+    if (rating === 'again') {
+      dueAt = new Date(now.getTime() + 10 * 60 * 1000);
+      intervalDays = 0;
+    } else if (rating === 'hard') {
+      intervalDays = Math.max(1, Math.round((intervalDays || 1) * 1.2));
+      dueAt = new Date(now.getTime() + intervalDays * 24 * 60 * 60 * 1000);
+    } else if (rating === 'easy') {
+      intervalDays = intervalDays ? Math.max(4, Math.round(intervalDays * 2.5)) : 4;
+      dueAt = new Date(now.getTime() + intervalDays * 24 * 60 * 60 * 1000);
+    } else {
+      intervalDays = intervalDays === 0 ? 1 : intervalDays === 1 ? 3 : Math.round(intervalDays * 2);
+      dueAt = new Date(now.getTime() + intervalDays * 24 * 60 * 60 * 1000);
+    }
+    const nextSchedule = {
+      ...reviewSchedule,
+      [key]: { dueAt: dueAt.toISOString(), intervalDays, repetitions: (previous.repetitions || 0) + 1, lastReviewedAt: now.toISOString(), rating },
+    };
+    setReviewSchedule(nextSchedule);
+    localStorage.setItem(`reviewSchedule:${activeSubject}`, JSON.stringify(nextSchedule));
+    if (rating === 'good' || rating === 'easy') {
+      const nextLearned = new Set(learnedNotes);
+      nextLearned.add(note.number);
+      saveLearned(nextLearned);
+    }
+    moveStudy(studyIndex + 1);
   }
 
   function markLearned() {
