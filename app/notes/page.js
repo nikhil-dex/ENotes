@@ -145,6 +145,7 @@ export default function HomePage() {
     if (!noteDialog || !activeSubject) return;
     const key = draftStorageKey(activeSubject, editingNote?.number);
     if (!heading.trim() && !answer.trim()) {
+      try { localStorage.removeItem(key); } catch {}
       setDraftStatus('');
       return;
     }
