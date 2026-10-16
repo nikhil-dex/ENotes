@@ -70,7 +70,7 @@ export async function POST(request) {
           contents: [{ role: 'user', parts: [{ text: prompt }] }],
           generationConfig: {
             temperature: 0.2,
-            thinkingConfig: { thinkingLevel: 'LOW' },
+            thinkingConfig: { thinkingLevel: 'low' },
             responseMimeType: 'application/json',
             responseSchema: {
               type: 'OBJECT',
