@@ -39,6 +39,8 @@ export async function POST(request) {
 
   const model = (process.env.GEMINI_MODEL || 'gemini-3.8-flash').trim();
   if (!/^[a-zA-Z0-9._-]+$/.test(model)) return json({ error: 'The configured Gemini model name is invalid.' }, 500);
+  const fallbackModel = (process.env.GEMINI_FALLBACK_MODEL || 'gemini-3.6-flash').trim();
+  if (!/^[a-zA-Z0-9._-]+$/.test(fallbackModel)) return json({ error: 'The configured Gemini fallback model name is invalid.' }, 500);
 
   const prompt = [
     'You are a careful editor for a personal technical study-notes application.',
@@ -58,7 +60,37 @@ export async function POST(request) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 30000);
   try {
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent', {
+    async function callModel(modelName) {
+      return fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(modelName) + ':generateContent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+        cache: 'no-store',
+        signal: controller.signal,
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.2,
+            responseMimeType: 'application/json',
+            responseSchema: {
+              type: 'OBJECT',
+              properties: { heading: { type: 'STRING' }, answer: { type: 'STRING' } },
+              required: ['heading', 'answer'],
+              propertyOrdering: ['heading', 'answer'],
+            },
+          },
+        }),
+      });
+    }
+
+    let activeModel = model;
+    let response = await callModel(activeModel);
+    if (response.status === 429 && fallbackModel !== activeModel) {
+      console.warn('Gemini primary model rate-limited; trying fallback model.', { primaryModel: activeModel, fallbackModel });
+      activeModel = fallbackModel;
+      response = await callModel(activeModel);
+    }
+
+    const payload = await response.json().catch(() => ({}));
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
       cache: 'no-store',
@@ -75,17 +107,14 @@ export async function POST(request) {
             propertyOrdering: ['heading', 'answer'],
           },
         },
-      }),
-    });
 
-    const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
-      if (response.status === 429) return json({ error: 'Gemini is receiving too many requests or its quota is exhausted. Please wait and try again.' }, 429);
+      if (response.status === 429) return json({ error: 'Gemini reached its usage limit on both the primary and fallback models. Please wait for quota to reset and try again.' }, 429);
       if (response.status === 400 || response.status === 404) {
-        console.error('Gemini cleanup configuration/request rejected:', { status: response.status, model });
+        console.error('Gemini cleanup configuration/request rejected:', { status: response.status, model: activeModel });
         return json({ error: 'Gemini rejected this request. Check GEMINI_MODEL and the API key’s model access.' }, 502);
       }
-      console.error('Gemini cleanup request failed:', { status: response.status, model });
+      console.error('Gemini cleanup request failed:', { status: response.status, model: activeModel });
       return json({ error: 'Gemini could not process this note right now. Please try again later.' }, 502);
     }
 
@@ -97,7 +126,7 @@ export async function POST(request) {
     let result;
     try { result = parseModelJson(output); }
     catch {
-      console.error('Gemini cleanup returned invalid structured output:', { model });
+      console.error('Gemini cleanup returned invalid structured output:', { model: activeModel });
       return json({ error: 'Gemini returned an unexpected format. Please try again.' }, 502);
     }
     return json(result);
