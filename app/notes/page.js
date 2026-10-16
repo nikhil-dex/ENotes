@@ -56,6 +56,7 @@ export default function HomePage() {
   const [answer, setAnswer] = useState('');
   const [formError, setFormError] = useState('');
   const [preview, setPreview] = useState(false);
+  const [answerFullscreen, setAnswerFullscreen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [draftStatus, setDraftStatus] = useState('');
   const [studyDeck, setStudyDeck] = useState([]);
@@ -321,6 +322,7 @@ export default function HomePage() {
     if (draftDirty && !window.confirm('Discard your unsaved note changes? The local draft will be removed.')) return;
     try { localStorage.removeItem(draftStorageKey(editingNote?.subject || activeSubject, editingNote?.number)); } catch {}
     setDraftStatus('');
+    setAnswerFullscreen(false);
     setNoteDialog(false);
     setEditingNote(null);
     setFormError('');
@@ -334,12 +336,13 @@ export default function HomePage() {
   useEffect(() => {
     function onKeyDown(event) {
       if (event.key !== 'Escape') return;
+      if (answerFullscreen) { setAnswerFullscreen(false); return; }
       if (noteDialog) requestCloseNoteDialog();
       setReaderNote(null); setStudyOpen(false); setMobileNavOpen(false);
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [noteDialog, heading, answer]);
+  }, [noteDialog, heading, answer, answerFullscreen]);
 
   useEffect(() => {
     if (!noteDialog || !activeSubject) return;
@@ -469,7 +472,7 @@ export default function HomePage() {
         } catch {}
       } else setNotes((current) => [...current, { ...note, subjectName: active?.name || activeSubject }]);
       try { localStorage.removeItem(draftStorageKey(activeSubject, editingNote?.number)); } catch {}
-      setHeading(''); setAnswer(''); setTagInput(''); setFavoriteDraft(false); setPinnedDraft(false); initialDraftRef.current = { heading: '', answer: '' }; setDraftStatus(''); setPreview(false); setNoteDialog(false); setEditingNote(null);
+      setHeading(''); setAnswer(''); setTagInput(''); setFavoriteDraft(false); setPinnedDraft(false); initialDraftRef.current = { heading: '', answer: '' }; setDraftStatus(''); setPreview(false); setAnswerFullscreen(false); setNoteDialog(false); setEditingNote(null);
     } catch (error) { setFormError(error.message); }
     finally { setSaving(false); }
   }
@@ -502,7 +505,7 @@ export default function HomePage() {
     initialDraftRef.current = { heading: note.heading, answer: note.answer };
     setEditingNote({ ...note, subject: note.subject || activeSubject }); setHeading(note.heading); setAnswer(note.answer);
     setTagInput((note.tags || []).join(', ')); setFavoriteDraft(note.favorite === true); setPinnedDraft(note.pinned === true);
-    setPreview(false); setFormError(''); setNoteDialog(true);
+    setPreview(false); setAnswerFullscreen(false); setFormError(''); setNoteDialog(true);
   }
 
   async function deleteNote(note) {
@@ -689,9 +692,12 @@ export default function HomePage() {
       {formError && !noteDialog && <p className="page-error" role="alert">{formError}</p>}
 
       {noteDialog && <div className="modal-backdrop editor-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) requestCloseNoteDialog(); }}><section ref={dialogRef} className="dialog editor-dialog" role="dialog" aria-modal="true" aria-labelledby="formTitle" aria-describedby="formDescription"><button className="close-button" onClick={requestCloseNoteDialog} aria-label="Close form">×</button><p className="eyebrow">{editingNote ? `EDIT NOTE ${String(editingNote.number).padStart(2, '0')}` : 'GROW YOUR LIBRARY'}</p><h2 id="formTitle">{editingNote ? 'Edit note' : 'Add a note'}<span className="period">.</span></h2><p id="formDescription" className="form-subtitle">{editingNote ? 'Update the heading or answer. Its serial number will stay the same.' : 'Give it a clear heading and capture what you learned.'}</p>
-        <form onSubmit={saveNote}><label htmlFor="heading">HEADING</label><input ref={headingInputRef} id="heading" maxLength={160} placeholder="e.g. What does chmod do?" value={heading} onChange={(event) => setHeading(event.target.value)} required/><label htmlFor="noteTags">TAGS <span className="field-hint">comma-separated · up to 10</span></label><input id="noteTags" maxLength={260} placeholder="e.g. arrays, exam, important" value={tagInput} onChange={(event) => setTagInput(event.target.value)} /><div className="note-metadata-fields"><label><input type="checkbox" checked={favoriteDraft} onChange={(event) => setFavoriteDraft(event.target.checked)} /> Mark as favorite</label><label><input type="checkbox" checked={pinnedDraft} onChange={(event) => setPinnedDraft(event.target.checked)} /> Pin to top</label></div><div className="label-row"><label htmlFor="answer">ANSWER</label><span>Markdown · link notes with [[Exact note heading]]</span></div><div className="editor-toolbar" aria-label="Answer formatting"><button type="button" onClick={() => insertFormatting('bold')} title="Bold">B</button><button type="button" onClick={() => insertFormatting('code')} title="Inline code">&lt;/&gt;</button><button type="button" onClick={() => insertFormatting('list')} title="Bullet list">• List</button><button type="button" onClick={() => insertFormatting('codeblock')} title="Code block">{'{ }'}</button><span>Formatting shortcuts</span><span className="draft-status" role="status" aria-live="polite">{draftStatus}</span></div>
-          <div className="editor-tabs"><button type="button" className={!preview ? 'active' : ''} onClick={() => setPreview(false)}>Write</button><button type="button" className={preview ? 'active' : ''} onClick={() => setPreview(true)}>Preview</button></div>
-          {!preview ? <textarea ref={answerRef} id="answer" rows={6} maxLength={10000} placeholder="Write your explanation here…" value={answer} onChange={(event) => setAnswer(event.target.value)} required/> : <div className="answer-preview">{answer ? <div dangerouslySetInnerHTML={{ __html: markdownHtml(answer) }}/> : <p className="preview-placeholder">Nothing to preview yet.</p>}</div>}
+        <form onSubmit={saveNote}><label htmlFor="heading">HEADING</label><input ref={headingInputRef} id="heading" maxLength={160} placeholder="e.g. What does chmod do?" value={heading} onChange={(event) => setHeading(event.target.value)} required/><label htmlFor="noteTags">TAGS <span className="field-hint">comma-separated · up to 10</span></label><input id="noteTags" maxLength={260} placeholder="e.g. arrays, exam, important" value={tagInput} onChange={(event) => setTagInput(event.target.value)} /><div className="note-metadata-fields"><label><input type="checkbox" checked={favoriteDraft} onChange={(event) => setFavoriteDraft(event.target.checked)} /> Mark as favorite</label><label><input type="checkbox" checked={pinnedDraft} onChange={(event) => setPinnedDraft(event.target.checked)} /> Pin to top</label></div><div className={`answer-workspace${answerFullscreen ? ' is-fullscreen' : ''}`}>
+            <div className="label-row"><label htmlFor="answer">ANSWER</label><span>Markdown · link notes with [[Exact note heading]]</span><button type="button" className="answer-expand-button" onClick={() => setAnswerFullscreen((current) => !current)} aria-label={answerFullscreen ? 'Exit full-screen writing area' : 'Expand writing area to full screen'} title={answerFullscreen ? 'Exit full screen (Esc)' : 'Expand writing area'}>{answerFullscreen ? '↙ Exit full screen' : '⛶ Expand'}</button></div>
+            <div className="editor-toolbar" aria-label="Answer formatting"><button type="button" onClick={() => insertFormatting('bold')} title="Bold">B</button><button type="button" onClick={() => insertFormatting('code')} title="Inline code">&lt;/&gt;</button><button type="button" onClick={() => insertFormatting('list')} title="Bullet list">• List</button><button type="button" onClick={() => insertFormatting('codeblock')} title="Code block">{'{ }'}</button><span>Formatting shortcuts</span><span className="draft-status" role="status" aria-live="polite">{draftStatus}</span></div>
+            <div className="editor-tabs"><button type="button" className={!preview ? 'active' : ''} onClick={() => setPreview(false)}>Write</button><button type="button" className={preview ? 'active' : ''} onClick={() => setPreview(true)}>Preview</button></div>
+            {!preview ? <textarea ref={answerRef} id="answer" rows={6} maxLength={10000} placeholder="Write your explanation here…" value={answer} onChange={(event) => setAnswer(event.target.value)} required/> : <div className="answer-preview">{answer ? <div dangerouslySetInnerHTML={{ __html: markdownHtml(answer) }}/> : <p className="preview-placeholder">Nothing to preview yet.</p>}</div>}
+          </div>
           {formError && <p className="form-error" role="alert">{formError}</p>}<button className="submit-button" type="submit" disabled={saving}><span>{saving ? 'Saving…' : editingNote ? 'Save changes' : 'Save note'}</span><span aria-hidden="true">→</span></button></form>
       </section></div>}
 
