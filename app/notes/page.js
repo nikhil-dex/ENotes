@@ -32,6 +32,10 @@ export default function HomePage() {
   const [preview, setPreview] = useState(false);
   const [saving, setSaving] = useState(false);
   const [draftStatus, setDraftStatus] = useState('');
+  const [revisions, setRevisions] = useState([]);
+  const [revisionsOpen, setRevisionsOpen] = useState(false);
+  const [revisionsLoading, setRevisionsLoading] = useState(false);
+  const [revisionsError, setRevisionsError] = useState('');
   const [studyDeck, setStudyDeck] = useState([]);
   const [studyIndex, setStudyIndex] = useState(0);
   const [studyRevealed, setStudyRevealed] = useState(false);
@@ -224,9 +228,28 @@ export default function HomePage() {
     finally { setSaving(false); }
   }
 
+  async function loadRevisionHistory() {
+    if (!editingNote) return;
+    setRevisionsOpen(true);
+    setRevisionsLoading(true);
+    setRevisionsError('');
+    try {
+      const data = await responseJson(await fetch(
+        `/api/notes?subject=${encodeURIComponent(activeSubject)}&number=${editingNote.number}&history=1`,
+        { cache: 'no-store' },
+      ));
+      setRevisions(Array.isArray(data.revisions) ? data.revisions : []);
+    } catch (error) {
+      setRevisionsError(error.message || 'Could not load revision history.');
+    } finally {
+      setRevisionsLoading(false);
+    }
+  }
+
   function editNote(note) {
     initialDraftRef.current = { heading: note.heading, answer: note.answer };
     setEditingNote(note); setHeading(note.heading); setAnswer(note.answer);
+    setRevisions([]); setRevisionsOpen(false); setRevisionsError('');
     setPreview(false); setFormError(''); setNoteDialog(true);
   }
 
@@ -324,7 +347,7 @@ export default function HomePage() {
 
       <section className="intro">
         <div><p className="eyebrow">YOUR PERSONAL KNOWLEDGE BASE</p><h1>{active?.name || 'Your'} notes<span className="period">.</span></h1><p className="subtitle">A clear place for the commands, concepts, and things you learn.</p></div>
-        <div className="intro-actions"><button className="study-button" onClick={startStudy} disabled={!notes.length}><span aria-hidden="true">◉</span> Study notes</button><button className="add-button" onClick={() => { initialDraftRef.current = { heading: '', answer: '' }; setEditingNote(null); setHeading(''); setAnswer(''); setFormError(''); setNoteDialog(true); }}><span aria-hidden="true">+</span> Add a note</button></div>
+        <div className="intro-actions"><button className="study-button" onClick={startStudy} disabled={!notes.length}><span aria-hidden="true">◉</span> Study notes</button><button className="add-button" onClick={() => { initialDraftRef.current = { heading: '', answer: '' }; setEditingNote(null); setHeading(''); setAnswer(''); setRevisions([]); setRevisionsOpen(false); setRevisionsError(''); setFormError(''); setNoteDialog(true); }}><span aria-hidden="true">+</span> Add a note</button></div>
       </section>
 
       <section className="stats" aria-label="Note statistics"><div className="stat"><span className="stat-number">{String(notes.length).padStart(2, '0')}</span><span className="stat-label">TOTAL NOTES</span></div><div className="stat-divider"/><div className="stat"><span className="stat-number">{String(subjects.length).padStart(2, '0')}</span><span className="stat-label">SUBJECTS</span></div><div className="stat-spacer"/><div className="search-wrap"><span aria-hidden="true">⌕</span><input type="search" placeholder="Search your notes…" aria-label="Search notes" value={query} onChange={(event) => setQuery(event.target.value)}/></div></section>
@@ -337,7 +360,18 @@ export default function HomePage() {
       {formError && !noteDialog && <p className="page-error" role="alert">{formError}</p>}
 
       {noteDialog && <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) requestCloseNoteDialog(); }}><section className="dialog" role="dialog" aria-modal="true" aria-labelledby="formTitle"><button className="close-button" onClick={requestCloseNoteDialog} aria-label="Close form">×</button><p className="eyebrow">{editingNote ? `EDIT NOTE ${String(editingNote.number).padStart(2, '0')}` : 'GROW YOUR LIBRARY'}</p><h2 id="formTitle">{editingNote ? 'Edit note' : 'Add a note'}<span className="period">.</span></h2><p className="form-subtitle">{editingNote ? 'Update the heading or answer. Its serial number will stay the same.' : 'Give it a clear heading and capture what you learned.'}</p>
-        <form onSubmit={saveNote}><label htmlFor="heading">HEADING</label><input id="heading" maxLength={160} placeholder="e.g. What does chmod do?" value={heading} onChange={(event) => setHeading(event.target.value)} required/><div className="label-row"><label htmlFor="answer">ANSWER</label><span>Markdown is okay</span></div><div className="editor-toolbar" aria-label="Answer formatting"><button type="button" onClick={() => insertFormatting('bold')} title="Bold">B</button><button type="button" onClick={() => insertFormatting('code')} title="Inline code">&lt;/&gt;</button><button type="button" onClick={() => insertFormatting('list')} title="Bullet list">• List</button><button type="button" onClick={() => insertFormatting('codeblock')} title="Code block">{'{ }'}</button><span>Formatting shortcuts</span><span className="draft-status" role="status" aria-live="polite">{draftStatus}</span></div><div className="editor-tabs"><button type="button" className={!preview ? 'active' : ''} onClick={() => setPreview(false)}>Write</button><button type="button" className={preview ? 'active' : ''} onClick={() => setPreview(true)}>Preview</button></div>
+        <form onSubmit={saveNote}><label htmlFor="heading">HEADING</label><input id="heading" maxLength={160} placeholder="e.g. What does chmod do?" value={heading} onChange={(event) => setHeading(event.target.value)} required/><div className="label-row"><label htmlFor="answer">ANSWER</label><span>Markdown is okay</span>{editingNote && <button type="button" className="history-button" onClick={loadRevisionHistory}>Revision history</button>}</div><div className="editor-toolbar" aria-label="Answer formatting"><button type="button" onClick={() => insertFormatting('bold')} title="Bold">B</button><button type="button" onClick={() => insertFormatting('code')} title="Inline code">&lt;/&gt;</button><button type="button" onClick={() => insertFormatting('list')} title="Bullet list">• List</button><button type="button" onClick={() => insertFormatting('codeblock')} title="Code block">{'{ }'}</button><span>Formatting shortcuts</span><span className="draft-status" role="status" aria-live="polite">{draftStatus}</span></div>
+          {revisionsOpen && <section className="revision-history" aria-label="Note revision history">
+            <div className="revision-history-heading"><strong>Previous versions</strong><button type="button" onClick={() => setRevisionsOpen(false)}>Close</button></div>
+            {revisionsLoading && <p role="status">Loading versions…</p>}
+            {revisionsError && <p className="form-error" role="alert">{revisionsError}</p>}
+            {!revisionsLoading && !revisionsError && revisions.length === 0 && <p>No previous versions yet. Versions are saved after you edit this note.</p>}
+            <ol>{revisions.map((revision, index) => <li key={`${revision.revisedAt || revision.saved || 'version'}-${index}`}>
+              <div><strong>{revision.saved || 'Previous version'}</strong><p>{revision.heading}</p><span>{String(revision.answer || '').slice(0, 110)}{String(revision.answer || '').length > 110 ? '…' : ''}</span></div>
+              <button type="button" onClick={() => { setHeading(revision.heading || ''); setAnswer(revision.answer || ''); setPreview(false); setFormError(''); setDraftStatus('Previous version restored to editor'); }}>Restore</button>
+            </li>)}</ol>
+          </section>}
+          <div className="editor-tabs"><button type="button" className={!preview ? 'active' : ''} onClick={() => setPreview(false)}>Write</button><button type="button" className={preview ? 'active' : ''} onClick={() => setPreview(true)}>Preview</button></div>
           {!preview ? <textarea ref={answerRef} id="answer" rows={6} maxLength={10000} placeholder="Write your explanation here…" value={answer} onChange={(event) => setAnswer(event.target.value)} required/> : <div className="answer-preview">{answer ? <div dangerouslySetInnerHTML={{ __html: markdownHtml(answer) }}/> : <p className="preview-placeholder">Nothing to preview yet.</p>}</div>}
           {formError && <p className="form-error" role="alert">{formError}</p>}<button className="submit-button" type="submit" disabled={saving}><span>{saving ? 'Saving…' : editingNote ? 'Save changes' : 'Save note'}</span><span aria-hidden="true">→</span></button></form>
       </section></div>}

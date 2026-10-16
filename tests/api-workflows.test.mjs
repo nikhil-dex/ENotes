@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { POST as createNote, PUT as updateNote, DELETE as deleteNote } from '../app/api/notes/route.js';
+import { GET as getNotes, POST as createNote, PUT as updateNote, DELETE as deleteNote } from '../app/api/notes/route.js';
 import { POST as createSubject, DELETE as deleteSubject } from '../app/api/subjects/route.js';
 import { POST as restoreBackup } from '../app/api/backup/route.js';
 
