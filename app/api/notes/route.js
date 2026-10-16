@@ -8,6 +8,14 @@ function json(data, status = 200) {
   return Response.json(data, { status, headers: { 'Cache-Control': 'no-store' } });
 }
 
+function normalizeTags(value) {
+  if (value === undefined) return [];
+  if (!Array.isArray(value)) return null;
+  const tags = [...new Set(value.map((tag) => String(tag).trim().toLowerCase()).filter(Boolean))];
+  if (tags.length > 10 || tags.some((tag) => tag.length > 24 || !/^[\\p{L}\\p{N} _-]+$/u.test(tag))) return null;
+  return tags;
+}
+
 function savedTime() {
   return new Date().toLocaleString('en-IN', {
     dateStyle: 'medium',
@@ -37,7 +45,7 @@ export async function GET(request) {
       return json({ revisions: Array.isArray(note.revisions) ? note.revisions.slice().reverse() : [] });
     }
     const notes = await db.collection('notes')
-      .find({ subject: slug }, { projection: { _id: 0, subject: 1, number: 1, heading: 1, answer: 1, saved: 1 } })
+      .find({ subject: slug }, { projection: { _id: 0, subject: 1, number: 1, heading: 1, answer: 1, saved: 1, tags: 1, favorite: 1, pinned: 1 } })
       .sort({ number: -1 })
       .toArray();
     return json(notes);
@@ -58,6 +66,10 @@ export async function POST(request) {
     const slug = String(data.subject || 'linux');
     const heading = String(data.heading || '').trim();
     const answer = String(data.answer || '').trim();
+    const tags = normalizeTags(data.tags);
+    if (tags === null) return json({ error: 'Use up to 10 tags, each no longer than 24 characters.' }, 400);
+    const favorite = data.favorite === true;
+    const pinned = data.pinned === true;
     if (!heading || !answer || heading.length > 160 || answer.length > 10000) {
       return json({ error: 'Add a heading and answer within the allowed length.' }, 400);
     }
@@ -100,6 +112,9 @@ export async function POST(request) {
         heading: heading.replace(/[\r\n]+/g, ' '),
         answer: answer.replace(/\r\n/g, '\n'),
         saved: savedTime(),
+        tags,
+        favorite,
+        pinned,
         createdAt: new Date(),
       };
       try {
@@ -135,6 +150,10 @@ export async function PUT(request) {
     const number = Number(data.number);
     const heading = String(data.heading || '').trim();
     const answer = String(data.answer || '').trim();
+    const tags = normalizeTags(data.tags);
+    if (tags === null) return json({ error: 'Use up to 10 tags, each no longer than 24 characters.' }, 400);
+    const favorite = data.favorite === true;
+    const pinned = data.pinned === true;
     if (!Number.isInteger(number) || number < 1) return json({ error: 'Choose a valid note.' }, 400);
     if (!heading || !answer || heading.length > 160 || answer.length > 10000) {
       return json({ error: 'Add a heading and answer within the allowed length.' }, 400);
@@ -154,6 +173,9 @@ export async function PUT(request) {
           heading: heading.replace(/[\\r\\n]+/g, ' '),
           answer: answer.replace(/\\r\\n/g, '\\n'),
           saved: savedTime(),
+          tags,
+          favorite,
+          pinned,
           updatedAt: new Date(),
         },
         $push: {
