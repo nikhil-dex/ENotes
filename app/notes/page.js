@@ -116,6 +116,29 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
+    const syncDailyRevision = () => {
+      try {
+        const stored = JSON.parse(localStorage.getItem('dailyRevision:v1') || 'null');
+        const today = getDailyRevisionState(stored);
+        if (JSON.stringify(stored) !== JSON.stringify(today)) localStorage.setItem('dailyRevision:v1', JSON.stringify(today));
+        setDailyRevision((current) => JSON.stringify(current) === JSON.stringify(today) ? current : today);
+      } catch {
+        const today = getDailyRevisionState(null);
+        try { localStorage.setItem('dailyRevision:v1', JSON.stringify(today)); } catch {}
+        setDailyRevision((current) => JSON.stringify(current) === JSON.stringify(today) ? current : today);
+      }
+    };
+    const interval = window.setInterval(syncDailyRevision, 60_000);
+    window.addEventListener('focus', syncDailyRevision);
+    document.addEventListener('visibilitychange', syncDailyRevision);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener('focus', syncDailyRevision);
+      document.removeEventListener('visibilitychange', syncDailyRevision);
+    };
+  }, []);
+
+  useEffect(() => {
     document.documentElement.dataset.theme = theme;
     localStorage.setItem('theme', theme);
   }, [theme]);
