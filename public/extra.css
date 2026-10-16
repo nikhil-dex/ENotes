@@ -427,3 +427,14 @@ button[aria-disabled="true"] {
 .search-limit-note{margin:12px 0;color:var(--muted);font:11px var(--sans)}
 [data-theme="dark"] .global-search-toggle.active{background:#29382e;color:#a5ceaf}
 @media(max-width:650px){.global-search-toggle{min-height:40px}.stats{flex-wrap:wrap}.stats .search-wrap{order:5;flex-basis:100%;width:100%}}
+
+
+/* Phase 16: note pagination and sorting */
+.sort-control{display:flex;align-items:center;gap:8px;color:var(--muted);font:11px var(--sans)}
+.sort-control select{max-width:170px;min-height:34px;padding:6px 9px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);font:11px var(--sans)}
+.pagination{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin:24px 0 6px;padding-top:16px;border-top:1px solid var(--line)}
+.pagination-summary{color:var(--muted);font:11px var(--sans)}
+.pagination-actions{display:flex;align-items:center;gap:12px;color:var(--muted);font:11px var(--sans)}
+.pagination-actions button{min-height:36px;padding:7px 11px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);font:11px var(--sans);cursor:pointer}
+.pagination-actions button:disabled{opacity:.4;cursor:not-allowed}
+@media(max-width:520px){.sort-control{width:100%;justify-content:space-between;margin-top:10px}.sort-control select{flex:1;max-width:none;min-height:40px}.pagination{align-items:stretch}.pagination-summary{text-align:center;width:100%}.pagination-actions{justify-content:space-between;gap:8px}.pagination-actions button{min-height:40px}}
