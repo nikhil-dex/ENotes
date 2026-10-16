@@ -19,6 +19,8 @@ export default function RevisionHistoryPage() {
   const [loadingSubjects, setLoadingSubjects] = useState(true);
   const [loadingNotes, setLoadingNotes] = useState(false);
   const [loadingRevisions, setLoadingRevisions] = useState(false);
+  const [restoring, setRestoring] = useState(false);
+  const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
   const activeSubject = subjects.find((subject) => subject.slug === subjectSlug);
@@ -60,6 +62,41 @@ export default function RevisionHistoryPage() {
     return () => { cancelled = true; };
   }, [subjectSlug]);
 
+  async function restoreRevision() {
+    if (!activeNote || !chosenRevision || restoring) return;
+    const approved = window.confirm(`Restore the saved version "${chosenRevision.heading || 'Untitled note'}" as the current version of this note? The current content will be saved in revision history first.`);
+    if (!approved) return;
+    setRestoring(true);
+    setError('');
+    setMessage('');
+    try {
+      const updated = await responseJson(await fetch('/api/notes', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        cache: 'no-store',
+        body: JSON.stringify({
+          subject: subjectSlug,
+          number: activeNote.number,
+          heading: chosenRevision.heading || '',
+          answer: chosenRevision.answer || '',
+          tags: Array.isArray(activeNote.tags) ? activeNote.tags : [],
+          favorite: activeNote.favorite === true,
+          pinned: activeNote.pinned === true,
+        }),
+      }));
+      setNotes((current) => current.map((note) => note.number === updated.number
+        ? { ...note, heading: updated.heading, answer: updated.answer, saved: updated.saved, tags: updated.tags, favorite: updated.favorite, pinned: updated.pinned }
+        : note));
+      setRevisions(Array.isArray(updated.revisions) ? updated.revisions.slice().reverse() : []);
+      setSelectedRevision(0);
+      setMessage('Previous version restored. The content that was current has been kept in revision history.');
+    } catch (restoreError) {
+      setError(restoreError.message || 'Could not restore this version.');
+    } finally {
+      setRestoring(false);
+    }
+  }
   useEffect(() => {
     if (!subjectSlug || !noteNumber) { setRevisions([]); return; }
     let cancelled = false;
@@ -89,6 +126,7 @@ export default function RevisionHistoryPage() {
       </section>
 
       {error && <p className="page-error" role="alert">{error}</p>}
+      {message && <p className="revision-success" role="status">{message}</p>}
 
       <section className="revision-layout" aria-label="Browse revision history">
         <div className="revision-panel">
@@ -135,7 +173,7 @@ export default function RevisionHistoryPage() {
                   <div className="revision-version-head"><strong>Version details</strong><span>{chosenRevision.saved || chosenRevision.revisedAt || 'Previous save'}</span></div>
                   <h3>{chosenRevision.heading || 'Untitled note'}</h3>
                   <div className="revision-version-content" dangerouslySetInnerHTML={{ __html: markdownHtml(chosenRevision.answer || '') }} />
-                  <div className="revision-actions"><a className="revision-primary" href={`/notes?subject=${encodeURIComponent(subjectSlug)}`}>Open notes library ↗</a></div>
+                  <div className="revision-actions"><button type="button" onClick={restoreRevision} disabled={restoring} className="revision-primary">{restoring ? 'Restoring…' : 'Restore this version'}</button><a href={`/notes?subject=${encodeURIComponent(subjectSlug)}`}>Open notes library ↗</a></div>
                 </article>
               )}
             </div>
