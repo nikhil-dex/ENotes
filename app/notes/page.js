@@ -391,7 +391,8 @@ export default function HomePage() {
   function startStudy(dueOnly = false) {
     if (!notes.length) return;
     const dueNotes = notes.filter(isReviewDue);
-    const deck = dueOnly && dueNotes.length ? dueNotes : notes;
+    const deck = dueOnly ? dueNotes : notes;
+    if (!deck.length) return;
     setStudyDeck([...deck].sort((a, b) => Number(isReviewDue(b)) - Number(isReviewDue(a)) || b.number - a.number));
     setStudyIndex(0); setStudyRevealed(false);
     const stillPresent = new Set([...learnedNotes].filter((number) => notes.some((note) => note.number === number)));
@@ -483,7 +484,7 @@ export default function HomePage() {
 
       <section className="intro">
         <div><p className="eyebrow">YOUR PERSONAL KNOWLEDGE BASE</p><h1>{active?.name || 'Your'} notes<span className="period">.</span></h1><p className="subtitle">A clear place for the commands, concepts, and things you learn.</p></div>
-        <div className="intro-actions"><button className="study-button" onClick={() => startStudy(true)} disabled={!notes.length}><span aria-hidden="true">◉</span> Review due ({dueReviewCount})</button><button className="study-button secondary-study-button" onClick={() => startStudy(false)} disabled={!notes.length}>Study all notes</button><button className="add-button" onClick={() => { initialDraftRef.current = { heading: '', answer: '' }; setEditingNote(null); setHeading(''); setAnswer(''); setTagInput(''); setFavoriteDraft(false); setPinnedDraft(false); setRevisions([]); setRevisionsOpen(false); setRevisionsError(''); setFormError(''); setNoteDialog(true); }}><span aria-hidden="true">+</span> Add a note</button></div>
+        <div className="intro-actions"><button className="study-button" onClick={() => startStudy(true)} disabled={!dueReviewCount}><span aria-hidden="true">◉</span> Review due ({dueReviewCount})</button><button className="study-button secondary-study-button" onClick={() => startStudy(false)} disabled={!notes.length}>Study all notes</button><button className="add-button" onClick={() => { initialDraftRef.current = { heading: '', answer: '' }; setEditingNote(null); setHeading(''); setAnswer(''); setTagInput(''); setFavoriteDraft(false); setPinnedDraft(false); setRevisions([]); setRevisionsOpen(false); setRevisionsError(''); setFormError(''); setNoteDialog(true); }}><span aria-hidden="true">+</span> Add a note</button></div>
       </section>
 
       <section className="stats" aria-label="Note statistics"><div className="stat"><span className="stat-number">{String(notes.length).padStart(2, '0')}</span><span className="stat-label">TOTAL NOTES</span></div><div className="stat-divider"/><div className="stat"><span className="stat-number">{String(subjects.length).padStart(2, '0')}</span><span className="stat-label">SUBJECTS</span></div><div className="stat-spacer"/><div className="search-wrap"><span aria-hidden="true">⌕</span><input type="search" placeholder={globalSearch ? "Search all subjects…" : "Search this subject…"} aria-label="Search notes" value={query} onChange={(event) => setQuery(event.target.value)}/></div><button type="button" className={globalSearch ? "global-search-toggle active" : "global-search-toggle"} aria-pressed={globalSearch} onClick={() => { setGlobalSearch((value) => !value); setQuery(""); setFormError(""); }}>⌕ {globalSearch ? "All subjects" : "Search all subjects"}</button></section>
