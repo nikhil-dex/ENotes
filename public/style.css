@@ -52,34 +52,46 @@
 }
 
 
-/* Phase 1: responsive note editor */
+/* Phase 1: responsive note editor — workspace layout */
 .editor-backdrop{
   z-index:1000;
-  padding:clamp(12px,2.5vw,28px);
-  overflow-y:auto;
+  display:grid;
+  place-items:center;
+  padding:clamp(12px,2vw,24px);
+  overflow:auto;
   overscroll-behavior:contain;
   -webkit-overflow-scrolling:touch;
 }
 .editor-dialog{
   display:flex;
   flex-direction:column;
-  width:min(100%,860px);
-  max-height:calc(100vh - 40px);
-  max-height:calc(100dvh - 40px);
+  width:min(96vw,1240px);
+  height:min(94vh,1100px);
+  height:min(94dvh,1100px);
+  max-height:calc(100vh - 24px);
+  max-height:calc(100dvh - 24px);
+  min-height:0;
+  overflow:hidden;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  padding:clamp(22px,2.5vw,34px);
+}
+.editor-dialog form{
+  display:flex;
+  flex:1 1 auto;
+  flex-direction:column;
+  min-width:0;
   min-height:0;
   overflow-y:auto;
   overscroll-behavior:contain;
-  -webkit-overflow-scrolling:touch;
-  padding:clamp(22px,3vw,36px);
 }
-.editor-dialog form{min-width:0}
-.editor-dialog .form-subtitle{margin-bottom:20px}
+.editor-dialog .form-subtitle{margin-bottom:18px}
 .editor-dialog .note-metadata-fields{
   display:flex;
   flex-wrap:wrap;
   align-items:center;
   gap:10px 18px;
-  margin:-2px 0 18px;
+  margin:-2px 0 16px;
 }
 .editor-dialog .note-metadata-fields label{
   display:inline-flex;
@@ -107,7 +119,7 @@
   flex-wrap:wrap;
   gap:7px;
   min-width:0;
-  margin:0 0 10px;
+  margin:0 0 8px;
 }
 .editor-dialog .editor-toolbar button{
   display:inline-flex;
@@ -138,6 +150,7 @@
 }
 .editor-dialog .editor-tabs{
   display:flex;
+  flex:0 0 auto;
   gap:4px;
   margin-bottom:8px;
   border-bottom:1px solid var(--line);
@@ -157,31 +170,42 @@
   color:var(--green-dark);
   border-bottom-color:var(--green);
 }
-.editor-dialog textarea#answer{
-  display:block;
-  width:100%;
-  min-height:clamp(240px,42dvh,520px);
-  margin:0;
-  padding:14px;
-  resize:vertical;
-  font:13px/1.75 var(--sans);
-  tab-size:2;
-}
+.editor-dialog textarea#answer,
 .editor-dialog .answer-preview{
+  display:block;
+  flex:1 1 0;
   width:100%;
-  min-height:clamp(240px,42dvh,520px);
+  min-height:clamp(220px,34dvh,620px);
+  height:auto;
+  max-height:none;
+  margin:0;
   padding:14px;
   border:1px solid var(--line);
   border-radius:7px;
+  font:13px/1.75 var(--sans);
+  tab-size:2;
+}
+.editor-dialog textarea#answer{
+  resize:none;
+  background:var(--paper);
+  color:var(--ink);
+}
+.editor-dialog .answer-preview{
+  overflow-y:auto;
   overflow-wrap:anywhere;
   background:var(--paper);
   color:var(--ink);
-  font:13px/1.75 var(--sans);
 }
 .editor-dialog .answer-preview pre{max-width:100%;overflow:auto;padding:12px;border-radius:7px;background:#f1f4f1}
 .editor-dialog .answer-preview code{font-family:var(--mono);overflow-wrap:anywhere}
 .editor-dialog .answer-preview img{max-width:100%;height:auto}
-.editor-dialog .submit-button{min-height:46px;margin-top:10px;touch-action:manipulation}
+.editor-dialog .form-error{flex:0 0 auto}
+.editor-dialog .submit-button{
+  flex:0 0 auto;
+  min-height:46px;
+  margin-top:10px;
+  touch-action:manipulation;
+}
 .editor-dialog .close-button{
   width:42px;
   height:42px;
@@ -196,14 +220,18 @@
   z-index:2;
 }
 @media(min-width:600px) and (max-width:1050px){
-  .editor-backdrop{padding:14px}
+  .editor-backdrop{padding:12px}
   .editor-dialog{
-    width:min(100%,900px);
-    max-height:calc(100vh - 28px);
-    max-height:calc(100dvh - 28px);
-    padding:clamp(22px,3.5vw,34px);
+    width:min(98vw,1100px);
+    height:96vh;
+    height:96dvh;
+    max-height:calc(100vh - 24px);
+    max-height:calc(100dvh - 24px);
+    padding:clamp(20px,2.6vw,30px);
   }
-  .editor-dialog textarea#answer,.editor-dialog .answer-preview{min-height:46dvh}
+  .editor-dialog textarea#answer,.editor-dialog .answer-preview{
+    min-height:clamp(280px,42dvh,620px);
+  }
 }
 @media(max-width:599px){
   .editor-backdrop{
@@ -218,46 +246,119 @@
     max-height:100vh;
     max-height:100dvh;
     border-radius:0;
-    padding:calc(18px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
+    padding:calc(14px + env(safe-area-inset-top)) 14px calc(12px + env(safe-area-inset-bottom));
     box-shadow:none;
     gap:0;
   }
-  .editor-dialog .eyebrow{padding-right:42px;font-size:9px}
-  .editor-dialog h2{font-size:28px;letter-spacing:-1px}
-  .editor-dialog .form-subtitle{font-size:11px;line-height:1.6;margin:8px 0 16px;padding-right:4px}
+  .editor-dialog .eyebrow{padding-right:42px;font-size:9px;margin-bottom:7px}
+  .editor-dialog h2{font-size:27px;letter-spacing:-1px}
+  .editor-dialog .form-subtitle{font-size:11px;line-height:1.5;margin:6px 0 12px;padding-right:4px}
   .editor-dialog form>label,.editor-dialog .label-row label{font-size:10px}
   .editor-dialog input:not([type="checkbox"]){
-    min-height:44px;
-    margin-bottom:13px;
+    min-height:42px;
+    margin-bottom:10px;
     font-size:16px;
   }
-  .editor-dialog .note-metadata-fields{gap:10px 14px;margin-bottom:14px}
+  .editor-dialog .note-metadata-fields{gap:8px 12px;margin-bottom:11px}
   .editor-dialog .note-metadata-fields label{font-size:12px;min-height:30px}
-  .editor-dialog .label-row{align-items:flex-start;margin-bottom:8px}
+  .editor-dialog .label-row{align-items:flex-start;margin-bottom:7px}
   .editor-dialog .label-row span{font-size:9px}
-  .editor-dialog .editor-toolbar{gap:6px;margin-bottom:8px}
-  .editor-dialog .editor-toolbar button{min-width:42px;min-height:42px;padding:8px 10px;font-size:13px}
+  .editor-dialog .editor-toolbar{gap:6px;margin-bottom:7px}
+  .editor-dialog .editor-toolbar button{min-width:40px;min-height:40px;padding:7px 9px;font-size:13px}
   .editor-dialog .editor-toolbar>span:not(.draft-status){display:none}
   .editor-dialog .draft-status{flex:1 1 100%;margin:0;font-size:9px}
-  .editor-dialog .editor-tabs button{min-height:42px;flex:1}
+  .editor-dialog .editor-tabs button{min-height:40px;flex:1}
   .editor-dialog textarea#answer,.editor-dialog .answer-preview{
-    min-height:30dvh;
-    height:30dvh;
-    max-height:none;
+    flex:1 1 0;
+    min-height:180px;
+    height:auto;
     font-size:16px;
-    line-height:1.7;
+    line-height:1.65;
     padding:12px;
   }
-  .editor-dialog .answer-preview{overflow-y:auto}
-  .editor-dialog .submit-button{min-height:48px;margin-top:10px}
-  .editor-dialog .close-button{right:10px;top:calc(10px + env(safe-area-inset-top));width:42px;height:42px}
+  .editor-dialog .submit-button{min-height:46px;margin-top:8px}
+  .editor-dialog .close-button{right:9px;top:calc(8px + env(safe-area-inset-top));width:40px;height:40px}
 }
 @media(max-width:380px){
-  .editor-dialog{padding-left:12px;padding-right:12px}
-  .editor-dialog .note-metadata-fields{gap:8px}
+  .editor-dialog{padding-left:11px;padding-right:11px}
+  .editor-dialog .note-metadata-fields{gap:7px}
   .editor-dialog .note-metadata-fields label{font-size:11px}
-  .editor-dialog .editor-toolbar button{min-width:38px;padding:7px 9px}
+  .editor-dialog .editor-toolbar button{min-width:36px;padding:6px 8px}
+  .editor-dialog .form-subtitle{margin-bottom:9px}
 }
 @media(prefers-reduced-motion:reduce){
   .editor-dialog{animation:none}
+}
+
+
+/* Expand only the answer-writing area; keep heading, tags and note metadata in place. */
+.answer-workspace{min-width:0}
+.answer-workspace .label-row{display:flex;align-items:center}
+.answer-workspace .answer-expand-button{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  flex:0 0 auto;
+  min-height:34px;
+  margin-left:auto;
+  padding:7px 11px;
+  border:1px solid var(--line);
+  border-radius:7px;
+  background:var(--paper);
+  color:var(--ink);
+  font:600 11px var(--sans);
+  cursor:pointer;
+  touch-action:manipulation;
+}
+.answer-workspace .answer-expand-button:hover{border-color:var(--green);color:var(--green-dark)}
+.answer-workspace .answer-expand-button:focus-visible{outline:2px solid var(--green);outline-offset:3px}
+.answer-workspace.is-fullscreen{
+  position:fixed;
+  inset:0;
+  z-index:1200;
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+  min-height:0;
+  width:100vw;
+  height:100vh;
+  height:100dvh;
+  padding:clamp(12px,2vw,24px);
+  padding-top:calc(clamp(12px,2vw,24px) + env(safe-area-inset-top));
+  padding-bottom:calc(clamp(12px,2vw,24px) + env(safe-area-inset-bottom));
+  overflow:hidden;
+  background:var(--paper);
+  color:var(--ink);
+}
+.answer-workspace.is-fullscreen .label-row{flex:0 0 auto;gap:12px}
+.answer-workspace.is-fullscreen .label-row label{font:700 14px var(--sans);letter-spacing:.08em}
+.answer-workspace.is-fullscreen .label-row>span{font-size:11px}
+.answer-workspace.is-fullscreen .editor-toolbar{flex:0 0 auto;margin-bottom:10px}
+.answer-workspace.is-fullscreen .editor-tabs{flex:0 0 auto;margin-bottom:10px}
+.answer-workspace.is-fullscreen textarea#answer,
+.answer-workspace.is-fullscreen .answer-preview{
+  flex:1 1 0;
+  min-width:0;
+  min-height:0;
+  height:auto;
+  max-height:none;
+  margin:0;
+  font-size:15px;
+  line-height:1.8;
+}
+.answer-workspace.is-fullscreen textarea#answer{resize:none}
+.answer-workspace.is-fullscreen .answer-preview{overflow:auto}
+.answer-workspace.is-fullscreen .answer-expand-button{min-height:40px}
+@media(max-width:599px){
+  .answer-workspace .label-row{gap:8px}
+  .answer-workspace .label-row>span{flex:1 1 100%;order:3}
+  .answer-workspace .answer-expand-button{min-height:38px;padding:7px 9px}
+  .answer-workspace.is-fullscreen{padding-left:12px;padding-right:12px}
+  .answer-workspace.is-fullscreen .label-row{align-items:center}
+  .answer-workspace.is-fullscreen .label-row>span{display:none}
+  .answer-workspace.is-fullscreen .editor-toolbar{gap:6px}
+  .answer-workspace.is-fullscreen .editor-toolbar button{min-width:42px;min-height:42px}
+  .answer-workspace.is-fullscreen textarea#answer,
+  .answer-workspace.is-fullscreen .answer-preview{font-size:16px}
 }
