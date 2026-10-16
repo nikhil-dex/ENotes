@@ -20,6 +20,8 @@ export default function HomePage() {
   const [notesLoading, setNotesLoading] = useState(false);
   const [deletingNotes, setDeletingNotes] = useState(new Set());
   const [query, setQuery] = useState('');
+  const [globalSearch, setGlobalSearch] = useState(false);
+  const [globalSearchTruncated, setGlobalSearchTruncated] = useState(false);
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [pinnedOnly, setPinnedOnly] = useState(false);
   const [selectedTag, setSelectedTag] = useState('');
@@ -89,7 +91,7 @@ export default function HomePage() {
   }, [noteDialog, readerNote, studyOpen]);
 
   useEffect(() => {
-    if (!activeSubject) return;
+    if (!activeSubject || globalSearch) return;
     const controller = new AbortController();
     localStorage.setItem('activeSubject', activeSubject);
     setNotesLoading(true);
@@ -115,11 +117,48 @@ export default function HomePage() {
     } catch { setLearnedNotes(new Set()); }
     setQuery('');
     return () => controller.abort();
-  }, [activeSubject]);
+  }, [activeSubject, globalSearch]);
+
+  useEffect(() => {
+    if (!globalSearch) {
+      setGlobalSearchTruncated(false);
+      return;
+    }
+    const q = query.trim();
+    if (q.length < 2) {
+      setNotes([]);
+      setNotesLoading(false);
+      setGlobalSearchTruncated(false);
+      return;
+    }
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setNotesLoading(true);
+      setFormError('');
+      try {
+        const data = await responseJson(await fetch(`/api/notes?scope=all&q=${encodeURIComponent(q)}`, {
+          signal: controller.signal,
+          cache: 'no-store',
+        }));
+        if (!controller.signal.aborted) {
+          setNotes(data.notes || []);
+          setGlobalSearchTruncated(data.truncated === true);
+        }
+      } catch (error) {
+        if (!controller.signal.aborted) setFormError(error.message || 'Global search failed.');
+      } finally {
+        if (!controller.signal.aborted) setNotesLoading(false);
+      }
+    }, 250);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [globalSearch, query]);
 
   function requestCloseNoteDialog() {
     if (draftDirty && !window.confirm('Discard your unsaved note changes? The local draft will be removed.')) return;
-    try { localStorage.removeItem(draftStorageKey(activeSubject, editingNote?.number)); } catch {}
+    try { localStorage.removeItem(draftStorageKey(editingNote?.subject || activeSubject, editingNote?.number)); } catch {}
     setDraftStatus('');
     setNoteDialog(false);
     setEditingNote(null);
@@ -231,13 +270,13 @@ export default function HomePage() {
     try {
       const note = await responseJson(await fetch('/api/notes', {
         method: editingNote ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ heading, answer, subject: activeSubject, tags: tagInput.split(',').map((tag) => tag.trim()).filter(Boolean), favorite: favoriteDraft, pinned: pinnedDraft, ...(editingNote ? { number: editingNote.number } : {}) }),
+        body: JSON.stringify({ heading, answer, subject: editingNote?.subject || activeSubject, tags: tagInput.split(',').map((tag) => tag.trim()).filter(Boolean), favorite: favoriteDraft, pinned: pinnedDraft, ...(editingNote ? { number: editingNote.number } : {}) }),
       }));
       if (editingNote) {
-        setNotes((current) => current.map((item) => item.number === note.number ? note : item));
-        setReaderNote((current) => current?.number === note.number ? note : current);
+        setNotes((current) => current.map((item) => item.number === note.number && (item.subject || activeSubject) === (note.subject || activeSubject) ? { ...item, ...note } : item));
+        setReaderNote((current) => current?.number === note.number && (current.subject || activeSubject) === (note.subject || activeSubject) ? { ...current, ...note } : current);
       } else {
-        setNotes((current) => [...current, note]);
+        setNotes((current) => [...current, { ...note, subjectName: active?.name || activeSubject }]);
       }
       try { localStorage.removeItem(draftStorageKey(activeSubject, editingNote?.number)); } catch {}
       setHeading(''); setAnswer(''); setTagInput(''); setFavoriteDraft(false); setPinnedDraft(false); initialDraftRef.current = { heading: '', answer: '' }; setDraftStatus(''); setPreview(false); setNoteDialog(false); setEditingNote(null);
@@ -249,10 +288,10 @@ export default function HomePage() {
     try {
       const updated = await responseJson(await fetch('/api/notes', {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subject: activeSubject, number: note.number, ...changes }),
+        body: JSON.stringify({ subject: note.subject || activeSubject, number: note.number, ...changes }),
       }));
-      setNotes((current) => current.map((item) => item.number === note.number ? { ...item, ...updated } : item));
-      setReaderNote((current) => current?.number === note.number ? { ...current, ...updated } : current);
+      setNotes((current) => current.map((item) => item.number === note.number && (item.subject || activeSubject) === (note.subject || activeSubject) ? { ...item, ...updated } : item));
+      setReaderNote((current) => current?.number === note.number && (current.subject || activeSubject) === (note.subject || activeSubject) ? { ...current, ...updated } : current);
     } catch (error) {
       setFormError(error.message || 'Could not update note properties.');
     }
@@ -265,7 +304,7 @@ export default function HomePage() {
     setRevisionsError('');
     try {
       const data = await responseJson(await fetch(
-        `/api/notes?subject=${encodeURIComponent(activeSubject)}&number=${editingNote.number}&history=1`,
+        `/api/notes?subject=${encodeURIComponent(editingNote.subject || activeSubject)}&number=${editingNote.number}&history=1`,
         { cache: 'no-store' },
       ));
       setRevisions(Array.isArray(data.revisions) ? data.revisions : []);
@@ -278,7 +317,7 @@ export default function HomePage() {
 
   function editNote(note) {
     initialDraftRef.current = { heading: note.heading, answer: note.answer };
-    setEditingNote(note); setHeading(note.heading); setAnswer(note.answer);
+    setEditingNote({ ...note, subject: note.subject || activeSubject }); setHeading(note.heading); setAnswer(note.answer);
     setTagInput((note.tags || []).join(', ')); setFavoriteDraft(note.favorite === true); setPinnedDraft(note.pinned === true);
     setRevisions([]); setRevisionsOpen(false); setRevisionsError('');
     setPreview(false); setFormError(''); setNoteDialog(true);
@@ -286,12 +325,12 @@ export default function HomePage() {
 
   async function deleteNote(note) {
     if (deletingNotes.has(note.number)) return;
-    if (!window.confirm(`Delete “${note.heading}” from ${active?.name || activeSubject}? This cannot be undone.`)) return;
+    if (!window.confirm(`Delete “${note.heading}” from ${note.subjectName || active?.name || activeSubject}? This cannot be undone.`)) return;
     setDeletingNotes((current) => new Set(current).add(note.number));
     setFormError('');
     try {
-      await responseJson(await fetch(`/api/notes?subject=${encodeURIComponent(activeSubject)}&number=${note.number}`, { method: 'DELETE' }));
-      setNotes((current) => current.filter((item) => item.number !== note.number));
+      await responseJson(await fetch(`/api/notes?subject=${encodeURIComponent(note.subject || activeSubject)}&number=${note.number}`, { method: 'DELETE' }));
+      setNotes((current) => current.filter((item) => !(item.number === note.number && (item.subject || activeSubject) === (note.subject || activeSubject))));
       setReaderNote((current) => current?.number === note.number ? null : current);
     } catch (error) {
       setFormError(error.message || 'Could not delete this note. Please try again.');
@@ -381,7 +420,7 @@ export default function HomePage() {
         <div className="intro-actions"><button className="study-button" onClick={startStudy} disabled={!notes.length}><span aria-hidden="true">◉</span> Study notes</button><button className="add-button" onClick={() => { initialDraftRef.current = { heading: '', answer: '' }; setEditingNote(null); setHeading(''); setAnswer(''); setTagInput(''); setFavoriteDraft(false); setPinnedDraft(false); setRevisions([]); setRevisionsOpen(false); setRevisionsError(''); setFormError(''); setNoteDialog(true); }}><span aria-hidden="true">+</span> Add a note</button></div>
       </section>
 
-      <section className="stats" aria-label="Note statistics"><div className="stat"><span className="stat-number">{String(notes.length).padStart(2, '0')}</span><span className="stat-label">TOTAL NOTES</span></div><div className="stat-divider"/><div className="stat"><span className="stat-number">{String(subjects.length).padStart(2, '0')}</span><span className="stat-label">SUBJECTS</span></div><div className="stat-spacer"/><div className="search-wrap"><span aria-hidden="true">⌕</span><input type="search" placeholder="Search your notes…" aria-label="Search notes" value={query} onChange={(event) => setQuery(event.target.value)}/></div></section>
+      <section className="stats" aria-label="Note statistics"><div className="stat"><span className="stat-number">{String(notes.length).padStart(2, '0')}</span><span className="stat-label">TOTAL NOTES</span></div><div className="stat-divider"/><div className="stat"><span className="stat-number">{String(subjects.length).padStart(2, '0')}</span><span className="stat-label">SUBJECTS</span></div><div className="stat-spacer"/><div className="search-wrap"><span aria-hidden="true">⌕</span><input type="search" placeholder={globalSearch ? "Search all subjects…" : "Search this subject…"} aria-label="Search notes" value={query} onChange={(event) => setQuery(event.target.value)}/></div><button type="button" className={globalSearch ? "global-search-toggle active" : "global-search-toggle"} aria-pressed={globalSearch} onClick={() => { setGlobalSearch((value) => !value); setQuery(""); setFormError(""); }}>⌕ {globalSearch ? "All subjects" : "Search all subjects"}</button></section>
 
       <section className="notes-section"><div className="section-heading"><div><p className="eyebrow">THE LIBRARY</p><h2>All notes <span className="count-pill">{shownNotes.length}</span></h2></div><span className="sort-label">LATEST FIRST <span aria-hidden="true">↕</span></span></div>
         <div className="note-filters" aria-label="Note filters">
@@ -394,7 +433,7 @@ export default function HomePage() {
           </label>}
           {(favoritesOnly || pinnedOnly || selectedTag) && <button type="button" className="clear-filters" onClick={() => { setFavoritesOnly(false); setPinnedOnly(false); setSelectedTag(''); }}>Clear filters</button>}
         </div>
-        {notesLoading ? <div className="empty-state" role="status"><span className="empty-icon">◌</span><h3>Loading notes…</h3><p>Getting notes for this subject.</p></div> : shownNotes.length ? <div className="notes-grid">{shownNotes.map((note) => <article className="note-card" key={note.number}><button className="card-open" onClick={() => setReaderNote(note)} aria-label={`Open note: ${note.heading}`}><span className="card-top"><span className="note-index">NO. {String(note.number).padStart(2, '0')}</span><span className="note-badges">{note.pinned && <span title="Pinned">📌</span>}{note.favorite && <span title="Favorite">★</span>}</span></span><span className="note-title">{note.heading}</span><span className="note-preview">{note.answer}</span><span className="card-tags">{(note.tags || []).map((tag) => <span key={tag} className="tag-chip">{tag}</span>)}</span><span className="card-bottom">◷ <span>{note.saved}</span></span></button><button className={note.favorite ? "metadata-action selected" : "metadata-action"} onClick={() => updateNoteMetadata(note, { favorite: note.favorite !== true })} aria-pressed={note.favorite === true} aria-label={note.favorite ? `Remove favorite: ${note.heading}` : `Add favorite: ${note.heading}`} title={note.favorite ? "Remove favorite" : "Add favorite"}>★</button><button className={note.pinned ? "metadata-action selected" : "metadata-action"} onClick={() => updateNoteMetadata(note, { pinned: note.pinned !== true })} aria-pressed={note.pinned === true} aria-label={note.pinned ? `Unpin note: ${note.heading}` : `Pin note: ${note.heading}`} title={note.pinned ? "Unpin note" : "Pin note"}>⌖</button><button className="edit-note" onClick={() => editNote(note)} aria-label={`Edit note: ${note.heading}`} title="Edit note">✎</button><button className="delete-note" onClick={() => deleteNote(note)} disabled={deletingNotes.has(note.number)} aria-label={`Delete note: ${note.heading}`} title={deletingNotes.has(note.number) ? 'Deleting note…' : 'Delete note'}>{deletingNotes.has(note.number) ? '…' : '×'}</button></article>)}</div> : <div className="empty-state"><span className="empty-icon">⌕</span><h3>{query ? 'No notes found' : 'Start your collection'}</h3><p>{query ? 'Try another search, or add a new note.' : 'Add a note to this subject, then come back to study it.'}</p></div>}
+        {notesLoading ? <div className="empty-state" role="status"><span className="empty-icon">◌</span><h3>Loading notes…</h3><p>Getting notes for this subject.</p></div> : shownNotes.length ? <div className="notes-grid">{shownNotes.map((note) => <article className="note-card" key={`${note.subject || activeSubject}:${note.number}`}><button className="card-open" onClick={() => setReaderNote(note)} aria-label={`Open note: ${note.heading}`}><span className="card-top"><span className="note-index">NO. {String(note.number).padStart(2, '0')}</span>{globalSearch && <span className="note-subject-label">{note.subjectName || note.subject}</span>}<span className="note-badges">{note.pinned && <span title="Pinned">📌</span>}{note.favorite && <span title="Favorite">★</span>}</span></span><span className="note-title">{note.heading}</span><span className="note-preview">{note.answer}</span><span className="card-tags">{(note.tags || []).map((tag) => <span key={tag} className="tag-chip">{tag}</span>)}</span><span className="card-bottom">◷ <span>{note.saved}</span></span></button><button className={note.favorite ? "metadata-action selected" : "metadata-action"} onClick={() => updateNoteMetadata(note, { favorite: note.favorite !== true })} aria-pressed={note.favorite === true} aria-label={note.favorite ? `Remove favorite: ${note.heading}` : `Add favorite: ${note.heading}`} title={note.favorite ? "Remove favorite" : "Add favorite"}>★</button><button className={note.pinned ? "metadata-action selected" : "metadata-action"} onClick={() => updateNoteMetadata(note, { pinned: note.pinned !== true })} aria-pressed={note.pinned === true} aria-label={note.pinned ? `Unpin note: ${note.heading}` : `Pin note: ${note.heading}`} title={note.pinned ? "Unpin note" : "Pin note"}>⌖</button><button className="edit-note" onClick={() => editNote(note)} aria-label={`Edit note: ${note.heading}`} title="Edit note">✎</button><button className="delete-note" onClick={() => deleteNote(note)} disabled={deletingNotes.has(note.number)} aria-label={`Delete note: ${note.heading}`} title={deletingNotes.has(note.number) ? 'Deleting note…' : 'Delete note'}>{deletingNotes.has(note.number) ? '…' : '×'}</button></article>)}</div> : <div className="empty-state"><span className="empty-icon">⌕</span><h3>{globalSearch && query.trim().length < 2 ? 'Search across your library' : query ? 'No notes found' : 'Start your collection'}</h3><p>{globalSearch && query.trim().length < 2 ? 'Enter at least 2 characters to search every subject.' : query ? 'Try another search, or add a new note.' : 'Add a note to this subject, then come back to study it.'}</p></div>}{globalSearchTruncated && <p className="search-limit-note" role="status">Showing the first 100 matching notes. Refine your search to narrow the results.</p> }
       </section>
       <footer><span>Built for learning, one note at a time.</span><span>MONGODB · SUBJECT BASED</span></footer>
 

@@ -115,3 +115,10 @@ test('metadata endpoint rejects invalid note numbers before database access', as
   assert.equal(response.status, 400);
   assert.match((await responseBody(response)).error, /valid note/);
 });
+
+
+test('global note search requires at least two query characters before database access', async () => {
+  const response = await getNotes(new Request('https://example.test/api/notes?scope=all&q=a'));
+  assert.equal(response.status, 400);
+  assert.match((await responseBody(response)).error, /at least 2 characters/);
+});
