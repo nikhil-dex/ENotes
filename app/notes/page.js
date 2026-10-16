@@ -3,6 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { markdownHtml } from '../../lib/markdown.js';
 
+function draftStorageKey(subject, number) {
+  return `enotes:draft:${subject}:${number ?? 'new'}`;
+}
+
 async function responseJson(response) {
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.error || 'The request could not be completed.');
@@ -27,6 +31,7 @@ export default function HomePage() {
   const [formError, setFormError] = useState('');
   const [preview, setPreview] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [draftStatus, setDraftStatus] = useState('');
   const [studyDeck, setStudyDeck] = useState([]);
   const [studyIndex, setStudyIndex] = useState(0);
   const [studyRevealed, setStudyRevealed] = useState(false);
