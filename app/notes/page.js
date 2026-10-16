@@ -119,6 +119,46 @@ export default function HomePage() {
   }, [noteDialog, heading, answer]);
 
   useEffect(() => {
+    if (!noteDialog || !activeSubject) return;
+    const key = draftStorageKey(activeSubject, editingNote?.number);
+    let saved;
+    try { saved = JSON.parse(localStorage.getItem(key) || 'null'); } catch { saved = null; }
+    if (!saved || typeof saved.heading !== 'string' || typeof saved.answer !== 'string') return;
+    const original = editingNote
+      ? { heading: editingNote.heading, answer: editingNote.answer }
+      : { heading: '', answer: '' };
+    if (saved.heading === original.heading && saved.answer === original.answer) return;
+    if (window.confirm('An autosaved draft exists on this device. Restore it?')) {
+      initialDraftRef.current = original;
+      setHeading(saved.heading);
+      setAnswer(saved.answer);
+      setDraftStatus('Draft restored');
+    } else {
+      try { localStorage.removeItem(key); } catch {}
+      setDraftStatus('');
+    }
+  }, [noteDialog, activeSubject, editingNote]);
+
+  useEffect(() => {
+    if (!noteDialog || !activeSubject) return;
+    const key = draftStorageKey(activeSubject, editingNote?.number);
+    if (!heading.trim() && !answer.trim()) {
+      setDraftStatus('');
+      return;
+    }
+    setDraftStatus('Saving draft…');
+    const timer = window.setTimeout(() => {
+      try {
+        localStorage.setItem(key, JSON.stringify({ heading, answer, updatedAt: new Date().toISOString() }));
+        setDraftStatus('Draft saved on this device');
+      } catch {
+        setDraftStatus('Draft could not be saved');
+      }
+    }, 600);
+    return () => window.clearTimeout(timer);
+  }, [noteDialog, activeSubject, editingNote, heading, answer]);
+
+  useEffect(() => {
     if (!draftDirty) return;
     function warnBeforeUnload(event) {
       event.preventDefault();
