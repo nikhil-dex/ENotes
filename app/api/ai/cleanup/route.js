@@ -58,7 +58,7 @@ export async function POST(request) {
   ].join('\n');
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 30000);
+  const timeout = setTimeout(() => controller.abort(), 60000);
   try {
     async function callModel(modelName) {
       return fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(modelName) + ':generateContent', {
@@ -70,6 +70,7 @@ export async function POST(request) {
           contents: [{ role: 'user', parts: [{ text: prompt }] }],
           generationConfig: {
             temperature: 0.2,
+            thinkingConfig: { thinkingLevel: 'LOW' },
             responseMimeType: 'application/json',
             responseSchema: {
               type: 'OBJECT',
