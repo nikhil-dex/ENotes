@@ -207,3 +207,138 @@ button{font-family:inherit}
  .settings-subject-info span{font-size:9px}
  .topbar-right{gap:5px}
 }
+
+
+/* Phase 7: keyboard accessibility, reduced motion, and small-screen usability */
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 3px solid var(--green, #3e7653);
+  outline-offset: 3px;
+}
+
+:where(button, input, textarea, select) {
+  font: inherit;
+}
+
+button:disabled,
+button[aria-disabled="true"] {
+  opacity: .65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.dialog {
+  max-height: min(88dvh, 820px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.modal-backdrop {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.settings-error,
+.form-error,
+.page-error,
+.settings-message {
+  overflow-wrap: anywhere;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+@media (max-width: 700px) {
+  .topbar {
+    height: auto;
+    min-height: 76px;
+    padding: 14px 0;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .topbar-right {
+    min-width: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    row-gap: 8px;
+  }
+
+  .topbar-right > .status-dot,
+  .topbar-right > span:not(.status-dot) {
+    display: none;
+  }
+
+  .theme-button {
+    min-height: 36px;
+  }
+
+  .edit-note,
+  .delete-note,
+  .settings-delete-button,
+  .close-button {
+    touch-action: manipulation;
+  }
+
+  .dialog {
+    width: min(100%, 470px);
+    padding-bottom: max(24px, env(safe-area-inset-bottom));
+  }
+}
+
+@media (max-width: 420px) {
+  .topbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .topbar-right {
+    justify-content: flex-start;
+  }
+
+  .topbar-right > .import-guide-link {
+    display: inline-flex;
+  }
+
+  .topbar-right .theme-button span {
+    display: inline;
+  }
+
+  .stats {
+    height: auto;
+    min-height: 68px;
+    padding: 12px 0;
+    flex-wrap: wrap;
+  }
+
+  .stat-spacer {
+    display: none;
+  }
+
+  .search-wrap {
+    order: 5;
+    width: 100%;
+    flex-basis: 100%;
+  }
+
+  .settings-subject-row {
+    align-items: flex-start;
+  }
+
+  .settings-open-link {
+    margin-left: 0;
+  }
+}
+
+@media (forced-colors: active) {
+  :where(a, button, input, textarea, select, [tabindex]):focus-visible {
+    outline: 2px solid Highlight;
+  }
+}
