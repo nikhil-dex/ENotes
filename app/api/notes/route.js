@@ -1,4 +1,5 @@
 import { getDatabase } from '../../../lib/mongodb.js';
+import { readLimitedBody } from '../../../lib/read-limited-body.js';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -33,7 +34,12 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const data = await request.json();
+    let data;
+    try {
+      data = JSON.parse(await readLimitedBody(request, 32 * 1024));
+    } catch (error) {
+      return json({ error: error?.status === 413 ? 'Request body is too large.' : 'Enter valid JSON.' }, error?.status || 400);
+    }
     const slug = String(data.subject || 'linux');
     const heading = String(data.heading || '').trim();
     const answer = String(data.answer || '').trim();
@@ -104,7 +110,12 @@ export async function POST(request) {
 
 export async function PUT(request) {
   try {
-    const data = await request.json();
+    let data;
+    try {
+      data = JSON.parse(await readLimitedBody(request, 32 * 1024));
+    } catch (error) {
+      return json({ error: error?.status === 413 ? 'Request body is too large.' : 'Enter valid JSON.' }, error?.status || 400);
+    }
     const slug = String(data.subject || 'linux');
     const number = Number(data.number);
     const heading = String(data.heading || '').trim();

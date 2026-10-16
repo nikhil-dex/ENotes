@@ -1,4 +1,5 @@
 import { getDatabase } from '../../../lib/mongodb.js';
+import { readLimitedBody } from '../../../lib/read-limited-body.js';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -29,7 +30,12 @@ export async function GET() {
 
 export async function POST(request) {
   try {
-    const data = await request.json();
+    let data;
+    try {
+      data = JSON.parse(await readLimitedBody(request, 4 * 1024));
+    } catch (error) {
+      return json({ error: error?.status === 413 ? 'Request body is too large.' : 'Enter valid JSON.' }, error?.status || 400);
+    }
     const name = String(data.name || '').trim().replace(/\s+/g, ' ');
     if (!name || name.length > 40) return json({ error: 'Subject name must be 1–40 characters.' }, 400);
 
