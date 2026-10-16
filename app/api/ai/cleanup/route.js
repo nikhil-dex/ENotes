@@ -9,7 +9,7 @@ export const maxDuration = 45;
 const MAX_BODY_BYTES = 24 * 1024;
 const MAX_HEADING_LENGTH = 160;
 const MAX_ANSWER_LENGTH = 10000;
-const GEMINI_TIMEOUT_MS = 35000;
+const GEMINI_TIMEOUT_MS = 14000; // Per model attempt; leaves time for one fallback within the function limit.
 
 function json(data, status = 200) {
   return Response.json(data, { status, headers: { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' } });
@@ -66,40 +66,59 @@ export async function POST(request) {
 
   const startedAt = Date.now();
   const requestId = request.headers.get('x-vercel-id') || 'unavailable';
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
-  console.info('Gemini cleanup started.', { requestId, model, fallbackModel, headingLength: heading.length, answerLength: answer.length, timeoutMs: GEMINI_TIMEOUT_MS });
+  console.info('Gemini cleanup started.', { requestId, model, fallbackModel, headingLength: heading.length, answerLength: answer.length, perModelTimeoutMs: GEMINI_TIMEOUT_MS });
 
   try {
     async function callModel(modelName) {
       const modelStartedAt = Date.now();
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
       console.info('Gemini request started.', { requestId, model: modelName });
-      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(modelName) + ':generateContent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-        cache: 'no-store',
-        signal: controller.signal,
-        body: JSON.stringify({
-          contents: [{ role: 'user', parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.2,
-            thinkingConfig: { thinkingLevel: 'low' },
-            responseMimeType: 'application/json',
-            responseSchema: {
-              type: 'OBJECT',
-              properties: { heading: { type: 'STRING' }, answer: { type: 'STRING' } },
-              required: ['heading', 'answer'],
-              propertyOrdering: ['heading', 'answer'],
+      try {
+        const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(modelName) + ':generateContent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+          cache: 'no-store',
+          signal: controller.signal,
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: 1,
+              thinkingConfig: { thinkingLevel: 'low' },
+              maxOutputTokens: 4096,
+              responseMimeType: 'application/json',
+              responseSchema: {
+                type: 'OBJECT',
+                properties: { heading: { type: 'STRING' }, answer: { type: 'STRING' } },
+                required: ['heading', 'answer'],
+                propertyOrdering: ['heading', 'answer'],
+              },
             },
-          },
-        }),
-      });
-      console.info('Gemini response received.', { requestId, model: modelName, status: response.status, elapsedMs: Date.now() - modelStartedAt });
-      return response;
+          }),
+        });
+        console.info('Gemini response received.', { requestId, model: modelName, status: response.status, elapsedMs: Date.now() - modelStartedAt });
+        return response;
+      } catch (error) {
+        if (error?.name === 'AbortError') error.geminiTimedOut = true;
+        throw error;
+      } finally {
+        clearTimeout(timeout);
+      }
     }
 
     let activeModel = model;
-    let response = await callModel(activeModel);
+    let response;
+    let primaryTimedOut = false;
+    try {
+      response = await callModel(activeModel);
+    } catch (error) {
+      if (!error?.geminiTimedOut || fallbackModel === activeModel) throw error;
+      primaryTimedOut = true;
+      console.warn('Gemini primary model timed out; trying fallback model.', { requestId, primaryModel: activeModel, fallbackModel, elapsedMs: Date.now() - startedAt });
+      activeModel = fallbackModel;
+      response = await callModel(activeModel);
+    }
+
     if (response.status === 429 && fallbackModel !== activeModel) {
       console.warn('Gemini primary model rate-limited; trying fallback model.', { requestId, primaryModel: activeModel, fallbackModel });
       activeModel = fallbackModel;
@@ -108,15 +127,18 @@ export async function POST(request) {
 
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
+      const providerMessage = typeof payload?.error?.message === 'string'
+        ? payload.error.message.replace(/[\\r\\n]+/g, ' ').slice(0, 300)
+        : 'No provider error message returned';
       if (response.status === 429) {
-        console.error('Gemini cleanup exhausted model quota.', { requestId, model: activeModel, elapsedMs: Date.now() - startedAt });
-        return json({ error: 'Gemini reached its usage limit on both the primary and fallback models. Please wait for quota to reset and try again.' }, 429);
+        console.error('Gemini cleanup exhausted model quota.', { requestId, model: activeModel, elapsedMs: Date.now() - startedAt, providerMessage });
+        return json({ error: 'Gemini reached its usage limit on the primary/fallback model. Please wait for quota to reset and try again.' }, 429);
       }
       if (response.status === 400 || response.status === 404) {
-        console.error('Gemini cleanup configuration/request rejected.', { requestId, status: response.status, model: activeModel, elapsedMs: Date.now() - startedAt });
+        console.error('Gemini cleanup configuration/request rejected.', { requestId, status: response.status, model: activeModel, elapsedMs: Date.now() - startedAt, providerMessage });
         return json({ error: 'Gemini rejected this request. Check GEMINI_MODEL and the API key’s model access.' }, 502);
       }
-      console.error('Gemini cleanup request failed.', { requestId, status: response.status, model: activeModel, elapsedMs: Date.now() - startedAt });
+      console.error('Gemini cleanup request failed.', { requestId, status: response.status, model: activeModel, elapsedMs: Date.now() - startedAt, providerMessage });
       return json({ error: 'Gemini could not process this note right now. Please try again later.' }, 502);
     }
 
@@ -134,17 +156,15 @@ export async function POST(request) {
       console.error('Gemini cleanup returned invalid structured output.', { requestId, model: activeModel, elapsedMs: Date.now() - startedAt });
       return json({ error: 'Gemini returned an unexpected format. Please try again.' }, 502);
     }
-    console.info('Gemini cleanup completed.', { requestId, model: activeModel, elapsedMs: Date.now() - startedAt });
+    console.info('Gemini cleanup completed.', { requestId, model: activeModel, elapsedMs: Date.now() - startedAt, primaryTimedOut });
     return json(result);
   } catch (error) {
     const elapsedMs = Date.now() - startedAt;
-    if (error?.name === 'AbortError') {
-      console.error('Gemini cleanup timed out.', { requestId, model, fallbackModel, elapsedMs, timeoutMs: GEMINI_TIMEOUT_MS });
-      return json({ error: 'Gemini is taking too long to respond. Please try again with a shorter note.' }, 504);
+    if (error?.geminiTimedOut) {
+      console.error('Gemini model request timed out.', { requestId, model: error?.modelName || model, fallbackModel, elapsedMs, perModelTimeoutMs: GEMINI_TIMEOUT_MS });
+      return json({ error: 'Gemini did not respond in time, even after trying the fallback model. Check the Gemini runtime logs for the request ID.' }, 504);
     }
     console.error('Gemini cleanup request could not be completed.', { requestId, name: error?.name || 'UnknownError', elapsedMs });
     return json({ error: 'Could not connect to Gemini. Check your connection and try again.' }, 502);
-  } finally {
-    clearTimeout(timeout);
   }
 }
