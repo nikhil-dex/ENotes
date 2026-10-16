@@ -168,7 +168,10 @@ export default function HomePage() {
   }
 
   async function saveNote(event) {
-    event.preventDefault(); setFormError(''); setSaving(true);
+    event.preventDefault();
+    if (saving) return;
+    setFormError('');
+    setSaving(true);
     try {
       const note = await responseJson(await fetch('/api/notes', {
         method: editingNote ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' },
