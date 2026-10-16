@@ -415,17 +415,17 @@ export default function HomePage() {
 
   async function lockSession() {
     const pending = getPendingOfflineMutations(localStorage);
-    if (pending.length && !window.confirm(`There are ${pending.length} offline change(s) waiting to sync. OK will discard them and release this device so another device can open ENotes. Cancel to stay here and sync first.`)) return;
-    if (pending.length) {
-      try { localStorage.setItem('enotes:offline:mutations:v1', '[]'); } catch {}
-      setPendingSyncCount(0);
-    }
+    if (pending.length && !window.confirm(`There are ${pending.length} offline change(s) waiting to sync. OK will discard them only after this device successfully releases its session. Cancel to stay here and sync first.`)) return;
     try {
       const response = await fetch('/api/access/logout', { method: 'POST', credentials: 'same-origin', cache: 'no-store' });
       if (!response.ok) throw new Error('Could not release this device session. Check your connection and try again.');
+      if (pending.length) {
+        try { localStorage.setItem('enotes:offline:mutations:v1', '[]'); } catch {}
+        setPendingSyncCount(0);
+      }
       window.location.replace('/access');
     } catch (error) {
-      setFormError(error.message || 'Could not lock ENotes. Please try again.');
+      setFormError(error.message || 'Could not lock ENotes. Please try again. Your queued changes have been kept.');
     }
   }
 

@@ -21,7 +21,7 @@ export async function proxy(request) {
     }
   }
   const publicPaths = new Set([
-    '/access', '/api/access/verify', '/api/access/logout', '/api/access/heartbeat',
+    '/access', '/api/access/verify', '/api/access/logout', '/api/access/heartbeat', '/service-worker.js',
     '/style.css', '/extra.css', '/favicon.ico', '/robots.txt', '/sitemap.xml',
   ]);
   if (publicPaths.has(pathname)) {
