@@ -102,7 +102,9 @@ export default function HomePage() {
   }, [activeSubject]);
 
   function requestCloseNoteDialog() {
-    if (draftDirty && !window.confirm('Discard your unsaved note changes?')) return;
+    if (draftDirty && !window.confirm('Discard your unsaved note changes? The local draft will be removed.')) return;
+    try { localStorage.removeItem(draftStorageKey(activeSubject, editingNote?.number)); } catch {}
+    setDraftStatus('');
     setNoteDialog(false);
     setEditingNote(null);
     setFormError('');
@@ -211,7 +213,8 @@ export default function HomePage() {
       } else {
         setNotes((current) => [...current, note]);
       }
-      setHeading(''); setAnswer(''); initialDraftRef.current = { heading: '', answer: '' }; setPreview(false); setNoteDialog(false); setEditingNote(null);
+      try { localStorage.removeItem(draftStorageKey(activeSubject, editingNote?.number)); } catch {}
+      setHeading(''); setAnswer(''); initialDraftRef.current = { heading: '', answer: '' }; setDraftStatus(''); setPreview(false); setNoteDialog(false); setEditingNote(null);
     } catch (error) { setFormError(error.message); }
     finally { setSaving(false); }
   }
@@ -329,7 +332,7 @@ export default function HomePage() {
       {formError && !noteDialog && <p className="page-error" role="alert">{formError}</p>}
 
       {noteDialog && <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) requestCloseNoteDialog(); }}><section className="dialog" role="dialog" aria-modal="true" aria-labelledby="formTitle"><button className="close-button" onClick={requestCloseNoteDialog} aria-label="Close form">×</button><p className="eyebrow">{editingNote ? `EDIT NOTE ${String(editingNote.number).padStart(2, '0')}` : 'GROW YOUR LIBRARY'}</p><h2 id="formTitle">{editingNote ? 'Edit note' : 'Add a note'}<span className="period">.</span></h2><p className="form-subtitle">{editingNote ? 'Update the heading or answer. Its serial number will stay the same.' : 'Give it a clear heading and capture what you learned.'}</p>
-        <form onSubmit={saveNote}><label htmlFor="heading">HEADING</label><input id="heading" maxLength={160} placeholder="e.g. What does chmod do?" value={heading} onChange={(event) => setHeading(event.target.value)} required/><div className="label-row"><label htmlFor="answer">ANSWER</label><span>Markdown is okay</span></div><div className="editor-toolbar" aria-label="Answer formatting"><button type="button" onClick={() => insertFormatting('bold')} title="Bold">B</button><button type="button" onClick={() => insertFormatting('code')} title="Inline code">&lt;/&gt;</button><button type="button" onClick={() => insertFormatting('list')} title="Bullet list">• List</button><button type="button" onClick={() => insertFormatting('codeblock')} title="Code block">{'{ }'}</button><span>Formatting shortcuts</span></div><div className="editor-tabs"><button type="button" className={!preview ? 'active' : ''} onClick={() => setPreview(false)}>Write</button><button type="button" className={preview ? 'active' : ''} onClick={() => setPreview(true)}>Preview</button></div>
+        <form onSubmit={saveNote}><label htmlFor="heading">HEADING</label><input id="heading" maxLength={160} placeholder="e.g. What does chmod do?" value={heading} onChange={(event) => setHeading(event.target.value)} required/><div className="label-row"><label htmlFor="answer">ANSWER</label><span>Markdown is okay</span></div><div className="editor-toolbar" aria-label="Answer formatting"><button type="button" onClick={() => insertFormatting('bold')} title="Bold">B</button><button type="button" onClick={() => insertFormatting('code')} title="Inline code">&lt;/&gt;</button><button type="button" onClick={() => insertFormatting('list')} title="Bullet list">• List</button><button type="button" onClick={() => insertFormatting('codeblock')} title="Code block">{'{ }'}</button><span>Formatting shortcuts</span><span className="draft-status" role="status" aria-live="polite">{draftStatus}</span></div><div className="editor-tabs"><button type="button" className={!preview ? 'active' : ''} onClick={() => setPreview(false)}>Write</button><button type="button" className={preview ? 'active' : ''} onClick={() => setPreview(true)}>Preview</button></div>
           {!preview ? <textarea ref={answerRef} id="answer" rows={6} maxLength={10000} placeholder="Write your explanation here…" value={answer} onChange={(event) => setAnswer(event.target.value)} required/> : <div className="answer-preview">{answer ? <div dangerouslySetInnerHTML={{ __html: markdownHtml(answer) }}/> : <p className="preview-placeholder">Nothing to preview yet.</p>}</div>}
           {formError && <p className="form-error" role="alert">{formError}</p>}<button className="submit-button" type="submit" disabled={saving}><span>{saving ? 'Saving…' : editingNote ? 'Save changes' : 'Save note'}</span><span aria-hidden="true">→</span></button></form>
       </section></div>}
