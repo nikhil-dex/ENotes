@@ -91,23 +91,6 @@ export async function POST(request) {
     }
 
     const payload = await response.json().catch(() => ({}));
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-      cache: 'no-store',
-      signal: controller.signal,
-      body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.2,
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: 'OBJECT',
-            properties: { heading: { type: 'STRING' }, answer: { type: 'STRING' } },
-            required: ['heading', 'answer'],
-            propertyOrdering: ['heading', 'answer'],
-          },
-        },
-
     if (!response.ok) {
       if (response.status === 429) return json({ error: 'Gemini reached its usage limit on both the primary and fallback models. Please wait for quota to reset and try again.' }, 429);
       if (response.status === 400 || response.status === 404) {
