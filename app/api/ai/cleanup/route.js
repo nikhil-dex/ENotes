@@ -37,7 +37,7 @@ export async function POST(request) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return json({ error: 'Gemini is not configured yet. Add GEMINI_API_KEY to the server environment and redeploy.' }, 503);
 
-  const model = (process.env.GEMINI_MODEL || 'gemini-2.5-flash').trim();
+  const model = (process.env.GEMINI_MODEL || 'gemini-3.8-flash').trim();
   if (!/^[a-zA-Z0-9._-]+$/.test(model)) return json({ error: 'The configured Gemini model name is invalid.' }, 500);
 
   const prompt = [

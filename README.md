@@ -129,7 +129,7 @@ Set these variables in `.env.local` for local development and in your hosting pr
 | `ENOTES_ACCESS_KEY` | Setup only | Shared access string used by `npm run access:setup` to generate a hashed MongoDB document |
 | `ENOTES_SESSION_SECRET` | Yes for protected access | Separate random secret used to sign session cookies; keep stable and private |
 | `GEMINI_API_KEY` | Optional for Gemini cleanup | Server-side Google Gemini API key. Never expose it in client-side code or commit the value. |
-| `GEMINI_MODEL` | No | Gemini model ID used by cleanup; defaults to `gemini-2.5-flash`. |
+| `GEMINI_MODEL` | No | Gemini model ID used by cleanup; defaults to `gemini-3.8-flash`. |
 
 Example configuration:
 
@@ -138,7 +138,7 @@ MONGODB_URI=mongodb+srv://<username>:<password>@<cluster-host>/?retryWrites=true
 MONGODB_DB=linux_notes
 # Optional: enables Gemini note cleanup
 GEMINI_API_KEY=your-server-side-gemini-api-key
-GEMINI_MODEL=gemini-2.5-flash
+GEMINI_MODEL=gemini-3.8-flash
 ```
 
 Replace the placeholders with your own database credentials and cluster host. **Never commit real credentials or your `.env.local` file.**
