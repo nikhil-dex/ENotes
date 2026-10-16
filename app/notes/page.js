@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { markdownHtml } from '../../lib/markdown.js';
 import { calculateNextReview } from '../../lib/spaced-repetition.js';
 import { getDailyRevisionState, recordDailyReview, setDailyRevisionGoal } from '../../lib/daily-revision.js';
+import { enqueueOfflineMutation, getPendingOfflineMutations, removePendingOfflineMutation } from '../../lib/offline-mutation-queue.js';
 
 function draftStorageKey(subject, number) {
   return `enotes:draft:${subject}:${number ?? 'new'}`;
