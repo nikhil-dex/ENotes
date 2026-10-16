@@ -3,6 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { markdownHtml } from '../../lib/markdown.js';
 
+function draftStorageKey(subject, number) {
+  return `enotes:draft:${subject}:${number ?? 'new'}`;
+}
+
 async function responseJson(response) {
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.error || 'The request could not be completed.');
@@ -27,6 +31,7 @@ export default function HomePage() {
   const [formError, setFormError] = useState('');
   const [preview, setPreview] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [draftStatus, setDraftStatus] = useState('');
   const [studyDeck, setStudyDeck] = useState([]);
   const [studyIndex, setStudyIndex] = useState(0);
   const [studyRevealed, setStudyRevealed] = useState(false);
@@ -97,7 +102,9 @@ export default function HomePage() {
   }, [activeSubject]);
 
   function requestCloseNoteDialog() {
-    if (draftDirty && !window.confirm('Discard your unsaved note changes?')) return;
+    if (draftDirty && !window.confirm('Discard your unsaved note changes? The local draft will be removed.')) return;
+    try { localStorage.removeItem(draftStorageKey(activeSubject, editingNote?.number)); } catch {}
+    setDraftStatus('');
     setNoteDialog(false);
     setEditingNote(null);
     setFormError('');
@@ -112,6 +119,51 @@ export default function HomePage() {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [noteDialog, heading, answer]);
+
+  useEffect(() => {
+    if (!noteDialog || !activeSubject) return;
+    const key = draftStorageKey(activeSubject, editingNote?.number);
+    let saved;
+    try { saved = JSON.parse(localStorage.getItem(key) || 'null'); } catch { saved = null; }
+    if (!saved || typeof saved.heading !== 'string' || typeof saved.answer !== 'string') return;
+    const original = editingNote
+      ? { heading: editingNote.heading, answer: editingNote.answer }
+      : { heading: '', answer: '' };
+    if (saved.heading === original.heading && saved.answer === original.answer) return;
+    if (window.confirm('An autosaved draft exists on this device. Restore it?')) {
+      initialDraftRef.current = original;
+      setHeading(saved.heading);
+      setAnswer(saved.answer);
+      setDraftStatus('Draft restored');
+    } else {
+      try { localStorage.removeItem(key); } catch {}
+      setDraftStatus('');
+    }
+  }, [noteDialog, activeSubject, editingNote]);
+
+  useEffect(() => {
+    if (!noteDialog || !activeSubject) return;
+    const key = draftStorageKey(activeSubject, editingNote?.number);
+    if (!heading.trim() && !answer.trim()) {
+      let existingDraft = null;
+      try { existingDraft = JSON.parse(localStorage.getItem(key) || 'null'); } catch {}
+      if (!existingDraft || (!existingDraft.heading && !existingDraft.answer)) {
+        try { localStorage.removeItem(key); } catch {}
+      }
+      setDraftStatus('');
+      return;
+    }
+    setDraftStatus('Saving draft…');
+    const timer = window.setTimeout(() => {
+      try {
+        localStorage.setItem(key, JSON.stringify({ heading, answer, updatedAt: new Date().toISOString() }));
+        setDraftStatus('Draft saved on this device');
+      } catch {
+        setDraftStatus('Draft could not be saved');
+      }
+    }, 600);
+    return () => window.clearTimeout(timer);
+  }, [noteDialog, activeSubject, editingNote, heading, answer]);
 
   useEffect(() => {
     if (!draftDirty) return;
@@ -166,7 +218,8 @@ export default function HomePage() {
       } else {
         setNotes((current) => [...current, note]);
       }
-      setHeading(''); setAnswer(''); initialDraftRef.current = { heading: '', answer: '' }; setPreview(false); setNoteDialog(false); setEditingNote(null);
+      try { localStorage.removeItem(draftStorageKey(activeSubject, editingNote?.number)); } catch {}
+      setHeading(''); setAnswer(''); initialDraftRef.current = { heading: '', answer: '' }; setDraftStatus(''); setPreview(false); setNoteDialog(false); setEditingNote(null);
     } catch (error) { setFormError(error.message); }
     finally { setSaving(false); }
   }
@@ -284,7 +337,7 @@ export default function HomePage() {
       {formError && !noteDialog && <p className="page-error" role="alert">{formError}</p>}
 
       {noteDialog && <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) requestCloseNoteDialog(); }}><section className="dialog" role="dialog" aria-modal="true" aria-labelledby="formTitle"><button className="close-button" onClick={requestCloseNoteDialog} aria-label="Close form">×</button><p className="eyebrow">{editingNote ? `EDIT NOTE ${String(editingNote.number).padStart(2, '0')}` : 'GROW YOUR LIBRARY'}</p><h2 id="formTitle">{editingNote ? 'Edit note' : 'Add a note'}<span className="period">.</span></h2><p className="form-subtitle">{editingNote ? 'Update the heading or answer. Its serial number will stay the same.' : 'Give it a clear heading and capture what you learned.'}</p>
-        <form onSubmit={saveNote}><label htmlFor="heading">HEADING</label><input id="heading" maxLength={160} placeholder="e.g. What does chmod do?" value={heading} onChange={(event) => setHeading(event.target.value)} required/><div className="label-row"><label htmlFor="answer">ANSWER</label><span>Markdown is okay</span></div><div className="editor-toolbar" aria-label="Answer formatting"><button type="button" onClick={() => insertFormatting('bold')} title="Bold">B</button><button type="button" onClick={() => insertFormatting('code')} title="Inline code">&lt;/&gt;</button><button type="button" onClick={() => insertFormatting('list')} title="Bullet list">• List</button><button type="button" onClick={() => insertFormatting('codeblock')} title="Code block">{'{ }'}</button><span>Formatting shortcuts</span></div><div className="editor-tabs"><button type="button" className={!preview ? 'active' : ''} onClick={() => setPreview(false)}>Write</button><button type="button" className={preview ? 'active' : ''} onClick={() => setPreview(true)}>Preview</button></div>
+        <form onSubmit={saveNote}><label htmlFor="heading">HEADING</label><input id="heading" maxLength={160} placeholder="e.g. What does chmod do?" value={heading} onChange={(event) => setHeading(event.target.value)} required/><div className="label-row"><label htmlFor="answer">ANSWER</label><span>Markdown is okay</span></div><div className="editor-toolbar" aria-label="Answer formatting"><button type="button" onClick={() => insertFormatting('bold')} title="Bold">B</button><button type="button" onClick={() => insertFormatting('code')} title="Inline code">&lt;/&gt;</button><button type="button" onClick={() => insertFormatting('list')} title="Bullet list">• List</button><button type="button" onClick={() => insertFormatting('codeblock')} title="Code block">{'{ }'}</button><span>Formatting shortcuts</span><span className="draft-status" role="status" aria-live="polite">{draftStatus}</span></div><div className="editor-tabs"><button type="button" className={!preview ? 'active' : ''} onClick={() => setPreview(false)}>Write</button><button type="button" className={preview ? 'active' : ''} onClick={() => setPreview(true)}>Preview</button></div>
           {!preview ? <textarea ref={answerRef} id="answer" rows={6} maxLength={10000} placeholder="Write your explanation here…" value={answer} onChange={(event) => setAnswer(event.target.value)} required/> : <div className="answer-preview">{answer ? <div dangerouslySetInnerHTML={{ __html: markdownHtml(answer) }}/> : <p className="preview-placeholder">Nothing to preview yet.</p>}</div>}
           {formError && <p className="form-error" role="alert">{formError}</p>}<button className="submit-button" type="submit" disabled={saving}><span>{saving ? 'Saving…' : editingNote ? 'Save changes' : 'Save note'}</span><span aria-hidden="true">→</span></button></form>
       </section></div>}
