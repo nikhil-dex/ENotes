@@ -117,7 +117,7 @@ export default function HomePage() {
   useEffect(() => {
     function onKeyDown(event) {
       if (event.key !== 'Escape') return;
-      setNoteDialog(false); setSubjectDialog(false); setReaderNote(null); setStudyOpen(false); setMobileNavOpen(false);
+      setNoteDialog(false); setReaderNote(null); setStudyOpen(false); setMobileNavOpen(false);
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
