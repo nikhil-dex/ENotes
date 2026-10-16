@@ -508,8 +508,8 @@ export default function HomePage() {
         <div className="daily-revision-copy">
           <p className="eyebrow">DAILY PRACTICE</p>
           <h2 id="dailyRevisionTitle">Today's revision<span className="period">.</span></h2>
-          <p>{dueReviewCount > 0 ? `${dueReviewCount} card${dueReviewCount === 1 ? '' : 's'} ready to review in ${active?.name || 'this subject'}.` : 'Your due queue is clear. New cards will appear here when they are ready.'}</p>
-          <div className="daily-progress-track" role="progressbar" aria-label="Daily revision goal progress" aria-valuemin={0} aria-valuemax={dailyRevision.goal} aria-valuenow={dailyRevision.completed}>
+          <p>{dueReviewCount > 0 ? `${dueReviewCount} card${dueReviewCount === 1 ? '' : 's'} due for review.` : 'No cards are due for review right now.'}</p>
+          <div className="daily-progress-track" role="progressbar" aria-label="Daily revision goal progress" aria-valuemin={0} aria-valuemax={dailyRevision.goal} aria-valuenow={Math.min(dailyRevision.completed, dailyRevision.goal)}>
             <span style={{ width: `${Math.min(100, Math.round((dailyRevision.completed / dailyRevision.goal) * 100))}%` }} />
           </div>
           <span className="daily-progress-caption">{dailyRevision.completed} of {dailyRevision.goal} reviews completed today</span>
