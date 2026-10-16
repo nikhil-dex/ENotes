@@ -231,7 +231,7 @@ export default function HomePage() {
     try {
       const note = await responseJson(await fetch('/api/notes', {
         method: editingNote ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ heading, answer, subject: activeSubject, ...(editingNote ? { number: editingNote.number } : {}) }),
+        body: JSON.stringify({ heading, answer, subject: activeSubject, tags: tagInput.split(',').map((tag) => tag.trim()).filter(Boolean), favorite: favoriteDraft, pinned: pinnedDraft, ...(editingNote ? { number: editingNote.number } : {}) }),
       }));
       if (editingNote) {
         setNotes((current) => current.map((item) => item.number === note.number ? note : item));
@@ -240,9 +240,22 @@ export default function HomePage() {
         setNotes((current) => [...current, note]);
       }
       try { localStorage.removeItem(draftStorageKey(activeSubject, editingNote?.number)); } catch {}
-      setHeading(''); setAnswer(''); initialDraftRef.current = { heading: '', answer: '' }; setDraftStatus(''); setPreview(false); setNoteDialog(false); setEditingNote(null);
+      setHeading(''); setAnswer(''); setTagInput(''); setFavoriteDraft(false); setPinnedDraft(false); initialDraftRef.current = { heading: '', answer: '' }; setDraftStatus(''); setPreview(false); setNoteDialog(false); setEditingNote(null);
     } catch (error) { setFormError(error.message); }
     finally { setSaving(false); }
+  }
+
+  async function updateNoteMetadata(note, changes) {
+    try {
+      const updated = await responseJson(await fetch('/api/notes', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subject: activeSubject, number: note.number, ...changes }),
+      }));
+      setNotes((current) => current.map((item) => item.number === note.number ? { ...item, ...updated } : item));
+      setReaderNote((current) => current?.number === note.number ? { ...current, ...updated } : current);
+    } catch (error) {
+      setFormError(error.message || 'Could not update note properties.');
+    }
   }
 
   async function loadRevisionHistory() {
