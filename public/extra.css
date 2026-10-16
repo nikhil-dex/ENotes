@@ -418,3 +418,12 @@ button[aria-disabled="true"] {
   .metadata-action { bottom: 9px; }
   .note-metadata-fields { gap: 12px; }
 }
+
+
+/* Phase 15: cross-subject search */
+.global-search-toggle{min-height:36px;padding:7px 11px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--muted);font:11px var(--sans);cursor:pointer}
+.global-search-toggle.active{border-color:var(--green);background:#edf4ef;color:var(--green)}
+.note-subject-label{margin-left:8px;color:var(--muted);font:10px var(--sans);overflow-wrap:anywhere}
+.search-limit-note{margin:12px 0;color:var(--muted);font:11px var(--sans)}
+[data-theme="dark"] .global-search-toggle.active{background:#29382e;color:#a5ceaf}
+@media(max-width:650px){.global-search-toggle{min-height:40px}.stats{flex-wrap:wrap}.stats .search-wrap{order:5;flex-basis:100%;width:100%}}
