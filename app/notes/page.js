@@ -15,8 +15,8 @@ async function responseJson(response) {
 
 function referencesNote(answer, heading) {
   if (!answer || !heading) return false;
-  return String(answer).split(/\\r?\\n/).some((line) => {
-    const matches = line.matchAll(/\\[\\[([^\\]]+)\\]\\]/g);
+  return String(answer).split(/\r?\n/).some((line) => {
+    const matches = line.matchAll(/\[\[([^\]]+)\]\]/g);
     for (const match of matches) {
       if (match[1].trim().toLocaleLowerCase() === heading.trim().toLocaleLowerCase()) return true;
     }
