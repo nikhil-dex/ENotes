@@ -438,3 +438,58 @@ button[aria-disabled="true"] {
 .pagination-actions button{min-height:36px;padding:7px 11px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);font:11px var(--sans);cursor:pointer}
 .pagination-actions button:disabled{opacity:.4;cursor:not-allowed}
 @media(max-width:520px){.sort-control{width:100%;justify-content:space-between;margin-top:10px}.sort-control select{flex:1;max-width:none;min-height:40px}.pagination{align-items:stretch}.pagination-summary{text-align:center;width:100%}.pagination-actions{justify-content:space-between;gap:8px}.pagination-actions button{min-height:40px}}
+
+
+/* Phase 17: wikilink relationships and backlinks */
+.note-links-section {
+  margin-top: 28px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.note-links-section h3 {
+  margin: 0 0 10px;
+  color: var(--ink);
+  font: 600 12px var(--sans);
+  letter-spacing: .04em;
+}
+.note-links-section p {
+  margin: 0;
+  color: var(--muted);
+  font: 12px/1.65 var(--sans);
+}
+.note-links-section ul {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.note-links-section li button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 40px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--ink);
+  text-align: left;
+  font: 12px var(--sans);
+  cursor: pointer;
+}
+.note-links-section li button span {
+  color: var(--green);
+  flex: 0 0 auto;
+}
+.note-links-section li button:hover {
+  border-color: var(--green);
+}
+.note-links-section code {
+  padding: 2px 4px;
+  border-radius: 3px;
+  background: var(--soft);
+  font-size: 11px;
+}
