@@ -18,10 +18,21 @@ function savedTime() {
 
 export async function GET(request) {
   try {
-    const slug = new URL(request.url).searchParams.get('subject') || 'linux';
+    const params = new URL(request.url).searchParams;
+    const slug = params.get('subject') || 'linux';
     const db = await getDatabase();
     const subject = await db.collection('subjects').findOne({ _id: slug });
     if (!subject) return json({ error: 'Subject not found.' }, 404);
+    if (params.get('history') === '1') {
+      const number = Number(params.get('number'));
+      if (!Number.isInteger(number) || number < 1) return json({ error: 'Choose a valid note.' }, 400);
+      const note = await db.collection('notes').findOne(
+        { _id: `${slug}:${number}`, subject: slug },
+        { projection: { _id: 0, revisions: 1 } },
+      );
+      if (!note) return json({ error: 'Note not found.' }, 404);
+      return json({ revisions: Array.isArray(note.revisions) ? note.revisions.slice().reverse() : [] });
+    }
     const notes = await db.collection('notes')
       .find({ subject: slug }, { projection: { _id: 0, subject: 1, number: 1, heading: 1, answer: 1, saved: 1 } })
       .sort({ number: -1 })
