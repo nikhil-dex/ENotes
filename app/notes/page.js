@@ -50,6 +50,7 @@ export default function HomePage() {
   const [subjects, setSubjects] = useState([]);
   const [activeSubject, setActiveSubject] = useState('');
   const [notes, setNotes] = useState([]);
+  const [notesLoading, setNotesLoading] = useState(false);
   const [query, setQuery] = useState('');
   const [theme, setTheme] = useState('light');
   const [noteDialog, setNoteDialog] = useState(false);
@@ -102,16 +103,31 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!activeSubject) return;
+    const controller = new AbortController();
     localStorage.setItem('activeSubject', activeSubject);
-    fetch(`/api/notes?subject=${encodeURIComponent(activeSubject)}`)
+    setNotesLoading(true);
+    setFormError('');
+    setNotes([]);
+    fetch(`/api/notes?subject=${encodeURIComponent(activeSubject)}`, {
+      signal: controller.signal,
+      cache: 'no-store',
+    })
       .then(responseJson)
-      .then(setNotes)
-      .catch((error) => setFormError(error.message));
+      .then((items) => {
+        if (!controller.signal.aborted) setNotes(items);
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted) setFormError(error.message);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setNotesLoading(false);
+      });
     try {
       const saved = JSON.parse(localStorage.getItem(`learnedNotes:${activeSubject}`) || '[]');
       setLearnedNotes(new Set(saved));
     } catch { setLearnedNotes(new Set()); }
     setQuery('');
+    return () => controller.abort();
   }, [activeSubject]);
 
   useEffect(() => {
@@ -262,7 +278,7 @@ export default function HomePage() {
       <section className="stats" aria-label="Note statistics"><div className="stat"><span className="stat-number">{String(notes.length).padStart(2, '0')}</span><span className="stat-label">TOTAL NOTES</span></div><div className="stat-divider"/><div className="stat"><span className="stat-number">{String(subjects.length).padStart(2, '0')}</span><span className="stat-label">SUBJECTS</span></div><div className="stat-spacer"/><div className="search-wrap"><span aria-hidden="true">⌕</span><input type="search" placeholder="Search your notes…" aria-label="Search notes" value={query} onChange={(event) => setQuery(event.target.value)}/></div></section>
 
       <section className="notes-section"><div className="section-heading"><div><p className="eyebrow">THE LIBRARY</p><h2>All notes <span className="count-pill">{shownNotes.length}</span></h2></div><span className="sort-label">LATEST FIRST <span aria-hidden="true">↕</span></span></div>
-        {shownNotes.length ? <div className="notes-grid">{shownNotes.map((note) => <article className="note-card" key={note.number}><button className="card-open" onClick={() => setReaderNote(note)} aria-label={`Open note: ${note.heading}`}><span className="card-top"><span className="note-index">NO. {String(note.number).padStart(2, '0')}</span></span><span className="note-title">{note.heading}</span><span className="note-preview">{note.answer}</span><span className="card-bottom">◷ <span>{note.saved}</span></span></button><button className="edit-note" onClick={() => editNote(note)} aria-label={`Edit note: ${note.heading}`} title="Edit note">✎</button><button className="delete-note" onClick={() => deleteNote(note)} aria-label={`Delete note: ${note.heading}`} title="Delete note">×</button></article>)}</div> : <div className="empty-state"><span className="empty-icon">⌕</span><h3>{query ? 'No notes found' : 'Start your collection'}</h3><p>{query ? 'Try another search, or add a new note.' : 'Add a note to this subject, then come back to study it.'}</p></div>}
+        {notesLoading ? <div className="empty-state" role="status"><span className="empty-icon">◌</span><h3>Loading notes…</h3><p>Getting notes for this subject.</p></div> : shownNotes.length ? <div className="notes-grid">{shownNotes.map((note) => <article className="note-card" key={note.number}><button className="card-open" onClick={() => setReaderNote(note)} aria-label={`Open note: ${note.heading}`}><span className="card-top"><span className="note-index">NO. {String(note.number).padStart(2, '0')}</span></span><span className="note-title">{note.heading}</span><span className="note-preview">{note.answer}</span><span className="card-bottom">◷ <span>{note.saved}</span></span></button><button className="edit-note" onClick={() => editNote(note)} aria-label={`Edit note: ${note.heading}`} title="Edit note">✎</button><button className="delete-note" onClick={() => deleteNote(note)} aria-label={`Delete note: ${note.heading}`} title="Delete note">×</button></article>)}</div> : <div className="empty-state"><span className="empty-icon">⌕</span><h3>{query ? 'No notes found' : 'Start your collection'}</h3><p>{query ? 'Try another search, or add a new note.' : 'Add a note to this subject, then come back to study it.'}</p></div>}
       </section>
       <footer><span>Built for learning, one note at a time.</span><span>MONGODB · SUBJECT BASED</span></footer>
 
