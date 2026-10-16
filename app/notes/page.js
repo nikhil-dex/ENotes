@@ -69,6 +69,7 @@ export default function HomePage() {
   const [isOnline, setIsOnline] = useState(true);
   const [syncStatus, setSyncStatus] = useState('online');
   const [syncVersion, setSyncVersion] = useState(0);
+  const [pendingSyncCount, setPendingSyncCount] = useState(0);
   const answerRef = useRef(null);
   const dialogRef = useRef(null);
   const headingInputRef = useRef(null);
@@ -106,6 +107,7 @@ export default function HomePage() {
     }
     setIsOnline(navigator.onLine);
     setSyncStatus(navigator.onLine ? 'online' : 'offline');
+    try { setPendingSyncCount(getPendingOfflineMutations(localStorage).length); } catch {}
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('/service-worker.js').catch(() => {});
     const storedTheme = localStorage.getItem('theme');
     if (storedTheme === 'dark' || storedTheme === 'light') setTheme(storedTheme);
@@ -164,6 +166,42 @@ export default function HomePage() {
     window.addEventListener('offline', onOffline);
     return () => { window.removeEventListener('online', onOnline); window.removeEventListener('offline', onOffline); };
   }, []);
+
+  useEffect(() => {
+    if (!isOnline || !pendingSyncCount) return;
+    let cancelled = false;
+    const flushOfflineMutations = async () => {
+      setSyncStatus('syncing');
+      while (!cancelled && navigator.onLine) {
+        const queue = getPendingOfflineMutations(localStorage);
+        if (!queue.length) {
+          setPendingSyncCount(0); setSyncStatus('synced'); setSyncVersion((version) => version + 1); return;
+        }
+        const mutation = queue[0];
+        try {
+          const response = await fetch('/api/notes', {
+            method: mutation.kind === 'update' ? 'PUT' : 'PATCH',
+            headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', cache: 'no-store',
+            body: JSON.stringify({
+              subject: mutation.subject, number: mutation.number,
+              ...(mutation.kind === 'update' ? {
+                heading: mutation.heading, answer: mutation.answer, tags: mutation.tags,
+                favorite: mutation.favorite, pinned: mutation.pinned,
+              } : mutation.changes),
+            }),
+          });
+          if (!response.ok) { setSyncStatus(response.status === 409 ? 'conflict' : 'error'); return; }
+          const updated = await response.json();
+          removePendingOfflineMutation(localStorage, mutation.id);
+          setPendingSyncCount(getPendingOfflineMutations(localStorage).length);
+          setNotes((current) => current.map((item) => item.number === updated.number && (item.subject || activeSubject) === (updated.subject || activeSubject) ? { ...item, ...updated, pendingSync: false } : item));
+          setReaderNote((current) => current?.number === updated.number && (current.subject || activeSubject) === (updated.subject || activeSubject) ? { ...current, ...updated, pendingSync: false } : current);
+        } catch { setSyncStatus('offline'); return; }
+      }
+    };
+    flushOfflineMutations();
+    return () => { cancelled = true; };
+  }, [isOnline, pendingSyncCount, syncVersion, activeSubject]);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -381,17 +419,38 @@ export default function HomePage() {
     if (saving) return;
     setFormError('');
     setSaving(true);
+    const payload = {
+      heading: heading.trim(), answer: answer.trim(), subject: editingNote?.subject || activeSubject,
+      tags: tagInput.split(',').map((tag) => tag.trim()).filter(Boolean), favorite: favoriteDraft, pinned: pinnedDraft,
+      ...(editingNote ? { number: editingNote.number } : {}),
+    };
     try {
-      const note = await responseJson(await fetch('/api/notes', {
-        method: editingNote ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ heading, answer, subject: editingNote?.subject || activeSubject, tags: tagInput.split(',').map((tag) => tag.trim()).filter(Boolean), favorite: favoriteDraft, pinned: pinnedDraft, ...(editingNote ? { number: editingNote.number } : {}) }),
-      }));
+      let note;
+      if (!navigator.onLine && editingNote) {
+        const mutation = enqueueOfflineMutation(localStorage, {
+          kind: 'update', subject: payload.subject, number: editingNote.number,
+          heading: payload.heading, answer: payload.answer, tags: payload.tags, favorite: payload.favorite, pinned: payload.pinned,
+        });
+        if (!mutation) throw new Error('Could not queue this edit on this device. Check browser storage and try again.');
+        note = { ...editingNote, ...payload, saved: 'Saved on this device · waiting to sync', pendingSync: true };
+        setPendingSyncCount(getPendingOfflineMutations(localStorage).length); setSyncStatus('offline');
+      } else if (!navigator.onLine && !editingNote) {
+        throw new Error('New notes cannot be created offline yet. Your draft remains saved on this device.');
+      } else {
+        note = await responseJson(await fetch('/api/notes', {
+          method: editingNote ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin', body: JSON.stringify(payload),
+        }));
+      }
       if (editingNote) {
         setNotes((current) => current.map((item) => item.number === note.number && (item.subject || activeSubject) === (note.subject || activeSubject) ? { ...item, ...note } : item));
         setReaderNote((current) => current?.number === note.number && (current.subject || activeSubject) === (note.subject || activeSubject) ? { ...current, ...note } : current);
-      } else {
-        setNotes((current) => [...current, { ...note, subjectName: active?.name || activeSubject }]);
-      }
+        try {
+          const key = `enotes:offline:notes:v1:${note.subject || activeSubject}`;
+          const cached = JSON.parse(localStorage.getItem(key) || '[]');
+          if (Array.isArray(cached)) localStorage.setItem(key, JSON.stringify(cached.map((item) => item.number === note.number ? { ...item, ...note } : item)));
+        } catch {}
+      } else setNotes((current) => [...current, { ...note, subjectName: active?.name || activeSubject }]);
       try { localStorage.removeItem(draftStorageKey(activeSubject, editingNote?.number)); } catch {}
       setHeading(''); setAnswer(''); setTagInput(''); setFavoriteDraft(false); setPinnedDraft(false); initialDraftRef.current = { heading: '', answer: '' }; setDraftStatus(''); setPreview(false); setNoteDialog(false); setEditingNote(null);
     } catch (error) { setFormError(error.message); }
@@ -400,15 +459,26 @@ export default function HomePage() {
 
   async function updateNoteMetadata(note, changes) {
     try {
+      if (!navigator.onLine) {
+        const mutation = enqueueOfflineMutation(localStorage, { kind: 'patch', subject: note.subject || activeSubject, number: note.number, changes });
+        if (!mutation) throw new Error('Could not queue this change on this device.');
+        const updated = { ...note, ...changes, pendingSync: true };
+        setNotes((current) => current.map((item) => item.number === note.number && (item.subject || activeSubject) === (note.subject || activeSubject) ? { ...item, ...updated } : item));
+        setReaderNote((current) => current?.number === note.number && (current.subject || activeSubject) === (note.subject || activeSubject) ? { ...current, ...updated } : current);
+        try {
+          const key = `enotes:offline:notes:v1:${note.subject || activeSubject}`;
+          const cached = JSON.parse(localStorage.getItem(key) || '[]');
+          if (Array.isArray(cached)) localStorage.setItem(key, JSON.stringify(cached.map((item) => item.number === note.number ? { ...item, ...updated } : item)));
+        } catch {}
+        setPendingSyncCount(getPendingOfflineMutations(localStorage).length); setSyncStatus('offline'); return;
+      }
       const updated = await responseJson(await fetch('/api/notes', {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ subject: note.subject || activeSubject, number: note.number, ...changes }),
       }));
       setNotes((current) => current.map((item) => item.number === note.number && (item.subject || activeSubject) === (note.subject || activeSubject) ? { ...item, ...updated } : item));
       setReaderNote((current) => current?.number === note.number && (current.subject || activeSubject) === (note.subject || activeSubject) ? { ...current, ...updated } : current);
-    } catch (error) {
-      setFormError(error.message || 'Could not update note properties.');
-    }
+    } catch (error) { setFormError(error.message || 'Could not update note properties.'); }
   }
 
   async function loadRevisionHistory() {
@@ -554,7 +624,7 @@ export default function HomePage() {
     <main className="shell">
       <header className="topbar">
         <a className="brand" href="/" aria-label="Notes dashboard home"><span className="brand-mark">N</span><span>Study<span className="brand-light">Notes</span></span></a>
-        <div className="topbar-right"><a className="import-guide-link" href="/">Home</a><a className="import-guide-link" href="/settings">Settings</a><a className="import-guide-link" href="/html-library">HTML files</a><a className="import-guide-link" href="/import-guide">Import guide</a><button className="theme-button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`} aria-pressed={theme === 'dark'}>{theme === 'dark' ? '☼' : '◐'} <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span></button><span className={`sync-status ${!isOnline ? 'offline' : syncStatus === 'error' ? 'error' : ''}`} role="status" aria-live="polite"><span className="sync-status-dot" aria-hidden="true"/>{!isOnline ? 'Offline · cached' : syncStatus === 'syncing' ? 'Syncing…' : syncStatus === 'synced' ? 'Synced' : syncStatus === 'error' ? 'Sync issue' : 'Online'}</span><span>{active?.file || 'MongoDB'}</span><button className="theme-button" type="button" onClick={lockSession} aria-label="Lock ENotes and end this session">Lock</button></div>
+        <div className="topbar-right"><a className="import-guide-link" href="/">Home</a><a className="import-guide-link" href="/settings">Settings</a><a className="import-guide-link" href="/html-library">HTML files</a><a className="import-guide-link" href="/import-guide">Import guide</a><button className="theme-button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`} aria-pressed={theme === 'dark'}>{theme === 'dark' ? '☼' : '◐'} <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span></button><span className={`sync-status ${!isOnline ? 'offline' : ['error', 'conflict'].includes(syncStatus) ? 'error' : ''}`} role="status" aria-live="polite"><span className="sync-status-dot" aria-hidden="true"/>{!isOnline ? `Offline · ${pendingSyncCount} pending` : syncStatus === 'syncing' ? `Syncing · ${pendingSyncCount} pending` : syncStatus === 'synced' ? 'Synced' : syncStatus === 'conflict' ? 'Sync paused · conflict' : syncStatus === 'error' ? 'Sync issue · queued' : 'Online'}</span><span>{active?.file || 'MongoDB'}</span><button className="theme-button" type="button" onClick={lockSession} aria-label="Lock ENotes and end this session">Lock</button></div>
       </header>
 
       <nav className="subject-nav" aria-label="Main navigation" ref={subjectNavRef}>
