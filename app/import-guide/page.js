@@ -1,3 +1,5 @@
+import SiteNavbar from '../components/site-navbar';
+
 export const metadata = {
   title: 'MongoDB Import Guide | Study Notes',
   description: 'MongoDB document schema and instructions for importing notes.',
@@ -25,10 +27,7 @@ const subjectExample = `{
 export default function ImportGuidePage() {
   return (
     <main className="shell import-guide-shell">
-      <header className="topbar">
-        <a className="brand" href="/" aria-label="Notes dashboard home"><span className="brand-mark">N</span><span>Study<span className="brand-light">Notes</span></span></a>
-        <div className="topbar-right"><a className="import-guide-link" href="/">← Back to notes</a></div>
-      </header>
+      <SiteNavbar />
 
       <article className="import-guide">
         <p className="eyebrow">MONGODB REFERENCE</p>

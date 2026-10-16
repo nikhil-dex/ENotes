@@ -1,4 +1,5 @@
 'use client';
+import SiteNavbar from '../components/site-navbar';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { markdownHtml } from '../../lib/markdown.js';
@@ -619,10 +620,14 @@ export default function HomePage() {
 
   return (
     <main className="shell">
-      <header className="topbar">
-        <a className="brand" href="/" aria-label="Notes dashboard home"><span className="brand-mark">N</span><span>Study<span className="brand-light">Notes</span></span></a>
-        <div className="topbar-right"><a className="import-guide-link" href="/">Home</a><a className="import-guide-link" href="/settings">Settings</a><a className="import-guide-link" href="/html-library">HTML files</a><a className="import-guide-link" href="/revision-history">Revision history</a><a className="import-guide-link" href="/import-guide">Import guide</a><button className="theme-button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`} aria-pressed={theme === 'dark'}>{theme === 'dark' ? '☼' : '◐'} <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span></button><span className={`sync-status ${!isOnline ? 'offline' : ['error', 'conflict'].includes(syncStatus) ? 'error' : ''}`} role="status" aria-live="polite"><span className="sync-status-dot" aria-hidden="true"/>{!isOnline ? `Offline · ${pendingSyncCount} pending` : syncStatus === 'syncing' ? `Syncing · ${pendingSyncCount} pending` : syncStatus === 'synced' ? 'Synced' : syncStatus === 'conflict' ? 'Sync paused · conflict' : syncStatus === 'error' ? 'Sync issue · queued' : 'Online'}</span><span>{active?.file || 'MongoDB'}</span><button className="theme-button" type="button" onClick={lockSession} aria-label="Lock ENotes and end this session">Lock</button></div>
-      </header>
+      <SiteNavbar actions={(
+          <>
+            <button className="theme-button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`} aria-pressed={theme === 'dark'}>{theme === 'dark' ? '☼' : '◐'} <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span></button>
+            <span className={`sync-status ${!isOnline ? 'offline' : ['error', 'conflict'].includes(syncStatus) ? 'error' : ''}`} role="status" aria-live="polite"><span className="sync-status-dot" aria-hidden="true"/>{!isOnline ? `Offline · ${pendingSyncCount} pending` : syncStatus === 'syncing' ? `Syncing · ${pendingSyncCount} pending` : syncStatus === 'synced' ? 'Synced' : syncStatus === 'conflict' ? 'Sync paused · conflict' : syncStatus === 'error' ? 'Sync issue · queued' : 'Online'}</span>
+            <span className="navbar-storage-label">{active?.file || 'MongoDB'}</span>
+            <button className="theme-button" type="button" onClick={lockSession} aria-label="Lock ENotes and end this session">Lock</button>
+          </>
+        )} />
 
       <nav className="subject-nav" aria-label="Main navigation" ref={subjectNavRef}>
         <button className="mobile-nav-toggle" type="button" aria-controls="subject-menu" aria-expanded={mobileNavOpen} aria-label={mobileNavOpen ? 'Close subject menu' : 'Open subject menu'} onClick={() => setMobileNavOpen((open) => !open)}><span className="mobile-nav-icon" aria-hidden="true"><i/><i/><i/></span><span>Subjects</span></button>

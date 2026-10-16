@@ -1,4 +1,5 @@
 'use client';
+import SiteNavbar from '../components/site-navbar';
 
 import { useEffect, useRef, useState } from 'react';
 
@@ -144,10 +145,12 @@ export default function SettingsPage() {
 
   return (
     <main className="shell hub-shell">
-      <header className="topbar">
-        <a className="brand" href="/" aria-label="ENotes home"><span className="brand-mark">N</span><span>Study<span className="brand-light">Notes</span></span></a>
-        <div className="topbar-right"><a className="import-guide-link" href="/">Home</a><a className="import-guide-link" href="/notes">Notes</a><button className="theme-button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`} aria-pressed={theme === 'dark'}>{theme === 'dark' ? '☼' : '◐'} <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span></button><button className="theme-button" type="button" onClick={lockSession}>Lock</button></div>
-      </header>
+      <SiteNavbar actions={(
+          <>
+            <button className="theme-button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`} aria-pressed={theme === 'dark'}>{theme === 'dark' ? '☼' : '◐'} <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span></button>
+            <button className="theme-button" type="button" onClick={lockSession}>Lock</button>
+          </>
+        )} />
 
       <section className="settings-heading">
         <div><p className="eyebrow">WORKSPACE CONTROL</p><h1>Settings<span className="period">.</span></h1><p className="hub-lead">Manage your subjects and keep your notes safe. Everyday note-taking stays in the Notes library.</p></div>
