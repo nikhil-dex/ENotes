@@ -22,10 +22,11 @@ export async function GET(request) {
     const db = await getDatabase();
     const subject = await db.collection('subjects').findOne({ _id: slug });
     if (!subject) return json({ error: 'Subject not found.' }, 404);
-    const notes = await db.collection('notes').find({ subject: slug }).sort({ number: -1 }).toArray();
-    return json(notes.map(({ _id, subject: noteSubject, number, heading, answer, saved }) => ({
-      number, heading, answer, saved, subject: noteSubject,
-    })));
+    const notes = await db.collection('notes')
+      .find({ subject: slug }, { projection: { _id: 0, subject: 1, number: 1, heading: 1, answer: 1, saved: 1 } })
+      .sort({ number: -1 })
+      .toArray();
+    return json(notes);
   } catch (error) {
     console.error('GET /api/notes failed:', error);
     return json({ error: 'Could not load notes. Check the MongoDB connection settings.' }, 500);
