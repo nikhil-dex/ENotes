@@ -12,6 +12,7 @@ A subject-based study notes application built with **Next.js**, **React**, and *
 - [Project structure](#project-structure)
 - [Data model](#data-model)
 - [Deployment](#deployment)
+- [Release readiness](#release-readiness)
 - [Security notes](#security-notes)
 - [Contributing](#contributing)
 - [License](#license)
@@ -108,7 +109,8 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 | `npm run build` | Build the application for production |
 | `npm run start` | Start the production server after building |
 | `npm run migrate:notes` | Import starter Markdown notes into MongoDB |
-| `npm test` | Run security and recovery unit tests |
+| `npm run check:release-env` | Check required production environment values for obvious format and placeholder issues |
+| `npm test` | Run security, recovery, workflow, and release-readiness tests |
 
 ## Environment variables
 
@@ -162,33 +164,30 @@ ENotes/
 │   ├── notes/             # Notes workspace
 │   ├── settings/          # Subject management, appearance, backup/restore
 │   ├── api/
-│   │   ├── notes/          # Note API routes
-│   │   └── subjects/       # Subject API routes
-│   ├── html-library/       # HTML learning-resource page
-│   ├── import-guide/       # Note import guide
-│   ├── layout.js           # Root application layout
-│   └── page.js             # Home hub / app launcher
+│   │   ├── notes/         # Note API routes
+│   │   └── subjects/      # Subject API routes
+│   ├── html-library/      # HTML learning-resource page
+│   ├── import-guide/      # Note import guide
+│   ├── layout.js          # Root application layout
+│   └── page.js            # Home hub / app launcher
 ├── lib/
-│   ├── access-session.js   # Signed session creation and validation
+│   ├── access-session.js  # Signed session creation and validation
 │   ├── backup-validation.js # Backup schema validation
 │   ├── read-limited-body.js # Bounded request-body reader
-│   └── mongodb.js          # MongoDB connection and indexes
+│   └── mongodb.js         # MongoDB connection and indexes
 ├── tests/
-│   └── security-recovery.test.mjs # Security/recovery unit tests
-├── notes/
-│   ├── devops.md           # Starter DevOps notes
-│   ├── linux.md            # Starter Linux notes
-│   └── ml.md               # Starter machine-learning notes
-├── public/
-│   ├── html-library/       # Static HTML resources
-│   ├── extra.css
-│   └── style.css
+│   ├── api-workflows.test.mjs
+│   ├── backup-integrity.test.mjs
+│   ├── release-readiness.test.mjs
+│   └── security-recovery.test.mjs
 ├── scripts/
-│   └── migrate-notes.mjs   # Markdown-to-MongoDB migration
-├── .env.example            # Environment-variable template
+│   ├── check-release-env.mjs
+│   ├── migrate-notes.mjs
+│   └── set-access-key.mjs
+├── .env.example
 ├── next.config.mjs
 ├── package.json
-└── subjects.json           # Starter subject configuration
+└── subjects.json
 ```
 
 ## Data model
@@ -217,6 +216,18 @@ Do not expose database credentials in client-side code or commit them to source 
 Use **Download backup** in the dashboard to export all subjects and notes to a JSON file. Keep this file somewhere private because it contains your study notes.
 
 To restore, choose a backup JSON file from the dashboard. ENotes validates the file format, record limits, subject slugs, note identifiers, and content lengths before writing. Restore uses **merge-only** behavior: missing subjects and notes are added, existing subject metadata and note contents are not overwritten, and duplicate note IDs are skipped. Uploads are limited to 10 MB. Restore is not a substitute for an independent MongoDB backup; keep multiple copies of important backups.
+
+## Release readiness
+
+Before a production release, follow [`RELEASE_CHECKLIST.md`](./RELEASE_CHECKLIST.md). It covers production environment configuration, deployment smoke tests, backup and restore checks, and final sign-off.
+
+Run this command locally or in CI to catch missing or obviously placeholder environment values:
+
+```bash
+npm run check:release-env
+```
+
+This is a format check only; it does **not** connect to MongoDB, validate credentials, or confirm that a deployed app is healthy. CI runs this check alongside tests and the production build using test-only values.
 
 ## Security notes
 
