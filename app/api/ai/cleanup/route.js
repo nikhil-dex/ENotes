@@ -99,7 +99,7 @@ export async function POST(request) {
         console.info('Gemini response received.', { requestId, model: modelName, status: response.status, elapsedMs: Date.now() - modelStartedAt });
         return response;
       } catch (error) {
-        if (error?.name === 'AbortError') error.geminiTimedOut = true;
+        if (error?.name === 'AbortError') { error.geminiTimedOut = true; error.modelName = modelName; }
         throw error;
       } finally {
         clearTimeout(timeout);
