@@ -1,4 +1,5 @@
 import { readdir } from 'node:fs/promises';
+import SiteNavbar from '../components/site-navbar';
 import path from 'node:path';
 
 export const dynamic = 'force-dynamic';
@@ -25,10 +26,7 @@ export default async function HtmlLibraryPage() {
 
   return (
     <main className="shell import-guide-shell">
-      <header className="topbar">
-        <a className="brand" href="/" aria-label="Notes dashboard home"><span className="brand-mark">N</span><span>Study<span className="brand-light">Notes</span></span></a>
-        <div className="topbar-right"><a className="import-guide-link" href="/">← Back to notes</a></div>
-      </header>
+      <SiteNavbar />
 
       <section className="html-library">
         <p className="eyebrow">YOUR STUDY PAGES</p>
