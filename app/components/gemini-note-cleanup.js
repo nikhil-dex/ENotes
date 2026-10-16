@@ -5,6 +5,7 @@ export default function GeminiNoteCleanup({ heading, answer, disabled = false, o
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [suggestion, setSuggestion] = useState(null);
+  const suggestionIsStale = Boolean(suggestion && (heading !== suggestion.originalHeading || answer !== suggestion.originalAnswer));
 
   async function cleanUp() {
     if (!heading.trim() || !answer.trim()) {
@@ -35,6 +36,11 @@ export default function GeminiNoteCleanup({ heading, answer, disabled = false, o
 
   function applySuggestion() {
     if (!suggestion) return;
+    if (heading !== suggestion.originalHeading || answer !== suggestion.originalAnswer) {
+      setSuggestion(null);
+      setError('Your note changed after this suggestion was generated. Run cleanup again to avoid overwriting your newer edits.');
+      return;
+    }
     onApply?.({ heading: suggestion.heading, answer: suggestion.answer });
     setSuggestion(null);
     setError('');
@@ -61,9 +67,10 @@ export default function GeminiNoteCleanup({ heading, answer, disabled = false, o
           <div className="gemini-review-panel"><h5>Gemini suggestion</h5><strong>{suggestion.heading}</strong><div className="gemini-review-content">{suggestion.answer}</div></div>
         </div>
         <p className="gemini-cleanup-note">Review code, commands, formulas, and technical facts before applying.</p>
+        {suggestionIsStale && <p className="gemini-cleanup-error" role="alert">Your note has changed since this suggestion was generated. Run cleanup again before applying.</p>}
         <div className="gemini-review-actions">
           <button type="button" onClick={() => setSuggestion(null)}>Cancel</button>
-          <button type="button" className="apply" onClick={applySuggestion}>Apply to draft</button>
+          <button type="button" className="apply" onClick={applySuggestion} disabled={suggestionIsStale}>Apply to draft</button>
         </div>
       </div>}
     </section>
