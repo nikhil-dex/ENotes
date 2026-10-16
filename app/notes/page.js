@@ -145,7 +145,11 @@ export default function HomePage() {
     if (!noteDialog || !activeSubject) return;
     const key = draftStorageKey(activeSubject, editingNote?.number);
     if (!heading.trim() && !answer.trim()) {
-      try { localStorage.removeItem(key); } catch {}
+      let existingDraft = null;
+      try { existingDraft = JSON.parse(localStorage.getItem(key) || 'null'); } catch {}
+      if (!existingDraft || (!existingDraft.heading && !existingDraft.answer)) {
+        try { localStorage.removeItem(key); } catch {}
+      }
       setDraftStatus('');
       return;
     }
