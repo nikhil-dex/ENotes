@@ -41,6 +41,8 @@ export default function HomePage() {
   const [studyRevealed, setStudyRevealed] = useState(false);
   const [learnedNotes, setLearnedNotes] = useState(new Set());
   const answerRef = useRef(null);
+  const dialogRef = useRef(null);
+  const headingInputRef = useRef(null);
   const initialDraftRef = useRef({ heading: '', answer: '' });
   const draftDirty = noteDialog && (heading !== initialDraftRef.current.heading || answer !== initialDraftRef.current.answer);
   const subjectNavRef = useRef(null);
