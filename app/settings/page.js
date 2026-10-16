@@ -108,7 +108,7 @@ export default function SettingsPage() {
   async function restoreBackup(event) {
     const file = event.target.files?.[0];
     event.target.value = '';
-    if (!file) return;
+    if (!file || backupBusy) return;
     setBackupMessage('');
     if (file.size > 10 * 1024 * 1024) {
       setBackupMessage('Choose a backup file no larger than 10 MB.');
