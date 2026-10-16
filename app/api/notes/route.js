@@ -138,14 +138,33 @@ export async function PUT(request) {
     }
 
     const db = await getDatabase();
-    const result = await db.collection('notes').findOneAndUpdate(
+    const collection = db.collection('notes');
+    const previous = await collection.findOne(
       { _id: `${slug}:${number}`, subject: slug },
-      { $set: {
-        heading: heading.replace(/[\r\n]+/g, ' '),
-        answer: answer.replace(/\r\n/g, '\n'),
-        saved: savedTime(),
-        updatedAt: new Date(),
-      } },
+      { projection: { heading: 1, answer: 1, saved: 1, revisions: 1 } },
+    );
+    if (!previous) return json({ error: 'Note not found.' }, 404);
+    const result = await collection.findOneAndUpdate(
+      { _id: `${slug}:${number}`, subject: slug },
+      {
+        $set: {
+          heading: heading.replace(/[\\r\\n]+/g, ' '),
+          answer: answer.replace(/\\r\\n/g, '\\n'),
+          saved: savedTime(),
+          updatedAt: new Date(),
+        },
+        $push: {
+          revisions: {
+            $each: [{
+              heading: previous.heading || '',
+              answer: previous.answer || '',
+              saved: previous.saved || '',
+              revisedAt: new Date(),
+            }],
+            $slice: -20,
+          },
+        },
+      },
       { returnDocument: 'after', includeResultMetadata: false },
     );
     if (!result) return json({ error: 'Note not found.' }, 404);
