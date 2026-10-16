@@ -66,6 +66,9 @@ export default function HomePage() {
   const [learnedNotes, setLearnedNotes] = useState(new Set());
   const [reviewSchedule, setReviewSchedule] = useState({});
   const [dailyRevision, setDailyRevision] = useState({ date: '', completed: 0, goal: 10 });
+  const [isOnline, setIsOnline] = useState(true);
+  const [syncStatus, setSyncStatus] = useState('online');
+  const [syncVersion, setSyncVersion] = useState(0);
   const answerRef = useRef(null);
   const dialogRef = useRef(null);
   const headingInputRef = useRef(null);
@@ -101,6 +104,9 @@ export default function HomePage() {
       setDailyRevision(today);
       localStorage.setItem('dailyRevision:v1', JSON.stringify(today));
     }
+    setIsOnline(navigator.onLine);
+    setSyncStatus(navigator.onLine ? 'online' : 'offline');
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/service-worker.js').catch(() => {});
     const storedTheme = localStorage.getItem('theme');
     if (storedTheme === 'dark' || storedTheme === 'light') setTheme(storedTheme);
     const storedSubject = localStorage.getItem('activeSubject');
@@ -109,10 +115,23 @@ export default function HomePage() {
       .then(responseJson)
       .then((items) => {
         setSubjects(items);
+        try { localStorage.setItem('enotes:offline:subjects:v1', JSON.stringify(items)); } catch {}
         const preferred = items.find((item) => item.slug === requestedSubject) || items.find((item) => item.slug === storedSubject) || items[0];
         if (preferred) setActiveSubject(preferred.slug);
       })
-      .catch((error) => setFormError(error.message));
+      .catch((error) => {
+        let cached = [];
+        try {
+          const parsed = JSON.parse(localStorage.getItem('enotes:offline:subjects:v1') || '[]');
+          if (Array.isArray(parsed)) cached = parsed;
+        } catch {}
+        if (cached.length) {
+          setSubjects(cached);
+          setSyncStatus('offline');
+          const preferred = cached.find((item) => item.slug === requestedSubject) || cached.find((item) => item.slug === storedSubject) || cached[0];
+          if (preferred) setActiveSubject(preferred.slug);
+        } else setFormError(error.message);
+      });
   }, []);
 
   useEffect(() => {
@@ -136,6 +155,14 @@ export default function HomePage() {
       window.removeEventListener('focus', syncDailyRevision);
       document.removeEventListener('visibilitychange', syncDailyRevision);
     };
+  }, []);
+
+  useEffect(() => {
+    const onOnline = () => { setIsOnline(true); setSyncStatus('syncing'); setSyncVersion((version) => version + 1); };
+    const onOffline = () => { setIsOnline(false); setSyncStatus('offline'); };
+    window.addEventListener('online', onOnline);
+    window.addEventListener('offline', onOffline);
+    return () => { window.removeEventListener('online', onOnline); window.removeEventListener('offline', onOffline); };
   }, []);
 
   useEffect(() => {
@@ -164,16 +191,33 @@ export default function HomePage() {
     setNotesLoading(true);
     setFormError('');
     setNotes([]);
+    if (navigator.onLine) setSyncStatus('syncing');
     fetch(`/api/notes?subject=${encodeURIComponent(activeSubject)}`, {
       signal: controller.signal,
       cache: 'no-store',
     })
       .then(responseJson)
       .then((items) => {
-        if (!controller.signal.aborted) setNotes(items);
+        if (!controller.signal.aborted) {
+          setNotes(items);
+          try { localStorage.setItem(`enotes:offline:notes:v1:${activeSubject}`, JSON.stringify(items)); } catch {}
+          setSyncStatus('synced');
+        }
       })
       .catch((error) => {
-        if (!controller.signal.aborted) setFormError(error.message);
+        if (controller.signal.aborted) return;
+        let cached = null;
+        try {
+          const parsed = JSON.parse(localStorage.getItem(`enotes:offline:notes:v1:${activeSubject}`) || 'null');
+          if (Array.isArray(parsed)) cached = parsed;
+        } catch {}
+        if (cached) {
+          setNotes(cached);
+          setSyncStatus('offline');
+        } else {
+          setFormError(error.message);
+          setSyncStatus(navigator.onLine ? 'error' : 'offline');
+        }
       })
       .finally(() => {
         if (!controller.signal.aborted) setNotesLoading(false);
@@ -187,7 +231,7 @@ export default function HomePage() {
     } catch { setReviewSchedule({}); }
     setQuery('');
     return () => controller.abort();
-  }, [activeSubject, globalSearch]);
+  }, [activeSubject, globalSearch, syncVersion]);
 
   useEffect(() => {
     if (!globalSearch) {
@@ -510,7 +554,7 @@ export default function HomePage() {
     <main className="shell">
       <header className="topbar">
         <a className="brand" href="/" aria-label="Notes dashboard home"><span className="brand-mark">N</span><span>Study<span className="brand-light">Notes</span></span></a>
-        <div className="topbar-right"><a className="import-guide-link" href="/">Home</a><a className="import-guide-link" href="/settings">Settings</a><a className="import-guide-link" href="/html-library">HTML files</a><a className="import-guide-link" href="/import-guide">Import guide</a><button className="theme-button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`} aria-pressed={theme === 'dark'}>{theme === 'dark' ? '☼' : '◐'} <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span></button><span className="status-dot"/><span>{active?.file || 'MongoDB'}</span><button className="theme-button" type="button" onClick={lockSession} aria-label="Lock ENotes and end this session">Lock</button></div>
+        <div className="topbar-right"><a className="import-guide-link" href="/">Home</a><a className="import-guide-link" href="/settings">Settings</a><a className="import-guide-link" href="/html-library">HTML files</a><a className="import-guide-link" href="/import-guide">Import guide</a><button className="theme-button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`} aria-pressed={theme === 'dark'}>{theme === 'dark' ? '☼' : '◐'} <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span></button><span className={`sync-status ${!isOnline ? 'offline' : syncStatus === 'error' ? 'error' : ''}`} role="status" aria-live="polite"><span className="sync-status-dot" aria-hidden="true"/>{!isOnline ? 'Offline · cached' : syncStatus === 'syncing' ? 'Syncing…' : syncStatus === 'synced' ? 'Synced' : syncStatus === 'error' ? 'Sync issue' : 'Online'}</span><span>{active?.file || 'MongoDB'}</span><button className="theme-button" type="button" onClick={lockSession} aria-label="Lock ENotes and end this session">Lock</button></div>
       </header>
 
       <nav className="subject-nav" aria-label="Main navigation" ref={subjectNavRef}>

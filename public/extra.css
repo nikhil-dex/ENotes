@@ -538,3 +538,7 @@ button[aria-disabled="true"] {
   .intro-actions { flex-wrap: wrap; }
   .intro-actions .study-button { flex: 1 1 100%; }
 }
+
+
+/* Offline status and synchronization */
+.sync-status{display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font:10px var(--mono);white-space:nowrap}.sync-status-dot{width:6px;height:6px;border-radius:50%;background:#6db58b}.sync-status.offline{border-color:#e6c98d;color:#8b6728}.sync-status.offline .sync-status-dot{background:#d69b38}.sync-status.error{border-color:#e8b6b2;color:#a43c34}.sync-status.error .sync-status-dot{background:#c54e46}@media(max-width:760px){.sync-status{font-size:9px;padding:4px 6px}}

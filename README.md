@@ -29,6 +29,8 @@ A subject-based study notes application built with **Next.js**, **React**, and *
 - **Search** — filter notes by heading or content.
 - **Light and dark themes** — switch themes, with the selected theme saved in the browser.
 - **Remembered study state** — the selected subject and learned-note progress are stored locally in the browser.
+- **Offline reading** — previously loaded subjects and their notes are cached in this browser and remain readable when the network is unavailable.
+- **Reconnect synchronization** — cached notes refresh from MongoDB when the connection returns; the header shows the current connection/sync state. Offline edits are not uploaded automatically in this phase.
 - **MongoDB persistence** — subjects and notes are stored in MongoDB.
 - **Dedicated Settings page** — manage subjects, choose a theme, and access JSON backup and restore outside the note-taking workspace.
 - **JSON backup and restore** — download a full backup and safely merge missing records from a validated backup without overwriting existing notes.
@@ -173,11 +175,13 @@ ENotes/
 │   └── page.js            # Home hub / app launcher
 ├── lib/
 │   ├── access-session.js  # Signed session creation and validation
+│   ├── offline-notes.js   # Browser cache helpers for offline reading
 │   ├── backup-validation.js # Backup schema validation
 │   ├── read-limited-body.js # Bounded request-body reader
 │   └── mongodb.js         # MongoDB connection and indexes
 ├── tests/
 │   ├── api-workflows.test.mjs
+│   ├── offline-notes.test.mjs
 │   ├── backup-integrity.test.mjs
 │   ├── release-readiness.test.mjs
 │   └── security-recovery.test.mjs
