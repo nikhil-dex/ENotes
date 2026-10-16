@@ -20,6 +20,12 @@ export default function HomePage() {
   const [notesLoading, setNotesLoading] = useState(false);
   const [deletingNotes, setDeletingNotes] = useState(new Set());
   const [query, setQuery] = useState('');
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [pinnedOnly, setPinnedOnly] = useState(false);
+  const [selectedTag, setSelectedTag] = useState('');
+  const [tagInput, setTagInput] = useState('');
+  const [favoriteDraft, setFavoriteDraft] = useState(false);
+  const [pinnedDraft, setPinnedDraft] = useState(false);
   const [theme, setTheme] = useState('light');
   const [noteDialog, setNoteDialog] = useState(false);
   const [editingNote, setEditingNote] = useState(null);
@@ -48,9 +54,13 @@ export default function HomePage() {
   const subjectNavRef = useRef(null);
 
   const active = subjects.find((subject) => subject.slug === activeSubject);
+  const availableTags = useMemo(() => [...new Set(notes.flatMap((note) => Array.isArray(note.tags) ? note.tags : []))].sort(), [notes]);
   const shownNotes = useMemo(() => notes
-    .filter((note) => `${note.heading} ${note.answer}`.toLowerCase().includes(query.trim().toLowerCase()))
-    .sort((a, b) => b.number - a.number), [notes, query]);
+    .filter((note) => `${note.heading} ${note.answer} ${(note.tags || []).join(' ')}`.toLowerCase().includes(query.trim().toLowerCase()))
+    .filter((note) => !favoritesOnly || note.favorite === true)
+    .filter((note) => !pinnedOnly || note.pinned === true)
+    .filter((note) => !selectedTag || (note.tags || []).includes(selectedTag))
+    .sort((a, b) => Number(b.pinned === true) - Number(a.pinned === true) || Number(b.favorite === true) - Number(a.favorite === true) || b.number - a.number), [notes, query, favoritesOnly, pinnedOnly, selectedTag]);
 
   useEffect(() => {
     const storedTheme = localStorage.getItem('theme');
@@ -256,6 +266,7 @@ export default function HomePage() {
   function editNote(note) {
     initialDraftRef.current = { heading: note.heading, answer: note.answer };
     setEditingNote(note); setHeading(note.heading); setAnswer(note.answer);
+    setTagInput((note.tags || []).join(', ')); setFavoriteDraft(note.favorite === true); setPinnedDraft(note.pinned === true);
     setRevisions([]); setRevisionsOpen(false); setRevisionsError('');
     setPreview(false); setFormError(''); setNoteDialog(true);
   }
@@ -354,7 +365,7 @@ export default function HomePage() {
 
       <section className="intro">
         <div><p className="eyebrow">YOUR PERSONAL KNOWLEDGE BASE</p><h1>{active?.name || 'Your'} notes<span className="period">.</span></h1><p className="subtitle">A clear place for the commands, concepts, and things you learn.</p></div>
-        <div className="intro-actions"><button className="study-button" onClick={startStudy} disabled={!notes.length}><span aria-hidden="true">◉</span> Study notes</button><button className="add-button" onClick={() => { initialDraftRef.current = { heading: '', answer: '' }; setEditingNote(null); setHeading(''); setAnswer(''); setRevisions([]); setRevisionsOpen(false); setRevisionsError(''); setFormError(''); setNoteDialog(true); }}><span aria-hidden="true">+</span> Add a note</button></div>
+        <div className="intro-actions"><button className="study-button" onClick={startStudy} disabled={!notes.length}><span aria-hidden="true">◉</span> Study notes</button><button className="add-button" onClick={() => { initialDraftRef.current = { heading: '', answer: '' }; setEditingNote(null); setHeading(''); setAnswer(''); setTagInput(''); setFavoriteDraft(false); setPinnedDraft(false); setRevisions([]); setRevisionsOpen(false); setRevisionsError(''); setFormError(''); setNoteDialog(true); }}><span aria-hidden="true">+</span> Add a note</button></div>
       </section>
 
       <section className="stats" aria-label="Note statistics"><div className="stat"><span className="stat-number">{String(notes.length).padStart(2, '0')}</span><span className="stat-label">TOTAL NOTES</span></div><div className="stat-divider"/><div className="stat"><span className="stat-number">{String(subjects.length).padStart(2, '0')}</span><span className="stat-label">SUBJECTS</span></div><div className="stat-spacer"/><div className="search-wrap"><span aria-hidden="true">⌕</span><input type="search" placeholder="Search your notes…" aria-label="Search notes" value={query} onChange={(event) => setQuery(event.target.value)}/></div></section>
