@@ -25,6 +25,9 @@ export default function HomePage() {
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [pinnedOnly, setPinnedOnly] = useState(false);
   const [selectedTag, setSelectedTag] = useState('');
+  const [sortOrder, setSortOrder] = useState('latest');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 12;
   const [tagInput, setTagInput] = useState('');
   const [favoriteDraft, setFavoriteDraft] = useState(false);
   const [pinnedDraft, setPinnedDraft] = useState(false);
@@ -57,12 +60,20 @@ export default function HomePage() {
 
   const active = subjects.find((subject) => subject.slug === activeSubject);
   const availableTags = useMemo(() => [...new Set(notes.flatMap((note) => Array.isArray(note.tags) ? note.tags : []))].sort(), [notes]);
-  const shownNotes = useMemo(() => notes
+  const filteredNotes = useMemo(() => notes
     .filter((note) => `${note.heading} ${note.answer} ${(note.tags || []).join(' ')}`.toLowerCase().includes(query.trim().toLowerCase()))
     .filter((note) => !favoritesOnly || note.favorite === true)
     .filter((note) => !pinnedOnly || note.pinned === true)
     .filter((note) => !selectedTag || (note.tags || []).includes(selectedTag))
-    .sort((a, b) => Number(b.pinned === true) - Number(a.pinned === true) || Number(b.favorite === true) - Number(a.favorite === true) || b.number - a.number), [notes, query, favoritesOnly, pinnedOnly, selectedTag]);
+    .sort((a, b) => {
+      if (sortOrder === 'oldest') return a.number - b.number;
+      if (sortOrder === 'title-asc') return a.heading.localeCompare(b.heading);
+      if (sortOrder === 'title-desc') return b.heading.localeCompare(a.heading);
+      return Number(b.pinned === true) - Number(a.pinned === true) || Number(b.favorite === true) - Number(a.favorite === true) || b.number - a.number;
+    }), [notes, query, favoritesOnly, pinnedOnly, selectedTag, sortOrder]);
+  const totalPages = Math.max(1, Math.ceil(filteredNotes.length / pageSize));
+  const shownNotes = useMemo(() => filteredNotes.slice((currentPage - 1) * pageSize, currentPage * pageSize), [filteredNotes, currentPage]);
+
 
   useEffect(() => {
     const storedTheme = localStorage.getItem('theme');
