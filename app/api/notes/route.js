@@ -1,5 +1,6 @@
 import { getDatabase } from '../../../lib/mongodb.js';
 import { readLimitedBody } from '../../../lib/read-limited-body.js';
+import { normalizeNoteHeading } from '../../../lib/note-normalization.js';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -122,7 +123,7 @@ export async function POST(request) {
         _id: `${slug}:${number}`,
         subject: slug,
         number,
-        heading: heading.replace(/[\r\n]+/g, ' '),
+        heading: normalizeNoteHeading(heading),
         answer: answer.replace(/\r\n/g, '\n'),
         saved: savedTime(),
         tags,
@@ -183,7 +184,7 @@ export async function PUT(request) {
       { _id: `${slug}:${number}`, subject: slug },
       {
         $set: {
-          heading: heading.replace(/[\\r\\n]+/g, ' '),
+          heading: normalizeNoteHeading(heading),
           answer: answer.replace(/\\r\\n/g, '\\n'),
           saved: savedTime(),
           tags,
