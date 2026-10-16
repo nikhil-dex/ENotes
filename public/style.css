@@ -289,3 +289,76 @@
 @media(prefers-reduced-motion:reduce){
   .editor-dialog{animation:none}
 }
+
+
+/* Expand only the answer-writing area; keep heading, tags and note metadata in place. */
+.answer-workspace{min-width:0}
+.answer-workspace .label-row{display:flex;align-items:center}
+.answer-workspace .answer-expand-button{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  flex:0 0 auto;
+  min-height:34px;
+  margin-left:auto;
+  padding:7px 11px;
+  border:1px solid var(--line);
+  border-radius:7px;
+  background:var(--paper);
+  color:var(--ink);
+  font:600 11px var(--sans);
+  cursor:pointer;
+  touch-action:manipulation;
+}
+.answer-workspace .answer-expand-button:hover{border-color:var(--green);color:var(--green-dark)}
+.answer-workspace .answer-expand-button:focus-visible{outline:2px solid var(--green);outline-offset:3px}
+.answer-workspace.is-fullscreen{
+  position:fixed;
+  inset:0;
+  z-index:1200;
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+  min-height:0;
+  width:100vw;
+  height:100vh;
+  height:100dvh;
+  padding:clamp(12px,2vw,24px);
+  padding-top:calc(clamp(12px,2vw,24px) + env(safe-area-inset-top));
+  padding-bottom:calc(clamp(12px,2vw,24px) + env(safe-area-inset-bottom));
+  overflow:hidden;
+  background:var(--paper);
+  color:var(--ink);
+}
+.answer-workspace.is-fullscreen .label-row{flex:0 0 auto;gap:12px}
+.answer-workspace.is-fullscreen .label-row label{font:700 14px var(--sans);letter-spacing:.08em}
+.answer-workspace.is-fullscreen .label-row>span{font-size:11px}
+.answer-workspace.is-fullscreen .editor-toolbar{flex:0 0 auto;margin-bottom:10px}
+.answer-workspace.is-fullscreen .editor-tabs{flex:0 0 auto;margin-bottom:10px}
+.answer-workspace.is-fullscreen textarea#answer,
+.answer-workspace.is-fullscreen .answer-preview{
+  flex:1 1 0;
+  min-width:0;
+  min-height:0;
+  height:auto;
+  max-height:none;
+  margin:0;
+  font-size:15px;
+  line-height:1.8;
+}
+.answer-workspace.is-fullscreen textarea#answer{resize:none}
+.answer-workspace.is-fullscreen .answer-preview{overflow:auto}
+.answer-workspace.is-fullscreen .answer-expand-button{min-height:40px}
+@media(max-width:599px){
+  .answer-workspace .label-row{gap:8px}
+  .answer-workspace .label-row>span{flex:1 1 100%;order:3}
+  .answer-workspace .answer-expand-button{min-height:38px;padding:7px 9px}
+  .answer-workspace.is-fullscreen{padding-left:12px;padding-right:12px}
+  .answer-workspace.is-fullscreen .label-row{align-items:center}
+  .answer-workspace.is-fullscreen .label-row>span{display:none}
+  .answer-workspace.is-fullscreen .editor-toolbar{gap:6px}
+  .answer-workspace.is-fullscreen .editor-toolbar button{min-width:42px;min-height:42px}
+  .answer-workspace.is-fullscreen textarea#answer,
+  .answer-workspace.is-fullscreen .answer-preview{font-size:16px}
+}
