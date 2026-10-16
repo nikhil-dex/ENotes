@@ -51,6 +51,7 @@ export default function HomePage() {
   const [activeSubject, setActiveSubject] = useState('');
   const [notes, setNotes] = useState([]);
   const [notesLoading, setNotesLoading] = useState(false);
+  const [deletingNotes, setDeletingNotes] = useState(new Set());
   const [query, setQuery] = useState('');
   const [theme, setTheme] = useState('light');
   const [noteDialog, setNoteDialog] = useState(false);
@@ -190,12 +191,23 @@ export default function HomePage() {
   }
 
   async function deleteNote(note) {
+    if (deletingNotes.has(note.number)) return;
     if (!window.confirm(`Delete “${note.heading}” from ${active?.name || activeSubject}? This cannot be undone.`)) return;
+    setDeletingNotes((current) => new Set(current).add(note.number));
+    setFormError('');
     try {
       await responseJson(await fetch(`/api/notes?subject=${encodeURIComponent(activeSubject)}&number=${note.number}`, { method: 'DELETE' }));
       setNotes((current) => current.filter((item) => item.number !== note.number));
       setReaderNote((current) => current?.number === note.number ? null : current);
-    } catch (error) { window.alert(error.message); }
+    } catch (error) {
+      setFormError(error.message || 'Could not delete this note. Please try again.');
+    } finally {
+      setDeletingNotes((current) => {
+        const next = new Set(current);
+        next.delete(note.number);
+        return next;
+      });
+    }
   }
 
 
@@ -278,7 +290,7 @@ export default function HomePage() {
       <section className="stats" aria-label="Note statistics"><div className="stat"><span className="stat-number">{String(notes.length).padStart(2, '0')}</span><span className="stat-label">TOTAL NOTES</span></div><div className="stat-divider"/><div className="stat"><span className="stat-number">{String(subjects.length).padStart(2, '0')}</span><span className="stat-label">SUBJECTS</span></div><div className="stat-spacer"/><div className="search-wrap"><span aria-hidden="true">⌕</span><input type="search" placeholder="Search your notes…" aria-label="Search notes" value={query} onChange={(event) => setQuery(event.target.value)}/></div></section>
 
       <section className="notes-section"><div className="section-heading"><div><p className="eyebrow">THE LIBRARY</p><h2>All notes <span className="count-pill">{shownNotes.length}</span></h2></div><span className="sort-label">LATEST FIRST <span aria-hidden="true">↕</span></span></div>
-        {notesLoading ? <div className="empty-state" role="status"><span className="empty-icon">◌</span><h3>Loading notes…</h3><p>Getting notes for this subject.</p></div> : shownNotes.length ? <div className="notes-grid">{shownNotes.map((note) => <article className="note-card" key={note.number}><button className="card-open" onClick={() => setReaderNote(note)} aria-label={`Open note: ${note.heading}`}><span className="card-top"><span className="note-index">NO. {String(note.number).padStart(2, '0')}</span></span><span className="note-title">{note.heading}</span><span className="note-preview">{note.answer}</span><span className="card-bottom">◷ <span>{note.saved}</span></span></button><button className="edit-note" onClick={() => editNote(note)} aria-label={`Edit note: ${note.heading}`} title="Edit note">✎</button><button className="delete-note" onClick={() => deleteNote(note)} aria-label={`Delete note: ${note.heading}`} title="Delete note">×</button></article>)}</div> : <div className="empty-state"><span className="empty-icon">⌕</span><h3>{query ? 'No notes found' : 'Start your collection'}</h3><p>{query ? 'Try another search, or add a new note.' : 'Add a note to this subject, then come back to study it.'}</p></div>}
+        {notesLoading ? <div className="empty-state" role="status"><span className="empty-icon">◌</span><h3>Loading notes…</h3><p>Getting notes for this subject.</p></div> : shownNotes.length ? <div className="notes-grid">{shownNotes.map((note) => <article className="note-card" key={note.number}><button className="card-open" onClick={() => setReaderNote(note)} aria-label={`Open note: ${note.heading}`}><span className="card-top"><span className="note-index">NO. {String(note.number).padStart(2, '0')}</span></span><span className="note-title">{note.heading}</span><span className="note-preview">{note.answer}</span><span className="card-bottom">◷ <span>{note.saved}</span></span></button><button className="edit-note" onClick={() => editNote(note)} aria-label={`Edit note: ${note.heading}`} title="Edit note">✎</button><button className="delete-note" onClick={() => deleteNote(note)} disabled={deletingNotes.has(note.number)} aria-label={`Delete note: ${note.heading}`} title={deletingNotes.has(note.number) ? 'Deleting note…' : 'Delete note'}>{deletingNotes.has(note.number) ? '…' : '×'}</button></article>)}</div> : <div className="empty-state"><span className="empty-icon">⌕</span><h3>{query ? 'No notes found' : 'Start your collection'}</h3><p>{query ? 'Try another search, or add a new note.' : 'Add a note to this subject, then come back to study it.'}</p></div>}
       </section>
       <footer><span>Built for learning, one note at a time.</span><span>MONGODB · SUBJECT BASED</span></footer>
 
