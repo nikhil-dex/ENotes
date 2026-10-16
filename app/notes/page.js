@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { markdownHtml } from '../../lib/markdown.js';
+import { calculateNextReview } from '../../lib/spaced-repetition.js';
 
 function draftStorageKey(subject, number) {
   return `enotes:draft:${subject}:${number ?? 'new'}`;
@@ -408,26 +409,11 @@ export default function HomePage() {
     const note = studyDeck[studyIndex];
     if (!note) return;
     const key = noteReviewKey(note);
-    const previous = reviewSchedule[key] || { intervalDays: 0, repetitions: 0 };
     const now = new Date();
-    let intervalDays = previous.intervalDays || 0;
-    let dueAt;
-    if (rating === 'again') {
-      dueAt = new Date(now.getTime() + 10 * 60 * 1000);
-      intervalDays = 0;
-    } else if (rating === 'hard') {
-      intervalDays = Math.max(1, Math.round((intervalDays || 1) * 1.2));
-      dueAt = new Date(now.getTime() + intervalDays * 24 * 60 * 60 * 1000);
-    } else if (rating === 'easy') {
-      intervalDays = intervalDays ? Math.max(4, Math.round(intervalDays * 2.5)) : 4;
-      dueAt = new Date(now.getTime() + intervalDays * 24 * 60 * 60 * 1000);
-    } else {
-      intervalDays = intervalDays === 0 ? 1 : intervalDays === 1 ? 3 : Math.round(intervalDays * 2);
-      dueAt = new Date(now.getTime() + intervalDays * 24 * 60 * 60 * 1000);
-    }
+    const nextReview = calculateNextReview(reviewSchedule[key], rating, now);
     const nextSchedule = {
       ...reviewSchedule,
-      [key]: { dueAt: dueAt.toISOString(), intervalDays, repetitions: (previous.repetitions || 0) + 1, lastReviewedAt: now.toISOString(), rating },
+      [key]: nextReview,
     };
     setReviewSchedule(nextSchedule);
     localStorage.setItem('reviewSchedule:v1', JSON.stringify(nextSchedule));
