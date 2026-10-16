@@ -20,6 +20,12 @@ export default function HomePage() {
   const [notesLoading, setNotesLoading] = useState(false);
   const [deletingNotes, setDeletingNotes] = useState(new Set());
   const [query, setQuery] = useState('');
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [pinnedOnly, setPinnedOnly] = useState(false);
+  const [selectedTag, setSelectedTag] = useState('');
+  const [tagInput, setTagInput] = useState('');
+  const [favoriteDraft, setFavoriteDraft] = useState(false);
+  const [pinnedDraft, setPinnedDraft] = useState(false);
   const [theme, setTheme] = useState('light');
   const [noteDialog, setNoteDialog] = useState(false);
   const [editingNote, setEditingNote] = useState(null);
@@ -48,9 +54,13 @@ export default function HomePage() {
   const subjectNavRef = useRef(null);
 
   const active = subjects.find((subject) => subject.slug === activeSubject);
+  const availableTags = useMemo(() => [...new Set(notes.flatMap((note) => Array.isArray(note.tags) ? note.tags : []))].sort(), [notes]);
   const shownNotes = useMemo(() => notes
-    .filter((note) => `${note.heading} ${note.answer}`.toLowerCase().includes(query.trim().toLowerCase()))
-    .sort((a, b) => b.number - a.number), [notes, query]);
+    .filter((note) => `${note.heading} ${note.answer} ${(note.tags || []).join(' ')}`.toLowerCase().includes(query.trim().toLowerCase()))
+    .filter((note) => !favoritesOnly || note.favorite === true)
+    .filter((note) => !pinnedOnly || note.pinned === true)
+    .filter((note) => !selectedTag || (note.tags || []).includes(selectedTag))
+    .sort((a, b) => Number(b.pinned === true) - Number(a.pinned === true) || Number(b.favorite === true) - Number(a.favorite === true) || b.number - a.number), [notes, query, favoritesOnly, pinnedOnly, selectedTag]);
 
   useEffect(() => {
     const storedTheme = localStorage.getItem('theme');
@@ -221,7 +231,7 @@ export default function HomePage() {
     try {
       const note = await responseJson(await fetch('/api/notes', {
         method: editingNote ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ heading, answer, subject: activeSubject, ...(editingNote ? { number: editingNote.number } : {}) }),
+        body: JSON.stringify({ heading, answer, subject: activeSubject, tags: tagInput.split(',').map((tag) => tag.trim()).filter(Boolean), favorite: favoriteDraft, pinned: pinnedDraft, ...(editingNote ? { number: editingNote.number } : {}) }),
       }));
       if (editingNote) {
         setNotes((current) => current.map((item) => item.number === note.number ? note : item));
@@ -230,9 +240,22 @@ export default function HomePage() {
         setNotes((current) => [...current, note]);
       }
       try { localStorage.removeItem(draftStorageKey(activeSubject, editingNote?.number)); } catch {}
-      setHeading(''); setAnswer(''); initialDraftRef.current = { heading: '', answer: '' }; setDraftStatus(''); setPreview(false); setNoteDialog(false); setEditingNote(null);
+      setHeading(''); setAnswer(''); setTagInput(''); setFavoriteDraft(false); setPinnedDraft(false); initialDraftRef.current = { heading: '', answer: '' }; setDraftStatus(''); setPreview(false); setNoteDialog(false); setEditingNote(null);
     } catch (error) { setFormError(error.message); }
     finally { setSaving(false); }
+  }
+
+  async function updateNoteMetadata(note, changes) {
+    try {
+      const updated = await responseJson(await fetch('/api/notes', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subject: activeSubject, number: note.number, ...changes }),
+      }));
+      setNotes((current) => current.map((item) => item.number === note.number ? { ...item, ...updated } : item));
+      setReaderNote((current) => current?.number === note.number ? { ...current, ...updated } : current);
+    } catch (error) {
+      setFormError(error.message || 'Could not update note properties.');
+    }
   }
 
   async function loadRevisionHistory() {
@@ -256,6 +279,7 @@ export default function HomePage() {
   function editNote(note) {
     initialDraftRef.current = { heading: note.heading, answer: note.answer };
     setEditingNote(note); setHeading(note.heading); setAnswer(note.answer);
+    setTagInput((note.tags || []).join(', ')); setFavoriteDraft(note.favorite === true); setPinnedDraft(note.pinned === true);
     setRevisions([]); setRevisionsOpen(false); setRevisionsError('');
     setPreview(false); setFormError(''); setNoteDialog(true);
   }
@@ -354,20 +378,30 @@ export default function HomePage() {
 
       <section className="intro">
         <div><p className="eyebrow">YOUR PERSONAL KNOWLEDGE BASE</p><h1>{active?.name || 'Your'} notes<span className="period">.</span></h1><p className="subtitle">A clear place for the commands, concepts, and things you learn.</p></div>
-        <div className="intro-actions"><button className="study-button" onClick={startStudy} disabled={!notes.length}><span aria-hidden="true">◉</span> Study notes</button><button className="add-button" onClick={() => { initialDraftRef.current = { heading: '', answer: '' }; setEditingNote(null); setHeading(''); setAnswer(''); setRevisions([]); setRevisionsOpen(false); setRevisionsError(''); setFormError(''); setNoteDialog(true); }}><span aria-hidden="true">+</span> Add a note</button></div>
+        <div className="intro-actions"><button className="study-button" onClick={startStudy} disabled={!notes.length}><span aria-hidden="true">◉</span> Study notes</button><button className="add-button" onClick={() => { initialDraftRef.current = { heading: '', answer: '' }; setEditingNote(null); setHeading(''); setAnswer(''); setTagInput(''); setFavoriteDraft(false); setPinnedDraft(false); setRevisions([]); setRevisionsOpen(false); setRevisionsError(''); setFormError(''); setNoteDialog(true); }}><span aria-hidden="true">+</span> Add a note</button></div>
       </section>
 
       <section className="stats" aria-label="Note statistics"><div className="stat"><span className="stat-number">{String(notes.length).padStart(2, '0')}</span><span className="stat-label">TOTAL NOTES</span></div><div className="stat-divider"/><div className="stat"><span className="stat-number">{String(subjects.length).padStart(2, '0')}</span><span className="stat-label">SUBJECTS</span></div><div className="stat-spacer"/><div className="search-wrap"><span aria-hidden="true">⌕</span><input type="search" placeholder="Search your notes…" aria-label="Search notes" value={query} onChange={(event) => setQuery(event.target.value)}/></div></section>
 
       <section className="notes-section"><div className="section-heading"><div><p className="eyebrow">THE LIBRARY</p><h2>All notes <span className="count-pill">{shownNotes.length}</span></h2></div><span className="sort-label">LATEST FIRST <span aria-hidden="true">↕</span></span></div>
-        {notesLoading ? <div className="empty-state" role="status"><span className="empty-icon">◌</span><h3>Loading notes…</h3><p>Getting notes for this subject.</p></div> : shownNotes.length ? <div className="notes-grid">{shownNotes.map((note) => <article className="note-card" key={note.number}><button className="card-open" onClick={() => setReaderNote(note)} aria-label={`Open note: ${note.heading}`}><span className="card-top"><span className="note-index">NO. {String(note.number).padStart(2, '0')}</span></span><span className="note-title">{note.heading}</span><span className="note-preview">{note.answer}</span><span className="card-bottom">◷ <span>{note.saved}</span></span></button><button className="edit-note" onClick={() => editNote(note)} aria-label={`Edit note: ${note.heading}`} title="Edit note">✎</button><button className="delete-note" onClick={() => deleteNote(note)} disabled={deletingNotes.has(note.number)} aria-label={`Delete note: ${note.heading}`} title={deletingNotes.has(note.number) ? 'Deleting note…' : 'Delete note'}>{deletingNotes.has(note.number) ? '…' : '×'}</button></article>)}</div> : <div className="empty-state"><span className="empty-icon">⌕</span><h3>{query ? 'No notes found' : 'Start your collection'}</h3><p>{query ? 'Try another search, or add a new note.' : 'Add a note to this subject, then come back to study it.'}</p></div>}
+        <div className="note-filters" aria-label="Note filters">
+          <button type="button" className={favoritesOnly ? 'filter-chip active' : 'filter-chip'} aria-pressed={favoritesOnly} onClick={() => setFavoritesOnly((value) => !value)}>★ Favorites</button>
+          <button type="button" className={pinnedOnly ? 'filter-chip active' : 'filter-chip'} aria-pressed={pinnedOnly} onClick={() => setPinnedOnly((value) => !value)}>📌 Pinned</button>
+          {availableTags.length > 0 && <label className="tag-filter">Tag
+            <select value={selectedTag} onChange={(event) => setSelectedTag(event.target.value)} aria-label="Filter notes by tag">
+              <option value="">All tags</option>{availableTags.map((tag) => <option key={tag} value={tag}>{tag}</option>)}
+            </select>
+          </label>}
+          {(favoritesOnly || pinnedOnly || selectedTag) && <button type="button" className="clear-filters" onClick={() => { setFavoritesOnly(false); setPinnedOnly(false); setSelectedTag(''); }}>Clear filters</button>}
+        </div>
+        {notesLoading ? <div className="empty-state" role="status"><span className="empty-icon">◌</span><h3>Loading notes…</h3><p>Getting notes for this subject.</p></div> : shownNotes.length ? <div className="notes-grid">{shownNotes.map((note) => <article className="note-card" key={note.number}><button className="card-open" onClick={() => setReaderNote(note)} aria-label={`Open note: ${note.heading}`}><span className="card-top"><span className="note-index">NO. {String(note.number).padStart(2, '0')}</span><span className="note-badges">{note.pinned && <span title="Pinned">📌</span>}{note.favorite && <span title="Favorite">★</span>}</span></span><span className="note-title">{note.heading}</span><span className="note-preview">{note.answer}</span><span className="card-tags">{(note.tags || []).map((tag) => <span key={tag} className="tag-chip">{tag}</span>)}</span><span className="card-bottom">◷ <span>{note.saved}</span></span></button><button className={note.favorite ? "metadata-action selected" : "metadata-action"} onClick={() => updateNoteMetadata(note, { favorite: note.favorite !== true })} aria-pressed={note.favorite === true} aria-label={note.favorite ? `Remove favorite: ${note.heading}` : `Add favorite: ${note.heading}`} title={note.favorite ? "Remove favorite" : "Add favorite"}>★</button><button className={note.pinned ? "metadata-action selected" : "metadata-action"} onClick={() => updateNoteMetadata(note, { pinned: note.pinned !== true })} aria-pressed={note.pinned === true} aria-label={note.pinned ? `Unpin note: ${note.heading}` : `Pin note: ${note.heading}`} title={note.pinned ? "Unpin note" : "Pin note"}>⌖</button><button className="edit-note" onClick={() => editNote(note)} aria-label={`Edit note: ${note.heading}`} title="Edit note">✎</button><button className="delete-note" onClick={() => deleteNote(note)} disabled={deletingNotes.has(note.number)} aria-label={`Delete note: ${note.heading}`} title={deletingNotes.has(note.number) ? 'Deleting note…' : 'Delete note'}>{deletingNotes.has(note.number) ? '…' : '×'}</button></article>)}</div> : <div className="empty-state"><span className="empty-icon">⌕</span><h3>{query ? 'No notes found' : 'Start your collection'}</h3><p>{query ? 'Try another search, or add a new note.' : 'Add a note to this subject, then come back to study it.'}</p></div>}
       </section>
       <footer><span>Built for learning, one note at a time.</span><span>MONGODB · SUBJECT BASED</span></footer>
 
       {formError && !noteDialog && <p className="page-error" role="alert">{formError}</p>}
 
       {noteDialog && <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) requestCloseNoteDialog(); }}><section ref={dialogRef} className="dialog" role="dialog" aria-modal="true" aria-labelledby="formTitle" aria-describedby="formDescription"><button className="close-button" onClick={requestCloseNoteDialog} aria-label="Close form">×</button><p className="eyebrow">{editingNote ? `EDIT NOTE ${String(editingNote.number).padStart(2, '0')}` : 'GROW YOUR LIBRARY'}</p><h2 id="formTitle">{editingNote ? 'Edit note' : 'Add a note'}<span className="period">.</span></h2><p id="formDescription" className="form-subtitle">{editingNote ? 'Update the heading or answer. Its serial number will stay the same.' : 'Give it a clear heading and capture what you learned.'}</p>
-        <form onSubmit={saveNote}><label htmlFor="heading">HEADING</label><input ref={headingInputRef} id="heading" maxLength={160} placeholder="e.g. What does chmod do?" value={heading} onChange={(event) => setHeading(event.target.value)} required/><div className="label-row"><label htmlFor="answer">ANSWER</label><span>Markdown is okay</span>{editingNote && <button type="button" className="history-button" onClick={loadRevisionHistory}>Revision history</button>}</div><div className="editor-toolbar" aria-label="Answer formatting"><button type="button" onClick={() => insertFormatting('bold')} title="Bold">B</button><button type="button" onClick={() => insertFormatting('code')} title="Inline code">&lt;/&gt;</button><button type="button" onClick={() => insertFormatting('list')} title="Bullet list">• List</button><button type="button" onClick={() => insertFormatting('codeblock')} title="Code block">{'{ }'}</button><span>Formatting shortcuts</span><span className="draft-status" role="status" aria-live="polite">{draftStatus}</span></div>
+        <form onSubmit={saveNote}><label htmlFor="heading">HEADING</label><input ref={headingInputRef} id="heading" maxLength={160} placeholder="e.g. What does chmod do?" value={heading} onChange={(event) => setHeading(event.target.value)} required/><label htmlFor="noteTags">TAGS <span className="field-hint">comma-separated · up to 10</span></label><input id="noteTags" maxLength={260} placeholder="e.g. arrays, exam, important" value={tagInput} onChange={(event) => setTagInput(event.target.value)} /><div className="note-metadata-fields"><label><input type="checkbox" checked={favoriteDraft} onChange={(event) => setFavoriteDraft(event.target.checked)} /> Mark as favorite</label><label><input type="checkbox" checked={pinnedDraft} onChange={(event) => setPinnedDraft(event.target.checked)} /> Pin to top</label></div><div className="label-row"><label htmlFor="answer">ANSWER</label><span>Markdown is okay</span>{editingNote && <button type="button" className="history-button" onClick={loadRevisionHistory}>Revision history</button>}</div><div className="editor-toolbar" aria-label="Answer formatting"><button type="button" onClick={() => insertFormatting('bold')} title="Bold">B</button><button type="button" onClick={() => insertFormatting('code')} title="Inline code">&lt;/&gt;</button><button type="button" onClick={() => insertFormatting('list')} title="Bullet list">• List</button><button type="button" onClick={() => insertFormatting('codeblock')} title="Code block">{'{ }'}</button><span>Formatting shortcuts</span><span className="draft-status" role="status" aria-live="polite">{draftStatus}</span></div>
           {revisionsOpen && <section className="revision-history" aria-label="Note revision history">
             <div className="revision-history-heading"><strong>Previous versions</strong><button type="button" onClick={() => setRevisionsOpen(false)}>Close</button></div>
             {revisionsLoading && <p role="status">Loading versions…</p>}

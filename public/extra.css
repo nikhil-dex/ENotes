@@ -358,3 +358,63 @@ button[aria-disabled="true"] {
   .history-button, .revision-history button { min-height: 38px; }
   .submit-button { min-height: 44px; width: 100%; justify-content: center; }
 }
+
+
+/* Phase 14: note organization controls */
+.note-filters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 18px;
+}
+.filter-chip, .clear-filters, .tag-filter select {
+  min-height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--ink);
+  padding: 6px 10px;
+  font: 11px var(--sans);
+}
+.filter-chip { cursor: pointer; }
+.filter-chip.active, .metadata-action.selected {
+  color: var(--green);
+  border-color: var(--green);
+  background: #edf4ef;
+}
+.clear-filters { cursor: pointer; color: var(--muted); }
+.tag-filter { display: flex; align-items: center; gap: 7px; color: var(--muted); font: 11px var(--sans); }
+.tag-filter select { padding: 5px 8px; }
+.note-badges { display: flex; gap: 7px; color: var(--green); }
+.card-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.tag-chip { display: inline-flex; align-items: center; border-radius: 4px; padding: 3px 6px; background: #edf3ee; color: #456d51; font: 10px var(--mono); }
+.metadata-action {
+  position: absolute;
+  right: 42px;
+  bottom: 12px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 29px;
+  height: 29px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--muted);
+  cursor: pointer;
+}
+.metadata-action + .metadata-action { right: 76px; }
+.note-metadata-fields { display: flex; flex-wrap: wrap; gap: 18px; margin: 12px 0 18px; }
+.note-metadata-fields label { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font: 12px var(--sans); }
+.note-metadata-fields input { width: 16px; height: 16px; margin: 0; accent-color: var(--green); }
+.field-hint { margin-left: 6px; color: var(--muted); font-size: 10px; font-weight: 400; }
+[data-theme="dark"] .filter-chip.active,
+[data-theme="dark"] .metadata-action.selected { background: #29382e; }
+[data-theme="dark"] .tag-chip { background: #29382e; color: #a5ceaf; }
+@media (max-width: 520px) {
+  .note-filters { gap: 6px; }
+  .filter-chip, .clear-filters, .tag-filter select { min-height: 38px; }
+  .metadata-action { bottom: 9px; }
+  .note-metadata-fields { gap: 12px; }
+}

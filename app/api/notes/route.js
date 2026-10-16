@@ -8,6 +8,14 @@ function json(data, status = 200) {
   return Response.json(data, { status, headers: { 'Cache-Control': 'no-store' } });
 }
 
+function normalizeTags(value) {
+  if (value === undefined) return [];
+  if (!Array.isArray(value)) return null;
+  const tags = [...new Set(value.map((tag) => String(tag).trim().toLowerCase()).filter(Boolean))];
+  if (tags.length > 10 || tags.some((tag) => tag.length > 24 || !/^[\p{L}\p{N} _-]+$/u.test(tag))) return null;
+  return tags;
+}
+
 function savedTime() {
   return new Date().toLocaleString('en-IN', {
     dateStyle: 'medium',
@@ -37,7 +45,7 @@ export async function GET(request) {
       return json({ revisions: Array.isArray(note.revisions) ? note.revisions.slice().reverse() : [] });
     }
     const notes = await db.collection('notes')
-      .find({ subject: slug }, { projection: { _id: 0, subject: 1, number: 1, heading: 1, answer: 1, saved: 1 } })
+      .find({ subject: slug }, { projection: { _id: 0, subject: 1, number: 1, heading: 1, answer: 1, saved: 1, tags: 1, favorite: 1, pinned: 1 } })
       .sort({ number: -1 })
       .toArray();
     return json(notes);
@@ -58,6 +66,10 @@ export async function POST(request) {
     const slug = String(data.subject || 'linux');
     const heading = String(data.heading || '').trim();
     const answer = String(data.answer || '').trim();
+    const tags = normalizeTags(data.tags);
+    if (tags === null) return json({ error: 'Use up to 10 tags, each no longer than 24 characters.' }, 400);
+    const favorite = data.favorite === true;
+    const pinned = data.pinned === true;
     if (!heading || !answer || heading.length > 160 || answer.length > 10000) {
       return json({ error: 'Add a heading and answer within the allowed length.' }, 400);
     }
@@ -100,6 +112,9 @@ export async function POST(request) {
         heading: heading.replace(/[\r\n]+/g, ' '),
         answer: answer.replace(/\r\n/g, '\n'),
         saved: savedTime(),
+        tags,
+        favorite,
+        pinned,
         createdAt: new Date(),
       };
       try {
@@ -135,6 +150,10 @@ export async function PUT(request) {
     const number = Number(data.number);
     const heading = String(data.heading || '').trim();
     const answer = String(data.answer || '').trim();
+    const tags = normalizeTags(data.tags);
+    if (tags === null) return json({ error: 'Use up to 10 tags, each no longer than 24 characters.' }, 400);
+    const favorite = data.favorite === true;
+    const pinned = data.pinned === true;
     if (!Number.isInteger(number) || number < 1) return json({ error: 'Choose a valid note.' }, 400);
     if (!heading || !answer || heading.length > 160 || answer.length > 10000) {
       return json({ error: 'Add a heading and answer within the allowed length.' }, 400);
@@ -154,6 +173,9 @@ export async function PUT(request) {
           heading: heading.replace(/[\\r\\n]+/g, ' '),
           answer: answer.replace(/\\r\\n/g, '\\n'),
           saved: savedTime(),
+          tags,
+          favorite,
+          pinned,
           updatedAt: new Date(),
         },
         $push: {
@@ -175,6 +197,46 @@ export async function PUT(request) {
   } catch (error) {
     console.error('PUT /api/notes failed:', error);
     return json({ error: 'Could not update this note.' }, 500);
+  }
+}
+
+export async function PATCH(request) {
+  try {
+    let data;
+    try {
+      data = JSON.parse(await readLimitedBody(request, 4 * 1024));
+    } catch (error) {
+      return json({ error: error?.status === 413 ? 'Request body is too large.' : 'Enter valid JSON.' }, error?.status || 400);
+    }
+    const slug = String(data.subject || 'linux');
+    const number = Number(data.number);
+    if (!Number.isInteger(number) || number < 1) return json({ error: 'Choose a valid note.' }, 400);
+    const updates = {};
+    if (Object.hasOwn(data, 'tags')) {
+      const tags = normalizeTags(data.tags);
+      if (tags === null) return json({ error: 'Use up to 10 tags, each no longer than 24 characters.' }, 400);
+      updates.tags = tags;
+    }
+    if (Object.hasOwn(data, 'favorite')) {
+      if (typeof data.favorite !== 'boolean') return json({ error: 'Favorite must be true or false.' }, 400);
+      updates.favorite = data.favorite;
+    }
+    if (Object.hasOwn(data, 'pinned')) {
+      if (typeof data.pinned !== 'boolean') return json({ error: 'Pinned must be true or false.' }, 400);
+      updates.pinned = data.pinned;
+    }
+    if (!Object.keys(updates).length) return json({ error: 'Choose a note property to update.' }, 400);
+    const db = await getDatabase();
+    const result = await db.collection('notes').findOneAndUpdate(
+      { _id: `${slug}:${number}`, subject: slug },
+      { $set: { ...updates, updatedAt: new Date() } },
+      { returnDocument: 'after', includeResultMetadata: false, projection: { _id: 0, subject: 1, number: 1, heading: 1, answer: 1, saved: 1, tags: 1, favorite: 1, pinned: 1 } },
+    );
+    if (!result) return json({ error: 'Note not found.' }, 404);
+    return json(result);
+  } catch (error) {
+    console.error('PATCH /api/notes failed:', error);
+    return json({ error: 'Could not update note properties.' }, 500);
   }
 }
 

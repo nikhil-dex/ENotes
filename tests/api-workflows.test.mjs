@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { GET as getNotes, POST as createNote, PUT as updateNote, DELETE as deleteNote } from '../app/api/notes/route.js';
+import { GET as getNotes, POST as createNote, PUT as updateNote, PATCH as patchNote, DELETE as deleteNote } from '../app/api/notes/route.js';
 import { POST as createSubject, DELETE as deleteSubject } from '../app/api/subjects/route.js';
 import { POST as restoreBackup } from '../app/api/backup/route.js';
 
@@ -99,4 +99,19 @@ test('backup restore rejects malformed JSON and unsupported backup formats befor
   }));
   assert.equal(unsupported.status, 400);
   assert.match((await responseBody(unsupported)).error, /supported/);
+});
+
+
+test('notes API validates tag limits before database access', async () => {
+  const response = await createNote(jsonRequest('https://example.test/api/notes', 'POST', {
+    subject: 'linux', heading: 'Tags test', answer: 'Content', tags: Array.from({ length: 11 }, (_, index) => `tag${index}`),
+  }));
+  assert.equal(response.status, 400);
+  assert.match((await responseBody(response)).error, /10 tags/);
+});
+
+test('metadata endpoint rejects invalid note numbers before database access', async () => {
+  const response = await patchNote(jsonRequest('https://example.test/api/notes', 'PATCH', { subject: 'linux', number: 0, favorite: true }));
+  assert.equal(response.status, 400);
+  assert.match((await responseBody(response)).error, /valid note/);
 });
