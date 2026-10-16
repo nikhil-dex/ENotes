@@ -14,10 +14,12 @@ export default function AccessPage() {
     setSubmitting(true);
 
     try {
+      let deviceId = localStorage.getItem('enotes:device-id:v1');
+      if (!deviceId) { deviceId = crypto.randomUUID(); localStorage.setItem('enotes:device-id:v1', deviceId); }
       const response = await fetch('/api/access/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accessKey }),
+        body: JSON.stringify({ accessKey, deviceId }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || 'Could not verify the access string.');

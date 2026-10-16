@@ -161,6 +161,17 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
+    const heartbeat = async () => {
+      try {
+        const response = await fetch('/api/access/heartbeat', { method: 'POST', credentials: 'same-origin', cache: 'no-store' });
+        if (response.status === 401) window.location.replace('/access?reason=session-replaced');
+      } catch {}
+    };
+    const timer = window.setInterval(heartbeat, 15 * 60 * 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
     const onOnline = () => { setIsOnline(true); setSyncStatus('syncing'); setSyncVersion((version) => version + 1); };
     const onOffline = () => { setIsOnline(false); setSyncStatus('offline'); };
     window.addEventListener('online', onOnline);
@@ -403,10 +414,18 @@ export default function HomePage() {
   }
 
   async function lockSession() {
+    const pending = getPendingOfflineMutations(localStorage);
+    if (pending.length && !window.confirm(`There are ${pending.length} offline change(s) waiting to sync. OK will discard them and release this device so another device can open ENotes. Cancel to stay here and sync first.`)) return;
+    if (pending.length) {
+      try { localStorage.setItem('enotes:offline:mutations:v1', '[]'); } catch {}
+      setPendingSyncCount(0);
+    }
     try {
-      await fetch('/api/access/logout', { method: 'POST', credentials: 'same-origin', cache: 'no-store' });
-    } finally {
+      const response = await fetch('/api/access/logout', { method: 'POST', credentials: 'same-origin', cache: 'no-store' });
+      if (!response.ok) throw new Error('Could not release this device session. Check your connection and try again.');
       window.location.replace('/access');
+    } catch (error) {
+      setFormError(error.message || 'Could not lock ENotes. Please try again.');
     }
   }
 

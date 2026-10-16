@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { COOKIE_NAME, isValidSession } from './lib/access-session.js';
+import { COOKIE_NAME, getSessionClaims } from './lib/access-session.js';
+import { getDatabase } from './lib/mongodb.js';
 
 function withSecurityHeaders(response) {
   response.headers.set('X-Content-Type-Options', 'nosniff');
@@ -11,47 +12,44 @@ function withSecurityHeaders(response) {
   return response;
 }
 
-export function proxy(request) {
+export async function proxy(request) {
   const { pathname } = request.nextUrl;
-  // Reject cross-origin browser mutations. Requests without Origin (for example,
-  // trusted server-to-server calls) remain governed by the session gate.
   if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method)) {
     const origin = request.headers.get('origin');
     if (origin && origin !== request.nextUrl.origin) {
-      return withSecurityHeaders(NextResponse.json(
-        { error: 'Cross-origin requests are not allowed.' },
-        { status: 403 },
-      ));
+      return withSecurityHeaders(NextResponse.json({ error: 'Cross-origin requests are not allowed.' }, { status: 403 }));
     }
   }
   const publicPaths = new Set([
-    '/access',
-    '/api/access/verify',
-    '/api/access/logout',
-    '/style.css',
-    '/extra.css',
-    '/favicon.ico',
-    '/robots.txt',
-    '/sitemap.xml',
+    '/access', '/api/access/verify', '/api/access/logout', '/api/access/heartbeat',
+    '/style.css', '/extra.css', '/favicon.ico', '/robots.txt', '/sitemap.xml',
   ]);
-
   if (publicPaths.has(pathname)) {
     if (pathname === '/access') {
       const token = request.cookies.get(COOKIE_NAME)?.value;
-      if (isValidSession(token, process.env.ENOTES_SESSION_SECRET)) {
-        return withSecurityHeaders(NextResponse.redirect(new URL('/', request.url)));
+      const claims = getSessionClaims(token, process.env.ENOTES_SESSION_SECRET);
+      if (claims) {
+        try {
+          const db = await getDatabase();
+          const active = await db.collection('settings').findOne({ _id: 'active-device-session', sessionId: claims.sessionId }, { projection: { _id: 1 } });
+          if (active) return withSecurityHeaders(NextResponse.redirect(new URL('/', request.url)));
+        } catch {}
       }
     }
     return withSecurityHeaders(NextResponse.next());
   }
 
   const token = request.cookies.get(COOKIE_NAME)?.value;
-  if (isValidSession(token, process.env.ENOTES_SESSION_SECRET)) return withSecurityHeaders(NextResponse.next());
-
-  const url = new URL('/access', request.url);
-  return withSecurityHeaders(NextResponse.redirect(url));
+  const claims = getSessionClaims(token, process.env.ENOTES_SESSION_SECRET);
+  if (!claims) return withSecurityHeaders(NextResponse.redirect(new URL('/access', request.url)));
+  try {
+    const db = await getDatabase();
+    const active = await db.collection('settings').findOne({ _id: 'active-device-session', sessionId: claims.sessionId }, { projection: { _id: 1 } });
+    if (active) return withSecurityHeaders(NextResponse.next());
+    return withSecurityHeaders(NextResponse.redirect(new URL('/access?reason=session-replaced', request.url)));
+  } catch {
+    return withSecurityHeaders(NextResponse.json({ error: 'Unable to verify the active device session. Check the database connection.' }, { status: 503 }));
+  }
 }
 
-export const config = {
-  matcher: ['/((?!_next/static|_next/image).*)'],
-};
+export const config = { matcher: ['/((?!_next/static|_next/image).*)'] };
