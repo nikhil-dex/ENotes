@@ -20,14 +20,17 @@ export async function GET(request) {
   try {
     const params = new URL(request.url).searchParams;
     const slug = params.get('subject') || 'linux';
+    const history = params.get('history') === '1';
+    const historyNumber = Number(params.get('number'));
+    if (history && (!Number.isInteger(historyNumber) || historyNumber < 1)) {
+      return json({ error: 'Choose a valid note.' }, 400);
+    }
     const db = await getDatabase();
     const subject = await db.collection('subjects').findOne({ _id: slug });
     if (!subject) return json({ error: 'Subject not found.' }, 404);
-    if (params.get('history') === '1') {
-      const number = Number(params.get('number'));
-      if (!Number.isInteger(number) || number < 1) return json({ error: 'Choose a valid note.' }, 400);
+    if (history) {
       const note = await db.collection('notes').findOne(
-        { _id: `${slug}:${number}`, subject: slug },
+        { _id: `${slug}:${historyNumber}`, subject: slug },
         { projection: { _id: 0, revisions: 1 } },
       );
       if (!note) return json({ error: 'Note not found.' }, 404);
