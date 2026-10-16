@@ -12,7 +12,7 @@ function normalizeTags(value) {
   if (value === undefined) return [];
   if (!Array.isArray(value)) return null;
   const tags = [...new Set(value.map((tag) => String(tag).trim().toLowerCase()).filter(Boolean))];
-  if (tags.length > 10 || tags.some((tag) => tag.length > 24 || !/^[\\p{L}\\p{N} _-]+$/u.test(tag))) return null;
+  if (tags.length > 10 || tags.some((tag) => tag.length > 24 || !/^[\p{L}\p{N} _-]+$/u.test(tag))) return null;
   return tags;
 }
 
