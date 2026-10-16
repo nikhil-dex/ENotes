@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { markdownHtml } from '../../lib/markdown.js';
 import { calculateNextReview } from '../../lib/spaced-repetition.js';
+import { getDailyRevisionState, recordDailyReview, setDailyRevisionGoal } from '../../lib/daily-revision.js';
 
 function draftStorageKey(subject, number) {
   return `enotes:draft:${subject}:${number ?? 'new'}`;
@@ -64,6 +65,7 @@ export default function HomePage() {
   const [studyRevealed, setStudyRevealed] = useState(false);
   const [learnedNotes, setLearnedNotes] = useState(new Set());
   const [reviewSchedule, setReviewSchedule] = useState({});
+  const [dailyRevision, setDailyRevision] = useState({ date: '', completed: 0, goal: 10 });
   const answerRef = useRef(null);
   const dialogRef = useRef(null);
   const headingInputRef = useRef(null);
@@ -89,6 +91,16 @@ export default function HomePage() {
 
 
   useEffect(() => {
+    try {
+      const storedDailyRevision = JSON.parse(localStorage.getItem('dailyRevision:v1') || 'null');
+      const today = getDailyRevisionState(storedDailyRevision);
+      setDailyRevision(today);
+      if (JSON.stringify(storedDailyRevision) !== JSON.stringify(today)) localStorage.setItem('dailyRevision:v1', JSON.stringify(today));
+    } catch {
+      const today = getDailyRevisionState(null);
+      setDailyRevision(today);
+      localStorage.setItem('dailyRevision:v1', JSON.stringify(today));
+    }
     const storedTheme = localStorage.getItem('theme');
     if (storedTheme === 'dark' || storedTheme === 'light') setTheme(storedTheme);
     const storedSubject = localStorage.getItem('activeSubject');
@@ -411,6 +423,9 @@ export default function HomePage() {
     if (!note) return;
     const key = noteReviewKey(note);
     const now = new Date();
+    const nextDailyRevision = recordDailyReview(dailyRevision, now);
+    setDailyRevision(nextDailyRevision);
+    localStorage.setItem('dailyRevision:v1', JSON.stringify(nextDailyRevision));
     const nextReview = calculateNextReview(reviewSchedule[key], rating, now);
     const nextSchedule = {
       ...reviewSchedule,
@@ -488,6 +503,26 @@ export default function HomePage() {
       </section>
 
       <section className="stats" aria-label="Note statistics"><div className="stat"><span className="stat-number">{String(notes.length).padStart(2, '0')}</span><span className="stat-label">TOTAL NOTES</span></div><div className="stat-divider"/><div className="stat"><span className="stat-number">{String(subjects.length).padStart(2, '0')}</span><span className="stat-label">SUBJECTS</span></div><div className="stat-spacer"/><div className="search-wrap"><span aria-hidden="true">⌕</span><input type="search" placeholder={globalSearch ? "Search all subjects…" : "Search this subject…"} aria-label="Search notes" value={query} onChange={(event) => setQuery(event.target.value)}/></div><button type="button" className={globalSearch ? "global-search-toggle active" : "global-search-toggle"} aria-pressed={globalSearch} onClick={() => { setGlobalSearch((value) => !value); setQuery(""); setFormError(""); }}>⌕ {globalSearch ? "All subjects" : "Search all subjects"}</button></section>
+
+      <section className="daily-revision" aria-labelledby="dailyRevisionTitle">
+        <div className="daily-revision-copy">
+          <p className="eyebrow">DAILY PRACTICE</p>
+          <h2 id="dailyRevisionTitle">Today's revision<span className="period">.</span></h2>
+          <p>{dueReviewCount > 0 ? `${dueReviewCount} card${dueReviewCount === 1 ? '' : 's'} ready to review in ${active?.name || 'this subject'}.` : 'Your due queue is clear. New cards will appear here when they are ready.'}</p>
+          <div className="daily-progress-track" role="progressbar" aria-label="Daily revision goal progress" aria-valuemin={0} aria-valuemax={dailyRevision.goal} aria-valuenow={dailyRevision.completed}>
+            <span style={{ width: `${Math.min(100, Math.round((dailyRevision.completed / dailyRevision.goal) * 100))}%` }} />
+          </div>
+          <span className="daily-progress-caption">{dailyRevision.completed} of {dailyRevision.goal} reviews completed today</span>
+        </div>
+        <div className="daily-revision-actions">
+          <label htmlFor="dailyRevisionGoal">Daily goal<select id="dailyRevisionGoal" value={dailyRevision.goal} onChange={(event) => {
+            const next = setDailyRevisionGoal(dailyRevision, Number(event.target.value));
+            setDailyRevision(next);
+            localStorage.setItem('dailyRevision:v1', JSON.stringify(next));
+          }}><option value={5}>5 cards</option><option value={10}>10 cards</option><option value={15}>15 cards</option><option value={20}>20 cards</option></select></label>
+          <button className="add-button daily-revision-start" type="button" onClick={() => startStudy(true)} disabled={!dueReviewCount}>Start daily review <span aria-hidden="true">→</span></button>
+        </div>
+      </section>
 
       <section className="notes-section"><div className="section-heading"><div><p className="eyebrow">THE LIBRARY</p><h2>{globalSearch ? "Search results" : "All notes"} <span className="count-pill">{filteredNotes.length}</span></h2></div><label className="sort-control">Sort <select value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} aria-label="Sort notes"><option value="latest">Pinned &amp; latest</option><option value="oldest">Oldest first</option><option value="title-asc">Title A–Z</option><option value="title-desc">Title Z–A</option></select></label></div>
         <div className="note-filters" aria-label="Note filters">
