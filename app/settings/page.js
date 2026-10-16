@@ -146,7 +146,7 @@ export default function SettingsPage() {
     <main className="shell hub-shell">
       <header className="topbar">
         <a className="brand" href="/" aria-label="ENotes home"><span className="brand-mark">N</span><span>Study<span className="brand-light">Notes</span></span></a>
-        <div className="topbar-right"><a className="import-guide-link" href="/">Home</a><a className="import-guide-link" href="/notes">Notes</a><button className="theme-button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>{theme === 'dark' ? '☼' : '◐'} <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span></button><button className="theme-button" type="button" onClick={lockSession}>Lock</button></div>
+        <div className="topbar-right"><a className="import-guide-link" href="/">Home</a><a className="import-guide-link" href="/notes">Notes</a><button className="theme-button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`} aria-pressed={theme === 'dark'}>{theme === 'dark' ? '☼' : '◐'} <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span></button><button className="theme-button" type="button" onClick={lockSession}>Lock</button></div>
       </header>
 
       <section className="settings-heading">
@@ -186,7 +186,7 @@ export default function SettingsPage() {
 
       <section className="settings-section settings-appearance" aria-labelledby="appearance-heading">
         <div><p className="eyebrow">03 · COMFORT</p><h2 id="appearance-heading">Appearance</h2><p className="settings-copy">Choose the theme for your workspace.</p></div>
-        <div className="settings-theme-switch"><button type="button" className={theme === 'light' ? 'selected' : ''} onClick={() => setTheme('light')}>☼ Light</button><button type="button" className={theme === 'dark' ? 'selected' : ''} onClick={() => setTheme('dark')}>◐ Dark</button></div>
+        <div className="settings-theme-switch"><button type="button" className={theme === 'light' ? 'selected' : ''} aria-pressed={theme === 'light'} onClick={() => setTheme('light')}>☼ Light</button><button type="button" className={theme === 'dark' ? 'selected' : ''} aria-pressed={theme === 'dark'} onClick={() => setTheme('dark')}>◐ Dark</button></div>
       </section>
 
       <footer><span>Built for learning, one note at a time.</span><span>SETTINGS · ENotes</span></footer>
