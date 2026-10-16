@@ -23,6 +23,7 @@ A subject-based study notes application built with **Next.js**, **React**, and *
 - **Subject-based organization** — switch between subjects in the Notes library and create or delete subjects from Settings.
 - **Note management** — create, edit, read, and delete notes within a subject.
 - **Markdown-friendly writing** — write note content with supported Markdown formatting and preview it before saving.
+- **Gemini note cleanup** — improve spelling, clarity, and Markdown through a server-side API key; review suggestions before applying them to the unsaved draft.
 - **Focused reading** — open notes in a full-screen reader.
 - **Flashcard study mode** — review notes, reveal answers, and mark material as learned.
 - **Daily revision queue** — track reviewed cards against a daily goal, prioritize due reviews, and reset the count automatically on the next local calendar day.
@@ -127,12 +128,19 @@ Set these variables in `.env.local` for local development and in your hosting pr
 | `MONGODB_DB` | No | Database name; defaults to `linux_notes` |
 | `ENOTES_ACCESS_KEY` | Setup only | Shared access string used by `npm run access:setup` to generate a hashed MongoDB document |
 | `ENOTES_SESSION_SECRET` | Yes for protected access | Separate random secret used to sign session cookies; keep stable and private |
+| `GEMINI_API_KEY` | Optional for Gemini cleanup | Server-side Google Gemini API key. Never expose it in client-side code or commit the value. |
+| `GEMINI_MODEL` | No | Primary Gemini model ID; defaults to `gemini-3.8-flash`. |
+| `GEMINI_FALLBACK_MODEL` | No | Fallback model after a primary-model HTTP 429; defaults to `gemini-3.6-flash`. |
 
 Example configuration:
 
 ```dotenv
 MONGODB_URI=mongodb+srv://<username>:<password>@<cluster-host>/?retryWrites=true&w=majority
 MONGODB_DB=linux_notes
+# Optional: enables Gemini note cleanup
+GEMINI_API_KEY=your-server-side-gemini-api-key
+GEMINI_MODEL=gemini-3.8-flash
+GEMINI_FALLBACK_MODEL=gemini-3.6-flash
 ```
 
 Replace the placeholders with your own database credentials and cluster host. **Never commit real credentials or your `.env.local` file.**
