@@ -117,6 +117,11 @@ export default function HomePage() {
   }
 
   useEffect(() => {
+    if (!noteDialog) return;
+    headingInputRef.current?.focus();
+  }, [noteDialog]);
+
+  useEffect(() => {
     function onKeyDown(event) {
       if (event.key !== 'Escape') return;
       if (noteDialog) requestCloseNoteDialog();
