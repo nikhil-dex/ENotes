@@ -1,44 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-
-function escapeHtml(value) {
-  return String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
-}
-
-function markdownHtml(value) {
-  const lines = escapeHtml(value).split('\n');
-  let html = '';
-  let inList = false;
-  let inCode = false;
-  let codeLines = [];
-  const inline = (line) => line.replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-  for (const line of lines) {
-    if (line.trim().startsWith('```')) {
-      if (!inCode) {
-        if (inList) { html += '</ul>'; inList = false; }
-        inCode = true;
-        codeLines = [];
-      } else {
-        html += `<pre><code>${codeLines.join('\n')}</code></pre>`;
-        inCode = false;
-      }
-      continue;
-    }
-    if (inCode) { codeLines.push(line); continue; }
-    if (/^\s*[-*]\s+/.test(line)) {
-      if (!inList) { html += '<ul>'; inList = true; }
-      html += `<li>${inline(line.replace(/^\s*[-*]\s+/, ''))}</li>`;
-    } else {
-      if (inList) { html += '</ul>'; inList = false; }
-      if (/^#{1,3}\s/.test(line)) html += `<h3>${inline(line.replace(/^#{1,3}\s+/, ''))}</h3>`;
-      else if (line.trim()) html += `<p>${inline(line)}</p>`;
-    }
-  }
-  if (inList) html += '</ul>';
-  if (inCode) html += `<pre><code>${codeLines.join('\n')}</code></pre>`;
-  return html;
-}
+import { markdownHtml } from '../../lib/markdown.js';
 
 async function responseJson(response) {
   const data = await response.json().catch(() => ({}));
@@ -69,6 +32,8 @@ export default function HomePage() {
   const [studyRevealed, setStudyRevealed] = useState(false);
   const [learnedNotes, setLearnedNotes] = useState(new Set());
   const answerRef = useRef(null);
+  const initialDraftRef = useRef({ heading: '', answer: '' });
+  const draftDirty = noteDialog && (heading !== initialDraftRef.current.heading || answer !== initialDraftRef.current.answer);
   const subjectNavRef = useRef(null);
 
   const active = subjects.find((subject) => subject.slug === activeSubject);
@@ -131,14 +96,32 @@ export default function HomePage() {
     return () => controller.abort();
   }, [activeSubject]);
 
+  function requestCloseNoteDialog() {
+    if (draftDirty && !window.confirm('Discard your unsaved note changes?')) return;
+    setNoteDialog(false);
+    setEditingNote(null);
+    setFormError('');
+  }
+
   useEffect(() => {
     function onKeyDown(event) {
       if (event.key !== 'Escape') return;
-      setNoteDialog(false); setReaderNote(null); setStudyOpen(false); setMobileNavOpen(false);
+      if (noteDialog) requestCloseNoteDialog();
+      setReaderNote(null); setStudyOpen(false); setMobileNavOpen(false);
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, []);
+  }, [noteDialog, heading, answer]);
+
+  useEffect(() => {
+    if (!draftDirty) return;
+    function warnBeforeUnload(event) {
+      event.preventDefault();
+      event.returnValue = '';
+    }
+    window.addEventListener('beforeunload', warnBeforeUnload);
+    return () => window.removeEventListener('beforeunload', warnBeforeUnload);
+  }, [draftDirty]);
 
   useEffect(() => {
     if (!mobileNavOpen) return;
@@ -183,12 +166,13 @@ export default function HomePage() {
       } else {
         setNotes((current) => [...current, note]);
       }
-      setHeading(''); setAnswer(''); setPreview(false); setNoteDialog(false); setEditingNote(null);
+      setHeading(''); setAnswer(''); initialDraftRef.current = { heading: '', answer: '' }; setPreview(false); setNoteDialog(false); setEditingNote(null);
     } catch (error) { setFormError(error.message); }
     finally { setSaving(false); }
   }
 
   function editNote(note) {
+    initialDraftRef.current = { heading: note.heading, answer: note.answer };
     setEditingNote(note); setHeading(note.heading); setAnswer(note.answer);
     setPreview(false); setFormError(''); setNoteDialog(true);
   }
@@ -287,7 +271,7 @@ export default function HomePage() {
 
       <section className="intro">
         <div><p className="eyebrow">YOUR PERSONAL KNOWLEDGE BASE</p><h1>{active?.name || 'Your'} notes<span className="period">.</span></h1><p className="subtitle">A clear place for the commands, concepts, and things you learn.</p></div>
-        <div className="intro-actions"><button className="study-button" onClick={startStudy} disabled={!notes.length}><span aria-hidden="true">◉</span> Study notes</button><button className="add-button" onClick={() => { setEditingNote(null); setHeading(''); setAnswer(''); setFormError(''); setNoteDialog(true); }}><span aria-hidden="true">+</span> Add a note</button></div>
+        <div className="intro-actions"><button className="study-button" onClick={startStudy} disabled={!notes.length}><span aria-hidden="true">◉</span> Study notes</button><button className="add-button" onClick={() => { initialDraftRef.current = { heading: '', answer: '' }; setEditingNote(null); setHeading(''); setAnswer(''); setFormError(''); setNoteDialog(true); }}><span aria-hidden="true">+</span> Add a note</button></div>
       </section>
 
       <section className="stats" aria-label="Note statistics"><div className="stat"><span className="stat-number">{String(notes.length).padStart(2, '0')}</span><span className="stat-label">TOTAL NOTES</span></div><div className="stat-divider"/><div className="stat"><span className="stat-number">{String(subjects.length).padStart(2, '0')}</span><span className="stat-label">SUBJECTS</span></div><div className="stat-spacer"/><div className="search-wrap"><span aria-hidden="true">⌕</span><input type="search" placeholder="Search your notes…" aria-label="Search notes" value={query} onChange={(event) => setQuery(event.target.value)}/></div></section>
@@ -299,7 +283,7 @@ export default function HomePage() {
 
       {formError && !noteDialog && <p className="page-error" role="alert">{formError}</p>}
 
-      {noteDialog && <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setNoteDialog(false); }}><section className="dialog" role="dialog" aria-modal="true" aria-labelledby="formTitle"><button className="close-button" onClick={() => setNoteDialog(false)} aria-label="Close form">×</button><p className="eyebrow">{editingNote ? `EDIT NOTE ${String(editingNote.number).padStart(2, '0')}` : 'GROW YOUR LIBRARY'}</p><h2 id="formTitle">{editingNote ? 'Edit note' : 'Add a note'}<span className="period">.</span></h2><p className="form-subtitle">{editingNote ? 'Update the heading or answer. Its serial number will stay the same.' : 'Give it a clear heading and capture what you learned.'}</p>
+      {noteDialog && <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) requestCloseNoteDialog(); }}><section className="dialog" role="dialog" aria-modal="true" aria-labelledby="formTitle"><button className="close-button" onClick={requestCloseNoteDialog} aria-label="Close form">×</button><p className="eyebrow">{editingNote ? `EDIT NOTE ${String(editingNote.number).padStart(2, '0')}` : 'GROW YOUR LIBRARY'}</p><h2 id="formTitle">{editingNote ? 'Edit note' : 'Add a note'}<span className="period">.</span></h2><p className="form-subtitle">{editingNote ? 'Update the heading or answer. Its serial number will stay the same.' : 'Give it a clear heading and capture what you learned.'}</p>
         <form onSubmit={saveNote}><label htmlFor="heading">HEADING</label><input id="heading" maxLength={160} placeholder="e.g. What does chmod do?" value={heading} onChange={(event) => setHeading(event.target.value)} required/><div className="label-row"><label htmlFor="answer">ANSWER</label><span>Markdown is okay</span></div><div className="editor-toolbar" aria-label="Answer formatting"><button type="button" onClick={() => insertFormatting('bold')} title="Bold">B</button><button type="button" onClick={() => insertFormatting('code')} title="Inline code">&lt;/&gt;</button><button type="button" onClick={() => insertFormatting('list')} title="Bullet list">• List</button><button type="button" onClick={() => insertFormatting('codeblock')} title="Code block">{'{ }'}</button><span>Formatting shortcuts</span></div><div className="editor-tabs"><button type="button" className={!preview ? 'active' : ''} onClick={() => setPreview(false)}>Write</button><button type="button" className={preview ? 'active' : ''} onClick={() => setPreview(true)}>Preview</button></div>
           {!preview ? <textarea ref={answerRef} id="answer" rows={6} maxLength={10000} placeholder="Write your explanation here…" value={answer} onChange={(event) => setAnswer(event.target.value)} required/> : <div className="answer-preview">{answer ? <div dangerouslySetInnerHTML={{ __html: markdownHtml(answer) }}/> : <p className="preview-placeholder">Nothing to preview yet.</p>}</div>}
           {formError && <p className="form-error" role="alert">{formError}</p>}<button className="submit-button" type="submit" disabled={saving}><span>{saving ? 'Saving…' : editingNote ? 'Save changes' : 'Save note'}</span><span aria-hidden="true">→</span></button></form>
