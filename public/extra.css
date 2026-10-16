@@ -493,3 +493,48 @@ button[aria-disabled="true"] {
   background: var(--soft);
   font-size: 11px;
 }
+
+
+/* Phase 18: spaced repetition review */
+.secondary-study-button {
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+.review-ratings {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 20px;
+}
+.review-ratings button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 58px;
+  padding: 8px 5px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--paper);
+  color: var(--ink);
+  font: 600 12px var(--sans);
+  cursor: pointer;
+}
+.review-ratings button small {
+  color: var(--muted);
+  font: 10px var(--sans);
+  font-weight: 400;
+}
+.review-ratings .rating-again { border-color: #d88e8e; }
+.review-ratings .rating-hard { border-color: #d8b47a; }
+.review-ratings .rating-good { border-color: #8eb99a; }
+.review-ratings .rating-easy { border-color: #82a9ca; }
+.review-ratings button:hover { transform: translateY(-1px); }
+@media (max-width: 520px) {
+  .review-ratings { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+  .review-ratings button { min-height: 54px; }
+  .intro-actions { flex-wrap: wrap; }
+  .intro-actions .study-button { flex: 1 1 100%; }
+}

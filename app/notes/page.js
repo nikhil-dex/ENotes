@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { markdownHtml } from '../../lib/markdown.js';
+import { calculateNextReview } from '../../lib/spaced-repetition.js';
 
 function draftStorageKey(subject, number) {
   return `enotes:draft:${subject}:${number ?? 'new'}`;
@@ -62,6 +63,7 @@ export default function HomePage() {
   const [studyIndex, setStudyIndex] = useState(0);
   const [studyRevealed, setStudyRevealed] = useState(false);
   const [learnedNotes, setLearnedNotes] = useState(new Set());
+  const [reviewSchedule, setReviewSchedule] = useState({});
   const answerRef = useRef(null);
   const dialogRef = useRef(null);
   const headingInputRef = useRef(null);
@@ -145,6 +147,9 @@ export default function HomePage() {
       const saved = JSON.parse(localStorage.getItem(`learnedNotes:${activeSubject}`) || '[]');
       setLearnedNotes(new Set(saved));
     } catch { setLearnedNotes(new Set()); }
+    try {
+      setReviewSchedule(JSON.parse(localStorage.getItem('reviewSchedule:v1') || '{}'));
+    } catch { setReviewSchedule({}); }
     setQuery('');
     return () => controller.abort();
   }, [activeSubject, globalSearch]);
@@ -374,9 +379,21 @@ export default function HomePage() {
   }
 
 
-  function startStudy() {
+  function noteReviewKey(note) { return `${note.subject || activeSubject}:${note.number}`; }
+
+  function isReviewDue(note) {
+    const dueAt = reviewSchedule[noteReviewKey(note)]?.dueAt;
+    return !dueAt || new Date(dueAt).getTime() <= Date.now();
+  }
+
+  const dueReviewCount = notes.filter(isReviewDue).length;
+
+  function startStudy(dueOnly = false) {
     if (!notes.length) return;
-    setStudyDeck([...notes].sort((a, b) => b.number - a.number));
+    const dueNotes = notes.filter(isReviewDue);
+    const deck = dueOnly ? dueNotes : notes;
+    if (!deck.length) return;
+    setStudyDeck([...deck].sort((a, b) => Number(isReviewDue(b)) - Number(isReviewDue(a)) || b.number - a.number));
     setStudyIndex(0); setStudyRevealed(false);
     const stillPresent = new Set([...learnedNotes].filter((number) => notes.some((note) => note.number === number)));
     saveLearned(stillPresent);
@@ -387,6 +404,26 @@ export default function HomePage() {
     if (index >= studyDeck.length) { setStudyOpen(false); return; }
     if (index < 0) return;
     setStudyIndex(index); setStudyRevealed(false);
+  }
+
+  function rateReview(rating) {
+    const note = studyDeck[studyIndex];
+    if (!note) return;
+    const key = noteReviewKey(note);
+    const now = new Date();
+    const nextReview = calculateNextReview(reviewSchedule[key], rating, now);
+    const nextSchedule = {
+      ...reviewSchedule,
+      [key]: nextReview,
+    };
+    setReviewSchedule(nextSchedule);
+    localStorage.setItem('reviewSchedule:v1', JSON.stringify(nextSchedule));
+    if (rating === 'good' || rating === 'easy') {
+      const nextLearned = new Set(learnedNotes);
+      nextLearned.add(note.number);
+      saveLearned(nextLearned);
+    }
+    moveStudy(studyIndex + 1);
   }
 
   function markLearned() {
@@ -447,7 +484,7 @@ export default function HomePage() {
 
       <section className="intro">
         <div><p className="eyebrow">YOUR PERSONAL KNOWLEDGE BASE</p><h1>{active?.name || 'Your'} notes<span className="period">.</span></h1><p className="subtitle">A clear place for the commands, concepts, and things you learn.</p></div>
-        <div className="intro-actions"><button className="study-button" onClick={startStudy} disabled={!notes.length}><span aria-hidden="true">◉</span> Study notes</button><button className="add-button" onClick={() => { initialDraftRef.current = { heading: '', answer: '' }; setEditingNote(null); setHeading(''); setAnswer(''); setTagInput(''); setFavoriteDraft(false); setPinnedDraft(false); setRevisions([]); setRevisionsOpen(false); setRevisionsError(''); setFormError(''); setNoteDialog(true); }}><span aria-hidden="true">+</span> Add a note</button></div>
+        <div className="intro-actions"><button className="study-button" onClick={() => startStudy(true)} disabled={!dueReviewCount}><span aria-hidden="true">◉</span> Review due ({dueReviewCount})</button><button className="study-button secondary-study-button" onClick={() => startStudy(false)} disabled={!notes.length}>Study all notes</button><button className="add-button" onClick={() => { initialDraftRef.current = { heading: '', answer: '' }; setEditingNote(null); setHeading(''); setAnswer(''); setTagInput(''); setFavoriteDraft(false); setPinnedDraft(false); setRevisions([]); setRevisionsOpen(false); setRevisionsError(''); setFormError(''); setNoteDialog(true); }}><span aria-hidden="true">+</span> Add a note</button></div>
       </section>
 
       <section className="stats" aria-label="Note statistics"><div className="stat"><span className="stat-number">{String(notes.length).padStart(2, '0')}</span><span className="stat-label">TOTAL NOTES</span></div><div className="stat-divider"/><div className="stat"><span className="stat-number">{String(subjects.length).padStart(2, '0')}</span><span className="stat-label">SUBJECTS</span></div><div className="stat-spacer"/><div className="search-wrap"><span aria-hidden="true">⌕</span><input type="search" placeholder={globalSearch ? "Search all subjects…" : "Search this subject…"} aria-label="Search notes" value={query} onChange={(event) => setQuery(event.target.value)}/></div><button type="button" className={globalSearch ? "global-search-toggle active" : "global-search-toggle"} aria-pressed={globalSearch} onClick={() => { setGlobalSearch((value) => !value); setQuery(""); setFormError(""); }}>⌕ {globalSearch ? "All subjects" : "Search all subjects"}</button></section>
@@ -509,7 +546,7 @@ export default function HomePage() {
           </section>
         </div></article></div>}
 
-      {studyOpen && currentStudyNote && <div className="reader-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setStudyOpen(false); }}><section className="study-panel" role="dialog" aria-modal="true" aria-labelledby="studyQuestion"><div className="reader-toolbar"><span className="reader-kicker">STUDY SESSION</span><button className="close-button reader-close" onClick={() => setStudyOpen(false)} aria-label="Close study session">×</button></div><div className="study-content"><div className="study-progress-row"><span>CARD {studyIndex + 1} OF {studyDeck.length}</span><span>{learnedNotes.size} learned</span></div><div className="study-progress"><span style={{ width: `${((studyIndex + 1) / studyDeck.length) * 100}%` }}/></div><p className="eyebrow">{active?.name}</p><p className="study-prompt">Try to recall the answer</p><h2 id="studyQuestion">{currentStudyNote.heading}</h2>{studyRevealed && <div className="study-answer" dangerouslySetInnerHTML={{ __html: markdownHtml(currentStudyNote.answer) }} />}{!studyRevealed && <button className="reveal-button" onClick={() => setStudyRevealed(true)}>Reveal answer</button>}{studyRevealed && <div className="study-actions">{currentIsLearned && <button className="review-button" onClick={() => { const next = new Set(learnedNotes); next.delete(currentStudyNote.number); saveLearned(next); }}>Review again</button>}<button className="submit-button" onClick={markLearned} disabled={currentIsLearned}><span>{currentIsLearned ? 'Learned ✓' : 'Got it'}</span><span aria-hidden="true">→</span></button></div>}<div className="study-navigation"><button onClick={() => moveStudy(studyIndex - 1)} disabled={studyIndex === 0}>← Previous</button><button onClick={shuffleStudy}>Shuffle cards</button><button onClick={() => moveStudy(studyIndex + 1)}>{studyIndex === studyDeck.length - 1 ? 'Finish' : 'Next →'}</button></div></div></section></div>}
+      {studyOpen && currentStudyNote && <div className="reader-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setStudyOpen(false); }}><section className="study-panel" role="dialog" aria-modal="true" aria-labelledby="studyQuestion"><div className="reader-toolbar"><span className="reader-kicker">STUDY SESSION</span><button className="close-button reader-close" onClick={() => setStudyOpen(false)} aria-label="Close study session">×</button></div><div className="study-content"><div className="study-progress-row"><span>CARD {studyIndex + 1} OF {studyDeck.length}</span><span>{dueReviewCount} due · {learnedNotes.size} learned</span></div><div className="study-progress"><span style={{ width: `${((studyIndex + 1) / studyDeck.length) * 100}%` }}/></div><p className="eyebrow">{active?.name}</p><p className="study-prompt">Try to recall the answer</p><h2 id="studyQuestion">{currentStudyNote.heading}</h2>{studyRevealed && <div className="study-answer" dangerouslySetInnerHTML={{ __html: markdownHtml(currentStudyNote.answer) }} />}{!studyRevealed && <button className="reveal-button" onClick={() => setStudyRevealed(true)}>Reveal answer</button>}{studyRevealed && <div className="study-actions review-ratings"><button type="button" className="rating-again" onClick={() => rateReview('again')}>Again <small>10 min</small></button><button type="button" className="rating-hard" onClick={() => rateReview('hard')}>Hard <small>1+ day</small></button><button type="button" className="rating-good" onClick={() => rateReview('good')}>Good <small>Next interval</small></button><button type="button" className="rating-easy" onClick={() => rateReview('easy')}>Easy <small>Longer interval</small></button></div>}<div className="study-navigation"><button onClick={() => moveStudy(studyIndex - 1)} disabled={studyIndex === 0}>← Previous</button><button onClick={shuffleStudy}>Shuffle cards</button><button onClick={() => moveStudy(studyIndex + 1)}>{studyIndex === studyDeck.length - 1 ? 'Finish' : 'Next →'}</button></div></div></section></div>}
     </main>
   );
 }
