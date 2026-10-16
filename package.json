@@ -12,6 +12,7 @@
     "start": "next start",
     "migrate:notes": "node scripts/migrate-notes.mjs",
     "access:setup": "node scripts/set-access-key.mjs",
+    "check:release-env": "node scripts/check-release-env.mjs",
     "test": "node --test"
   },
   "dependencies": {
