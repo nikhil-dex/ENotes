@@ -12,6 +12,7 @@ export default function SettingsPage() {
   const [subjects, setSubjects] = useState([]);
   const [subjectName, setSubjectName] = useState('');
   const [subjectBusy, setSubjectBusy] = useState(false);
+  const [deletingSubjects, setDeletingSubjects] = useState(new Set());
   const [subjectError, setSubjectError] = useState('');
   const [backupBusy, setBackupBusy] = useState(false);
   const [backupMessage, setBackupMessage] = useState('');
@@ -55,17 +56,25 @@ export default function SettingsPage() {
   }
 
   async function deleteSubject(subject) {
+    if (deletingSubjects.has(subject.slug)) return;
     if (subjects.length <= 1) {
       setSubjectError('Keep at least one subject. Add another before deleting this one.');
       return;
     }
     if (!window.confirm(`Delete “${subject.name}” and all its notes? This cannot be undone.`)) return;
+    setDeletingSubjects((current) => new Set(current).add(subject.slug));
     setSubjectError('');
     try {
       await responseJson(await fetch(`/api/subjects?slug=${encodeURIComponent(subject.slug)}`, { method: 'DELETE' }));
       setSubjects((current) => current.filter((item) => item.slug !== subject.slug));
     } catch (error) {
-      setSubjectError(error.message);
+      setSubjectError(error.message || `Could not delete ${subject.name}. Please try again.`);
+    } finally {
+      setDeletingSubjects((current) => {
+        const next = new Set(current);
+        next.delete(subject.slug);
+        return next;
+      });
     }
   }
 
@@ -157,7 +166,7 @@ export default function SettingsPage() {
             <span className="settings-subject-mark" aria-hidden="true">▤</span>
             <div className="settings-subject-info"><strong>{subject.name}</strong><span>{subject.file || 'MongoDB'} · next note #{subject.nextNumber || 1}</span></div>
             <a className="settings-open-link" href={`/notes?subject=${encodeURIComponent(subject.slug)}`}>Open notes ↗</a>
-            <button className="settings-delete-button" type="button" onClick={() => deleteSubject(subject)} aria-label={`Delete ${subject.name} and its notes`}>Delete</button>
+            <button className="settings-delete-button" type="button" onClick={() => deleteSubject(subject)} disabled={deletingSubjects.has(subject.slug)} aria-label={`Delete ${subject.name} and its notes`}>{deletingSubjects.has(subject.slug) ? 'Deleting…' : 'Delete'}</button>
           </article>)}
           {!subjects.length && <p className="settings-muted">No subjects yet. Add one above to start your library.</p>}
         </div>
