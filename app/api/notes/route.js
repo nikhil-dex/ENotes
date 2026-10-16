@@ -34,6 +34,26 @@ export async function GET(request) {
       return json({ error: 'Choose a valid note.' }, 400);
     }
     const db = await getDatabase();
+    if (params.get('scope') === 'all') {
+      const q = (params.get('q') || '').trim().slice(0, 120);
+      if (q.length < 2) return json({ error: 'Enter at least 2 characters to search all subjects.' }, 400);
+      const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\    const db = await getDatabase();
+    const subject = await db.collection('subjects').findOne({ _id: slug });');
+      const regex = new RegExp(escapeRegex(q), 'i');
+      const [subjects, matches] = await Promise.all([
+        db.collection('subjects').find({}, { projection: { _id: 1, name: 1, slug: 1 } }).toArray(),
+        db.collection('notes').find({
+          $or: [{ heading: regex }, { answer: regex }, { tags: regex }],
+        }, { projection: { _id: 0, subject: 1, number: 1, heading: 1, answer: 1, saved: 1, tags: 1, favorite: 1, pinned: 1 } })
+          .sort({ number: -1 }).limit(100).toArray(),
+      ]);
+      const subjectNames = new Map(subjects.map((item) => [item.slug || item._id, item.name || item.slug || item._id]));
+      return json({
+        notes: matches.map((note) => ({ ...note, subjectName: subjectNames.get(note.subject) || note.subject })),
+        limit: 100,
+        query: q,
+      });
+    }
     const subject = await db.collection('subjects').findOne({ _id: slug });
     if (!subject) return json({ error: 'Subject not found.' }, 404);
     if (history) {
