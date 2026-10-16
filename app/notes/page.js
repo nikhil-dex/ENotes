@@ -1,44 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-
-function escapeHtml(value) {
-  return String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
-}
-
-function markdownHtml(value) {
-  const lines = escapeHtml(value).split('\n');
-  let html = '';
-  let inList = false;
-  let inCode = false;
-  let codeLines = [];
-  const inline = (line) => line.replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-  for (const line of lines) {
-    if (line.trim().startsWith('```')) {
-      if (!inCode) {
-        if (inList) { html += '</ul>'; inList = false; }
-        inCode = true;
-        codeLines = [];
-      } else {
-        html += `<pre><code>${codeLines.join('\n')}</code></pre>`;
-        inCode = false;
-      }
-      continue;
-    }
-    if (inCode) { codeLines.push(line); continue; }
-    if (/^\s*[-*]\s+/.test(line)) {
-      if (!inList) { html += '<ul>'; inList = true; }
-      html += `<li>${inline(line.replace(/^\s*[-*]\s+/, ''))}</li>`;
-    } else {
-      if (inList) { html += '</ul>'; inList = false; }
-      if (/^#{1,3}\s/.test(line)) html += `<h3>${inline(line.replace(/^#{1,3}\s+/, ''))}</h3>`;
-      else if (line.trim()) html += `<p>${inline(line)}</p>`;
-    }
-  }
-  if (inList) html += '</ul>';
-  if (inCode) html += `<pre><code>${codeLines.join('\n')}</code></pre>`;
-  return html;
-}
+import { markdownHtml } from '../../lib/markdown.js';
 
 async function responseJson(response) {
   const data = await response.json().catch(() => ({}));
