@@ -39,6 +39,7 @@ A subject-based study notes application built with **Next.js**, **React**, and *
 - **JSON backup and restore** — download a full backup and safely merge missing records from a validated backup without overwriting existing notes.
 - **Starter note import** — migrate the Markdown files in `notes/` into MongoDB using the included script.
 - **Additional learning resources** — includes HTML library and import-guide pages.
+- **Private Image & PDF Library (detour)** — organize PDF, JPEG, PNG, and WebP files into folders, preview and download them using short-lived signed links, and keep binary files in a private Cloudflare R2 bucket.
 
 ## Tech stack
 
@@ -131,6 +132,10 @@ Set these variables in `.env.local` for local development and in your hosting pr
 | `GEMINI_API_KEY` | Optional for Gemini cleanup | Server-side Google Gemini API key. Never expose it in client-side code or commit the value. |
 | `GEMINI_MODEL` | No | Primary Gemini model ID; defaults to `gemini-3.8-flash`. |
 | `GEMINI_FALLBACK_MODEL` | No | Fallback model after a primary-model HTTP 429; defaults to `gemini-3.6-flash`. |
+| `R2_ACCOUNT_ID` | Optional for My Files | Cloudflare account ID used by the private media library. |
+| `R2_BUCKET_NAME` | Optional for My Files | Name of the private R2 bucket. |
+| `R2_ACCESS_KEY_ID` | Optional for My Files | Server-side R2 S3-compatible access key ID, scoped to the bucket. |
+| `R2_SECRET_ACCESS_KEY` | Optional for My Files | Server-side R2 S3-compatible secret. Never expose or commit it. |
 
 Example configuration:
 
@@ -184,7 +189,7 @@ ENotes/
 │   ├── layout.js          # Root application layout
 │   └── page.js            # Home hub / app launcher
 ├── lib/
-│   ├── access-session.js  # Signed session creation and validation
+│   ├── access-session.js  # Signed session creation and validation\n│   ├── media-validation.js # File, folder, and signature validation\n│   ├── r2-storage.js      # Private R2 signed URL and object operations
 │   ├── offline-notes.js   # Browser cache helpers for offline reading
 │   ├── backup-validation.js # Backup schema validation
 │   ├── read-limited-body.js # Bounded request-body reader
@@ -210,7 +215,7 @@ ENotes/
 The application stores two main kinds of documents:
 
 - **Subjects** — subject name, slug, display order, next note number, and related metadata.
-- **Notes** — subject slug, note number, heading, content, and saved-time metadata.
+- **Notes** — subject slug, note number, heading, content, and saved-time metadata.\n- **Media folders** — UUID, folder name, and creation/update timestamps.\n- **Media files** — UUID, display name, MIME type, size, folder ID, generated private object key, status, and timestamps. Binary contents are stored in the private R2 bucket, not MongoDB.
 
 MongoDB indexes support subject lookup and note ordering, with a unique constraint on the subject-and-note-number pair.
 
@@ -228,7 +233,7 @@ Do not expose database credentials in client-side code or commit them to source 
 
 ## Backups and restore
 
-Use **Download backup** in the dashboard to export all subjects and notes to a JSON file. Keep this file somewhere private because it contains your study notes.
+Use **Download backup** in the dashboard to export ENotes metadata to a JSON file. Keep this file somewhere private because it contains your study notes and saved links.
 
 To restore, choose a backup JSON file from the dashboard. ENotes validates the file format, record limits, subject slugs, note identifiers, and content lengths before writing. Restore uses **merge-only** behavior: missing subjects and notes are added, existing subject metadata and note contents are not overwritten, and duplicate note IDs are skipped. Uploads are limited to 10 MB. Restore is not a substitute for an independent MongoDB backup; keep multiple copies of important backups.
 
@@ -243,6 +248,10 @@ npm run check:release-env
 ```
 
 This is a format check only; it does **not** connect to MongoDB, validate credentials, or confirm that a deployed app is healthy. CI runs this check alongside tests and the production build using test-only values.
+
+## Private Image & PDF Library setup
+
+The optional My Files page uses a private Cloudflare R2 bucket for binary data and MongoDB for metadata. See [docs/IMAGE-PDF-LIBRARY.md](docs/IMAGE-PDF-LIBRARY.md) for bucket-scoped credentials, exact-origin CORS, and local testing instructions. The feature accepts PDF, JPEG, PNG, and WebP files up to 20 MB each. Do not enable a public bucket or commit R2 credentials.
 
 ## Security notes
 
