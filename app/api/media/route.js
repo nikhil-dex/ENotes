@@ -33,7 +33,8 @@ export async function GET(request) {
       if (!isValidMediaId(id)) return json({ error: 'Choose a valid file.' }, 400);
       const file = await db.collection('mediaFiles').findOne({ _id: id, status: 'ready' });
       if (!file) return json({ error: 'File not found.' }, 404);
-      const url = createPresignedUrl('GET', file.objectKey, 300);
+      const disposition = params.get('disposition') === 'attachment' ? `attachment; filename="${file.name.replace(/["\\\\\r\n]/g, '_')}"` : '';
+      const url = createPresignedUrl('GET', file.objectKey, 300, new Date(), disposition);
       return json({ url, expiresIn: 300, file: serialize(file) });
     }
     const folderId = params.get('folderId') || null;
