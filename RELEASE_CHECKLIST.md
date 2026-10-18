@@ -30,7 +30,7 @@ Run these checks against the deployed app using a valid access session:
 - [ ] Create and remove a disposable test subject only after confirming it contains no needed notes.
 - [ ] Confirm browser theme and learned-note state behave as expected.
 
-## 4. Backup and recovery
+## 4. Private Image & PDF Library (if enabled)\n\n- [ ] Configure R2 server-side variables with a bucket-scoped API token; never use a public bucket.\n- [ ] Configure CORS for only the expected ENotes origin(s), with PUT/GET/HEAD and the required content-type header.\n- [ ] Verify unauthenticated requests cannot reach media APIs and direct public object URLs are not available.\n- [ ] Upload, preview, download, move, and delete disposable test files using a non-production database and private test bucket.\n- [ ] Confirm invalid MIME/signature combinations are rejected and failed uploads are cleaned up where possible.\n- [ ] Remember JSON backups include media metadata only; keep the R2 bucket and binary objects separately available.\n\n## 5. Backup and recovery
 
 - [ ] Download a fresh JSON backup and store it privately outside the repository.
 - [ ] Verify the downloaded file is non-empty valid JSON and includes the expected subject and note counts.
@@ -39,7 +39,7 @@ Run these checks against the deployed app using a valid access session:
 - [ ] Confirm the reported restore counts and inspect the restored data in the test database.
 - [ ] Do not run destructive restore experiments against production data.
 
-## 5. Final sign-off
+## 6. Final sign-off
 
 - [ ] Inspect hosting logs after smoke tests; investigate unexpected 4xx/5xx errors.
 - [ ] Confirm the deployment is healthy after a fresh session and a second page load.
