@@ -35,6 +35,9 @@ export async function GET() {
       notes,
       savedLinks,
       quickNotes,
+      mediaFolders,
+      mediaFiles,
+      mediaBackupMode: 'metadata-only',
     };
     const filename = `enotes-backup-${new Date().toISOString().slice(0, 10)}.json`;
     return new Response(JSON.stringify(backup, null, 2), {
