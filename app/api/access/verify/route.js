@@ -92,14 +92,14 @@ export async function POST(request) {
     // replaces the previous session, so the previous device is signed out on
     // its next request/heartbeat instead of blocking the new login.
     const sessionId = randomUUID();
-    const now = new Date();
+    const sessionNow = new Date();
     let activeSession;
     try {
       activeSession = await db.collection('settings').findOneAndUpdate(
         { _id: 'active-device-session' },
         {
-          $set: { sessionId, deviceId, lastSeenAt: now },
-          $setOnInsert: { createdAt: now },
+          $set: { sessionId, deviceId, lastSeenAt: sessionNow },
+          $setOnInsert: { createdAt: sessionNow },
         },
         { upsert: true, returnDocument: 'after', includeResultMetadata: false },
       );
@@ -109,7 +109,7 @@ export async function POST(request) {
       if (error?.code !== 11000) throw error;
       activeSession = await db.collection('settings').findOneAndUpdate(
         { _id: 'active-device-session' },
-        { $set: { sessionId, deviceId, lastSeenAt: now } },
+        { $set: { sessionId, deviceId, lastSeenAt: sessionNow } },
         { returnDocument: 'after', includeResultMetadata: false },
       );
       if (!activeSession) throw error;
