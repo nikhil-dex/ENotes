@@ -159,16 +159,6 @@ export default function HomePage() {
     };
   }, []);
 
-  useEffect(() => {
-    const heartbeat = async () => {
-      try {
-        const response = await fetch('/api/access/heartbeat', { method: 'POST', credentials: 'same-origin', cache: 'no-store' });
-        if (response.status === 401) window.location.replace('/access?reason=session-replaced');
-      } catch {}
-    };
-    const timer = window.setInterval(heartbeat, 15 * 60 * 1000);
-    return () => window.clearInterval(timer);
-  }, []);
 
   useEffect(() => {
     const onOnline = () => { setIsOnline(true); setSyncStatus('syncing'); setSyncVersion((version) => version + 1); };
