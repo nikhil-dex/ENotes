@@ -100,4 +100,5 @@ test('backup validator accepts media metadata but rejects invalid keys and orpha
   assert.match(validateBackup({ ...base, mediaFolders: [folder], mediaFiles: [{ ...file, objectKey: 'media/other' }] }), /storage key/);
   assert.match(validateBackup({ ...base, mediaFolders: [], mediaFiles: [file] }), /folder missing/);
   assert.match(validateBackup({ ...base, mediaFolders: [folder], mediaFiles: [{ ...file, name: '../lecture.pdf' }] }), /invalid name/);
+  assert.match(validateBackup({ ...base, mediaFolders: [folder], mediaFiles: Array.from({ length: 401 }, (_, index) => ({ ...file, _id: `f47ac10b-58cc-4372-a567-0e02b2c3${String(index).padStart(4, '0')}`, name: `lecture-${index}.pdf`, objectKey: `media/f47ac10b-58cc-4372-a567-0e02b2c3${String(index).padStart(4, '0')}`, size: 20 * 1024 * 1024, folderId: null })) }), /storage safety limit/);
 });
