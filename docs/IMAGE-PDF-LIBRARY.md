@@ -39,7 +39,7 @@ The browser PUT upload sends the selected file's Content-Type. The API checks th
 - PDF, JPEG, PNG, and WebP only, with matching file extensions and MIME types.
 - 20 MiB maximum per file.
 - 10,000 metadata records per type and 2,000 folders.
-- A 9 GiB application-tracked storage ceiling leaves headroom below R2's commonly listed 10 GB free storage allowance. This is a safeguard, not a guarantee of zero charges: usage-based billing, orphaned objects, and provider pricing/allowances must still be checked in the Cloudflare dashboard.
+- An 8 GB application-tracked storage ceiling leaves headroom below R2's commonly listed 10 GB free storage allowance. This is a safeguard, not a guarantee of zero charges: usage-based billing, orphaned objects, and provider pricing/allowances must still be checked in the Cloudflare dashboard.
 - Folder names reject slashes and control characters.
 - A folder cannot be deleted while it contains files.
 - File deletion removes the R2 object first; if storage deletion fails, metadata is retained.
