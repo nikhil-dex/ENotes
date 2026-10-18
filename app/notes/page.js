@@ -404,22 +404,6 @@ export default function HomePage() {
     localStorage.setItem(`learnedNotes:${activeSubject}`, JSON.stringify([...next]));
   }
 
-  async function lockSession() {
-    const pending = getPendingOfflineMutations(localStorage);
-    if (pending.length && !window.confirm(`There are ${pending.length} offline change(s) waiting to sync. OK will discard them only after this device successfully releases its session. Cancel to stay here and sync first.`)) return;
-    try {
-      const response = await fetch('/api/access/logout', { method: 'POST', credentials: 'same-origin', cache: 'no-store' });
-      if (!response.ok) throw new Error('Could not release this device session. Check your connection and try again.');
-      if (pending.length) {
-        try { localStorage.setItem('enotes:offline:mutations:v1', '[]'); } catch {}
-        setPendingSyncCount(0);
-      }
-      window.location.replace('/access');
-    } catch (error) {
-      setFormError(error.message || 'Could not lock ENotes. Please try again. Your queued changes have been kept.');
-    }
-  }
-
   async function reloadNotes(slug = activeSubject) {
     const data = await responseJson(await fetch(`/api/notes?subject=${encodeURIComponent(slug)}`));
     setNotes(data);
@@ -619,7 +603,6 @@ export default function HomePage() {
             <button className="theme-button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`} aria-pressed={theme === 'dark'}>{theme === 'dark' ? '☼' : '◐'} <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span></button>
             <span className={`sync-status ${!isOnline ? 'offline' : ['error', 'conflict'].includes(syncStatus) ? 'error' : ''}`} role="status" aria-live="polite"><span className="sync-status-dot" aria-hidden="true"/>{!isOnline ? `Offline · ${pendingSyncCount} pending` : syncStatus === 'syncing' ? `Syncing · ${pendingSyncCount} pending` : syncStatus === 'synced' ? 'Synced' : syncStatus === 'conflict' ? 'Sync paused · conflict' : syncStatus === 'error' ? 'Sync issue · queued' : 'Online'}</span>
             <span className="navbar-storage-label">{active?.file || 'MongoDB'}</span>
-            <button className="theme-button" type="button" onClick={lockSession} aria-label="Lock ENotes and end this session">Lock</button>
           </>
         )} />
 
