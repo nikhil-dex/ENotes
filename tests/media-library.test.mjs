@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   MAX_MEDIA_FILE_BYTES,
   MAX_MEDIA_FILES,
+  MAX_MEDIA_TOTAL_BYTES,
   hasValidMediaSignature,
   isValidFolderId,
   isValidMediaId,
@@ -41,6 +42,7 @@ test('validates media IDs and root/folder selectors', () => {
   assert.equal(isValidFolderId('f47ac10b-58cc-4372-a567-0e02b2c3d479'), true);
   assert.equal(isValidFolderId('bad'), false);
   assert.equal(MAX_MEDIA_FILES, 10000);
+  assert.equal(MAX_MEDIA_TOTAL_BYTES, 9 * 1024 * 1024 * 1024);
 });
 
 
