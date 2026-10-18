@@ -29,3 +29,27 @@ test('validates title, description, category, and tag limits', () => {
   assert.match(normalizeSavedLink({ title: 'Example', url: 'https://example.com', description: 'x'.repeat(501) }).error, /Description/i);
   assert.match(normalizeSavedLink({ title: 'Example', url: 'https://example.com', tags: Array.from({ length: 11 }, (_, i) => String(i)) }).error, /up to 10 tags/i);
 });
+
+
+test('validates saved links in backups while allowing older backups without the field', async () => {
+  const { validateBackup } = await import('../lib/backup-validation.js');
+  const base = {
+    format: 'enotes-backup',
+    version: 1,
+    subjects: [{ slug: 'linux', name: 'Linux' }],
+    notes: [],
+  };
+  assert.equal(validateBackup(base), null);
+  assert.equal(validateBackup({ ...base, savedLinks: [{
+    _id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
+    title: 'Docs',
+    url: 'https://example.com/docs',
+    tags: ['docs'],
+    order: 0,
+  }] }), null);
+  assert.match(validateBackup({ ...base, savedLinks: [{
+    _id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
+    title: 'Unsafe',
+    url: 'javascript:alert(1)',
+  }] }), /invalid URL/i);
+});
