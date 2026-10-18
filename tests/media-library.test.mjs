@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   MAX_MEDIA_FILE_BYTES,
   MAX_MEDIA_FILES,
+  hasValidMediaSignature,
   isValidFolderId,
   isValidMediaId,
   normalizeFolderName,
