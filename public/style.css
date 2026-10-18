@@ -362,3 +362,309 @@
   .answer-workspace.is-fullscreen textarea#answer,
   .answer-workspace.is-fullscreen .answer-preview{font-size:16px}
 }
+
+
+/* UI detour: full-bleed navbar without covering the notes workspace. */
+.site-navbar{
+  position:relative;
+  width:100vw;
+  max-width:100vw;
+  margin-left:calc(50% - 50vw);
+  padding-left:max(20px,calc((100vw - 1036px)/2));
+  padding-right:max(20px,calc((100vw - 1036px)/2));
+  isolation:isolate;
+}
+.site-navbar-content,
+.site-navbar-links,
+.site-navbar-actions{min-width:0}
+.site-navbar-content{flex-wrap:wrap}
+@media(max-width:1200px){
+  .site-navbar{gap:12px}
+  .site-navbar-toggle{display:inline-flex;flex:0 0 auto;margin-left:auto}
+  .site-navbar-content{display:none;flex:0 0 100%;order:3;align-items:stretch;flex-direction:column;gap:12px;padding:12px 0 4px;border-top:1px solid var(--line)}
+  .site-navbar-content.is-open{display:flex}
+  .site-navbar-links{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;width:100%}
+  .site-navbar-link{justify-content:flex-start;padding:0 12px;min-height:42px;border-color:var(--line)}
+  .site-navbar-actions{justify-content:flex-start;padding-top:4px}
+}
+@media(max-width:520px){
+  .site-navbar{min-height:66px;padding:10px 17px}
+  .site-navbar-links{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .site-navbar-link{font-size:12px}
+  .site-navbar-actions{gap:7px}
+  .site-navbar-actions .sync-status{font-size:10px}
+  .navbar-storage-label{display:none}
+}
+/* Keep the subject row and page intro from being compressed by navigation. */
+.subject-nav{min-width:0;max-width:100%}
+.subject-dropdown{min-width:0;max-width:100%}
+.intro{min-width:0;gap:24px}
+.intro>div{min-width:0}
+.intro-actions{flex-wrap:wrap;justify-content:flex-end}
+@media(max-width:850px){
+  .intro{align-items:flex-start;flex-direction:column;gap:18px;padding-top:42px}
+  .intro-actions{width:100%;justify-content:flex-start}
+}
+
+
+/* Notes library polish: style the current card/action/filter markup explicitly. */
+.notes-section{min-width:0}
+.notes-section .section-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.notes-section .section-heading>div{min-width:0}
+.notes-section .sort-control{display:flex;align-items:center;gap:8px;color:var(--muted);font:600 11px var(--sans)}
+.notes-section .sort-control select,
+.note-filters select{min-height:38px;max-width:100%;padding:8px 30px 8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font:500 12px var(--sans)}
+.note-filters{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:18px 0 16px}
+.filter-chip,.clear-filters{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--ink);font:600 11px var(--sans);cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+.filter-chip:hover,.clear-filters:hover{border-color:var(--green);color:var(--green-dark)}
+.filter-chip.active{border-color:var(--green);background:color-mix(in srgb,var(--green) 11%,var(--paper));color:var(--green-dark)}
+.tag-filter{display:flex;align-items:center;gap:8px;color:var(--muted);font:600 11px var(--sans)}
+.notes-grid{align-items:stretch}
+.note-card{position:relative;min-width:0;min-height:210px;gap:0;padding:15px 15px 12px;background:var(--paper);border-color:var(--line)}
+.card-open{display:flex;flex:1 1 auto;flex-direction:column;align-items:stretch;width:100%;min-width:0;min-height:0;padding:0;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer}
+.card-open:focus-visible{outline:2px solid var(--green);outline-offset:4px;border-radius:5px}
+.card-top{display:flex;align-items:center;gap:8px;min-width:0;margin-bottom:12px}
+.note-index{flex:0 0 auto}
+.note-subject-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font:10px var(--mono)}
+.note-badges{display:flex;align-items:center;gap:6px;margin-left:auto;flex:0 0 auto;font-size:13px}
+.note-title{display:-webkit-box;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:2;margin:0 0 7px;color:var(--ink);font:700 15px/1.4 var(--display);letter-spacing:-.25px;overflow-wrap:anywhere}
+.note-preview{display:-webkit-box;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:3;margin:0 0 12px;color:var(--muted);font:12px/1.65 var(--sans);white-space:pre-wrap;overflow-wrap:anywhere}
+.card-tags{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 10px}
+.tag-chip{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:4px 7px;border:1px solid var(--line);border-radius:5px;background:color-mix(in srgb,var(--green) 6%,var(--paper));color:var(--muted);font:10px var(--sans)}
+.card-bottom{margin-top:auto;padding-top:10px;overflow-wrap:anywhere}
+.note-card-actions{display:flex;align-items:center;gap:6px;margin-top:10px;padding-top:9px;border-top:1px solid var(--line)}
+.note-card-actions button{display:inline-grid;place-items:center;flex:0 0 34px;width:34px;height:34px;min-width:34px;padding:0;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--muted);font:600 15px/1 var(--sans);cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+.note-card-actions button:hover{border-color:var(--line);background:color-mix(in srgb,var(--green) 8%,var(--paper));color:var(--green-dark)}
+.note-card-actions button:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.note-card-actions .metadata-action.selected{border-color:color-mix(in srgb,var(--green) 30%,var(--line));background:color-mix(in srgb,var(--green) 12%,var(--paper));color:var(--green-dark)}
+.note-card-actions .metadata-action[aria-label^="Remove favorite"]{color:#c28b26}
+.note-card-actions .delete-note{margin-left:auto;color:#a0aaa3}
+.note-card-actions .delete-note:hover{border-color:#e8c8c5;background:#fff5f4;color:#b42318}
+.note-card-actions button:disabled{opacity:.5;cursor:wait}
+.search-limit-note{color:var(--muted);font-size:12px}
+.pagination{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:22px 0}
+.pagination-summary,.pagination-actions{color:var(--muted);font:11px var(--sans)}
+.pagination-actions{display:flex;align-items:center;gap:10px}
+.pagination-actions button{min-height:36px;padding:8px 11px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--ink);font:600 11px var(--sans);cursor:pointer}
+.pagination-actions button:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:900px){.notes-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.note-card{min-height:200px}}
+@media(max-width:599px){
+  .notes-section .section-heading{align-items:flex-start}
+  .notes-section .sort-control{width:100%;justify-content:space-between}
+  .notes-section .sort-control select{flex:1;min-width:0}
+  .note-filters{gap:7px;margin:14px 0}
+  .filter-chip,.clear-filters{min-height:38px;padding:8px 10px}
+  .tag-filter{flex:1 1 100%;justify-content:space-between}
+  .tag-filter select{flex:1;min-width:0}
+  .notes-grid{grid-template-columns:minmax(0,1fr);gap:10px}
+  .note-card{min-height:0;padding:14px}
+  .note-title{font-size:15px}
+  .note-preview{-webkit-line-clamp:4}
+  .note-card-actions button{flex-basis:40px;width:40px;height:40px;min-width:40px}
+}
+@media(prefers-reduced-motion:reduce){.note-card,.note-card-actions button,.filter-chip{transition:none;animation:none}}
+
+
+/* Editor polish: keep the primary save action reachable while the form scrolls. */
+.editor-dialog form{padding-bottom:8px}
+.editor-dialog .submit-button{
+  position:sticky;
+  bottom:0;
+  z-index:4;
+  margin-top:12px;
+  box-shadow:0 -8px 18px color-mix(in srgb,var(--paper) 88%,transparent);
+}
+.editor-dialog .editor-toolbar button:hover{
+  border-color:var(--green);
+  background:color-mix(in srgb,var(--green) 8%,var(--paper));
+}
+.editor-dialog .editor-toolbar button:focus-visible,
+.editor-dialog .editor-tabs button:focus-visible,
+.editor-dialog .submit-button:focus-visible{
+  outline:2px solid var(--green);
+  outline-offset:2px;
+}
+.editor-dialog input:not([type="checkbox"]){min-width:0}
+.editor-dialog .answer-preview>*:first-child{margin-top:0}
+.editor-dialog .answer-preview>*:last-child{margin-bottom:0}
+@media(max-width:599px){
+  .editor-dialog form{padding-bottom:calc(8px + env(safe-area-inset-bottom))}
+  .editor-dialog .submit-button{bottom:0;min-height:48px}
+  .editor-dialog .editor-toolbar button{flex:0 0 auto}
+}
+
+
+/* Prevent favorite/pinned badges in the card header from crowding action buttons. */
+.note-card{overflow:hidden}
+.note-card .card-open{position:relative;z-index:0}
+.note-card .card-top{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:center;
+  column-gap:8px;
+  width:100%;
+}
+.note-card .note-subject-label{grid-column:2;min-width:0}
+.note-card .note-badges{
+  grid-column:3;
+  display:inline-flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:7px;
+  min-width:max-content;
+  margin:0;
+  padding:2px 0 2px 6px;
+  white-space:nowrap;
+  line-height:1.2;
+}
+.note-card .note-badges span{
+  display:inline-grid;
+  place-items:center;
+  flex:0 0 auto;
+  width:18px;
+  height:18px;
+}
+.note-card .note-card-actions{
+  position:relative;
+  z-index:1;
+  display:flex;
+  flex:0 0 auto;
+  width:100%;
+  min-width:0;
+  align-items:center;
+  gap:8px;
+}
+.note-card .note-card-actions button{
+  position:static;
+  flex:0 0 36px;
+  width:36px;
+  min-width:36px;
+  height:36px;
+}
+.note-card .note-card-actions .delete-note{margin-left:auto}
+@media(max-width:599px){
+  .note-card .card-top{column-gap:6px}
+  .note-card .note-badges{gap:5px;padding-left:4px}
+  .note-card .note-card-actions{gap:6px}
+  .note-card .note-card-actions button{
+    flex-basis:40px;
+    width:40px;
+    min-width:40px;
+    height:40px;
+  }
+}
+
+
+/* Visibility fix: preserve the original flex header and make all card actions visible. */
+.note-card .card-top{
+  display:flex;
+  flex-wrap:nowrap;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+}
+.note-card .note-subject-label{flex:1 1 auto;min-width:0}
+.note-card .note-badges{
+  display:flex;
+  flex:0 0 auto;
+  align-items:center;
+  justify-content:flex-end;
+  gap:6px;
+  min-width:0;
+  margin-left:auto;
+  padding:2px 0;
+}
+.note-card .note-card-actions{
+  display:flex !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  overflow:visible;
+  flex-wrap:nowrap;
+  align-items:center;
+}
+.note-card .note-card-actions button{
+  display:inline-grid !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  position:static !important;
+  place-items:center;
+  flex-shrink:0;
+  border:1px solid var(--line);
+  background:var(--paper);
+  color:var(--ink);
+  font-size:16px;
+  line-height:1;
+}
+.note-card .note-card-actions .metadata-action.selected{
+  border-color:var(--green);
+  background:var(--paper);
+  color:var(--green-dark);
+}
+.note-card .note-card-actions .metadata-action[aria-label^="Remove favorite"]{color:#b77912}
+.note-card .note-card-actions .edit-note{color:var(--ink)}
+.note-card .note-card-actions .delete-note{margin-left:auto;color:var(--muted)}
+.note-card .note-card-actions .delete-note:hover{color:#b42318;border-color:#e8c8c5}
+
+
+/* Structural fix: reserve a dedicated row for card actions instead of relying on flex growth. */
+.notes-grid .note-card{
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:minmax(0,1fr) auto;
+  align-content:stretch;
+  min-width:0;
+}
+.notes-grid .note-card > .card-open{
+  display:flex !important;
+  flex:none !important;
+  width:100%;
+  min-width:0;
+  min-height:0;
+  align-self:stretch;
+}
+.notes-grid .note-card > .note-card-actions{
+  display:flex !important;
+  flex:none !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  position:relative !important;
+  z-index:2;
+  min-height:48px;
+  width:100%;
+  margin-top:8px;
+  padding:8px 0 0;
+  border-top:1px solid var(--line);
+  overflow:visible !important;
+}
+.notes-grid .note-card > .note-card-actions > button{
+  display:inline-grid !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  flex:0 0 38px !important;
+  width:38px !important;
+  min-width:38px !important;
+  height:38px !important;
+  padding:0 !important;
+  place-items:center;
+  border:1px solid var(--line) !important;
+  border-radius:9px;
+  background:var(--paper) !important;
+  color:var(--ink) !important;
+  font:600 17px/1 var(--sans) !important;
+  cursor:pointer;
+}
+.notes-grid .note-card > .note-card-actions > .metadata-action[aria-pressed="true"]{
+  border-color:var(--green) !important;
+  background:color-mix(in srgb,var(--green) 12%,var(--paper)) !important;
+  color:var(--green-dark) !important;
+}
+.notes-grid .note-card > .note-card-actions > .delete-note{margin-left:auto}
+@media(max-width:599px){
+  .notes-grid .note-card > .note-card-actions{min-height:52px}
+  .notes-grid .note-card > .note-card-actions > button{
+    flex-basis:42px !important;
+    width:42px !important;
+    min-width:42px !important;
+    height:42px !important;
+  }
+}
