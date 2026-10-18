@@ -17,10 +17,11 @@ function json(data, status = 200, headers = {}) {
 export async function GET() {
   try {
     const db = await getDatabase();
-    const [subjects, notes, savedLinks] = await Promise.all([
+    const [subjects, notes, savedLinks, quickNotes] = await Promise.all([
       db.collection('subjects').find({}).sort({ order: 1, name: 1 }).toArray(),
       db.collection('notes').find({}).sort({ subject: 1, number: 1 }).toArray(),
       db.collection('savedLinks').find({}).sort({ order: 1, createdAt: -1 }).toArray(),
+      db.collection('quickNotes').find({}).sort({ updatedAt: -1, createdAt: -1 }).toArray(),
     ]);
 
     const backup = {
@@ -30,6 +31,7 @@ export async function GET() {
       subjects,
       notes,
       savedLinks,
+      quickNotes,
     };
     const filename = `enotes-backup-${new Date().toISOString().slice(0, 10)}.json`;
     return new Response(JSON.stringify(backup, null, 2), {
@@ -73,6 +75,7 @@ export async function POST(request) {
     const subjectsCollection = db.collection('subjects');
     const notesCollection = db.collection('notes');
     const savedLinksCollection = db.collection('savedLinks');
+    const quickNotesCollection = db.collection('quickNotes');
     const existingSubjects = await subjectsCollection.find({}).toArray();
     const existingSlugs = new Set(existingSubjects.map((subject) => subject.slug || subject._id));
     const existingSubjectBySlug = new Map(existingSubjects.map((subject) => [subject.slug || subject._id, subject]));
@@ -173,6 +176,31 @@ export async function POST(request) {
       }
     }
 
+    const existingQuickNoteIds = new Set((await quickNotesCollection.find({}, { projection: { _id: 1 } }).toArray()).map((note) => String(note._id)));
+    let quickNotesAdded = 0;
+    let quickNotesSkipped = 0;
+    for (const note of backup.quickNotes || []) {
+      const id = String(note.id || note._id);
+      if (existingQuickNoteIds.has(id)) {
+        quickNotesSkipped += 1;
+        continue;
+      }
+      try {
+        await quickNotesCollection.insertOne({
+          _id: id,
+          content: note.content,
+          title: typeof note.title === 'string' ? note.title : (String(note.content || '').split(/\r?\n/, 1)[0].trim().slice(0, 120) || 'New note'),
+          createdAt: note.createdAt ? new Date(note.createdAt) : new Date(),
+          updatedAt: note.updatedAt ? new Date(note.updatedAt) : new Date(),
+        });
+        existingQuickNoteIds.add(id);
+        quickNotesAdded += 1;
+      } catch (error) {
+        if (error?.code === 11000) quickNotesSkipped += 1;
+        else throw error;
+      }
+    }
+
     return json({
       ok: true,
       subjectsAdded: subjectsToInsert.length,
@@ -180,8 +208,10 @@ export async function POST(request) {
       notesSkipped,
       savedLinksAdded,
       savedLinksSkipped,
+      quickNotesAdded,
+      quickNotesSkipped,
       mode: 'merge',
-      message: 'Restore complete. Existing subjects, notes, and saved links were not overwritten.',
+      message: 'Restore complete. Existing subjects, notes, saved links, and quick notes were not overwritten.',
     });
   } catch (error) {
     console.error('POST /api/backup failed:', error);
