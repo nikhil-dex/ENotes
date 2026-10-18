@@ -29,28 +29,28 @@ export default function HomePage() {
         </a>
         <a className="hub-card" href="/settings">
           <span className="hub-card-icon" aria-hidden="true">⚙</span>
-          <span className="hub-card-kicker">02 · ORGANIZE</span>
+          <span className="hub-card-kicker">03 · ORGANIZE</span>
           <h2>Settings & backup <span aria-hidden="true">↗</span></h2>
           <p>Manage subjects, download a backup, restore missing records, and choose your theme.</p>
           <span className="hub-card-link">Open settings <span aria-hidden="true">→</span></span>
         </a>
         <a className="hub-card" href="/html-library">
           <span className="hub-card-icon" aria-hidden="true">⌘</span>
-          <span className="hub-card-kicker">03 · EXPLORE</span>
+          <span className="hub-card-kicker">04 · EXPLORE</span>
           <h2>HTML files <span aria-hidden="true">↗</span></h2>
           <p>Keep useful reference files and learning resources close at hand.</p>
           <span className="hub-card-link">View resources <span aria-hidden="true">→</span></span>
         </a>
         <a className="hub-card" href="/revision-history">
           <span className="hub-card-icon" aria-hidden="true">↶</span>
-          <span className="hub-card-kicker">04 · HISTORY</span>
+          <span className="hub-card-kicker">05 · HISTORY</span>
           <h2>Revision history <span aria-hidden="true">↗</span></h2>
           <p>Browse previous saved versions of your notes by subject and restore content when needed.</p>
           <span className="hub-card-link">Browse revisions <span aria-hidden="true">→</span></span>
         </a>
         <a className="hub-card" href="/import-guide">
           <span className="hub-card-icon" aria-hidden="true">⇧</span>
-          <span className="hub-card-kicker">05 · MIGRATE</span>
+          <span className="hub-card-kicker">06 · MIGRATE</span>
           <h2>Import guide <span aria-hidden="true">↗</span></h2>
           <p>Review how to bring your existing Markdown notes into ENotes.</p>
           <span className="hub-card-link">Read guide <span aria-hidden="true">→</span></span>
