@@ -20,6 +20,13 @@ export async function proxy(request) {
       return withSecurityHeaders(NextResponse.json({ error: 'Cross-origin requests are not allowed.' }, { status: 403 }));
     }
   }
+  // Temporary development mode: access protection is disabled unless explicitly enabled.
+  // Set ENOTES_ACCESS_GATE_ENABLED=true to restore the shared-key/session gate.
+  if (process.env.ENOTES_ACCESS_GATE_ENABLED !== 'true') {
+    if (pathname === '/access') return withSecurityHeaders(NextResponse.redirect(new URL('/', request.url)));
+    return withSecurityHeaders(NextResponse.next());
+  }
+
   const publicPaths = new Set([
     '/access', '/api/access/verify', '/api/access/logout', '/api/access/heartbeat', '/service-worker.js',
     '/style.css', '/extra.css', '/favicon.ico', '/robots.txt', '/sitemap.xml',
