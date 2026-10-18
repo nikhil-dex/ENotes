@@ -242,7 +242,7 @@ Do not expose database credentials in client-side code or commit them to source 
 
 Use **Download backup** in the dashboard to export ENotes metadata to a JSON file. Keep this file somewhere private because it contains your study notes and saved links.
 
-To restore, choose a backup JSON file from the dashboard. ENotes validates the file format, record limits, subject slugs, note identifiers, and content lengths before writing. Restore uses **merge-only** behavior: missing subjects and notes are added, existing subject metadata and note contents are not overwritten, and duplicate note IDs are skipped. Uploads are limited to 10 MB. Restore is not a substitute for an independent MongoDB backup; keep multiple copies of important backups.
+To restore, choose a backup JSON file from the dashboard. ENotes validates the file format, record limits, subject slugs, note identifiers, and content lengths before writing. Restore uses **merge-only** behavior: missing subjects and notes are added, existing subject metadata and note contents are not overwritten, and duplicate note IDs are skipped. Backup uploads are limited to 10 MB. Media backups include folder/file metadata only, not binary contents. Restore checks that referenced objects already exist in the configured private R2 bucket; a JSON backup alone cannot migrate the files. Keep the same R2 bucket and its objects available when restoring. Restore is not a substitute for an independent MongoDB backup; keep multiple copies of important backups.
 
 ## Release readiness
 
