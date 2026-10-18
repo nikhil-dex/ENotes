@@ -88,19 +88,31 @@ export async function POST(request) {
       return json({ error: 'This browser could not identify its device. Refresh the page and try again.' }, 400);
     }
 
-    // Keep one active device lease. Re-authentication from the same browser can
-    // renew its session, but a second browser cannot replace the active owner.
+    // Keep one active device session. A successful login on a new device
+    // replaces the previous session, so the previous device is signed out on
+    // its next request/heartbeat instead of blocking the new login.
     const sessionId = randomUUID();
+    const sessionNow = new Date();
     let activeSession;
     try {
       activeSession = await db.collection('settings').findOneAndUpdate(
-        { _id: 'active-device-session', deviceId },
-        { $set: { lastSeenAt: new Date() }, $setOnInsert: { sessionId, deviceId, createdAt: new Date() } },
+        { _id: 'active-device-session' },
+        {
+          $set: { sessionId, deviceId, lastSeenAt: sessionNow },
+          $setOnInsert: { createdAt: sessionNow },
+        },
         { upsert: true, returnDocument: 'after', includeResultMetadata: false },
       );
     } catch (error) {
-      if (error?.code === 11000) return json({ error: 'ENotes is already open on another device. Log out from that device before switching.' }, 409);
-      throw error;
+      // Two first-time logins can race to insert the singleton session record.
+      // If one wins the insert, retry as an update to replace that session.
+      if (error?.code !== 11000) throw error;
+      activeSession = await db.collection('settings').findOneAndUpdate(
+        { _id: 'active-device-session' },
+        { $set: { sessionId, deviceId, lastSeenAt: sessionNow } },
+        { returnDocument: 'after', includeResultMetadata: false },
+      );
+      if (!activeSession) throw error;
     }
     const expiresAt = Math.floor(Date.now() / 1000) + SESSION_SECONDS;
     const token = createSessionToken(sessionSecret, expiresAt, activeSession.sessionId);
