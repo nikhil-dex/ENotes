@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { getDatabase } from '../../../lib/mongodb.js';
 import { readLimitedBody } from '../../../lib/read-limited-body.js';
-import { hasValidMediaSignature, isValidFolderId, isValidMediaId, MAX_MEDIA_FILES, MAX_MEDIA_FOLDERS, normalizeFolderName, normalizeMediaFile } from '../../../lib/media-validation.js';
+import { hasValidMediaSignature, isValidFolderId, isValidMediaId, MAX_MEDIA_FILES, MAX_MEDIA_FOLDERS, MAX_MEDIA_TOTAL_BYTES, normalizeFolderName, normalizeMediaFile } from '../../../lib/media-validation.js';
 import { createPresignedUrl, deleteObject, headObject, readObjectPrefix } from '../../../lib/r2-storage.js';
 
 export const runtime = 'nodejs';
@@ -76,6 +76,13 @@ export async function POST(request) {
       if (!isValidFolderId(folderId)) return json({ error: 'Choose a valid folder.' }, 400);
       if (folderId && !await db.collection('mediaFolders').findOne({ _id: folderId })) return json({ error: 'Folder not found.' }, 404);
       if (await db.collection('mediaFiles').countDocuments({ status: { $ne: 'deleted' } }) >= MAX_MEDIA_FILES) return json({ error: 'The library has reached its file limit.' }, 400);
+      const usage = await db.collection('mediaFiles').aggregate([
+        { $match: { status: { $in: ['ready', 'pending'] } } },
+        { $group: { _id: null, bytes: { $sum: '$size' } } },
+      ]).toArray();
+      if ((usage[0]?.bytes || 0) + normalized.value.size > MAX_MEDIA_TOTAL_BYTES) {
+        return json({ error: 'The library has reached its 9 GiB tracked-storage safety limit. Delete unneeded files before uploading more.' }, 400);
+      }
       const id = randomUUID();
       const now = new Date();
       const file = {
