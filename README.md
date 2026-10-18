@@ -204,7 +204,8 @@ ENotes/
 │   ├── offline-notes.test.mjs
 │   ├── backup-integrity.test.mjs
 │   ├── release-readiness.test.mjs
-│   └── security-recovery.test.mjs
+│   ├── security-recovery.test.mjs
+│   └── media-library.test.mjs
 ├── scripts/
 │   ├── check-release-env.mjs
 │   ├── migrate-notes.mjs
