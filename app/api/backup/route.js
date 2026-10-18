@@ -17,9 +17,10 @@ function json(data, status = 200, headers = {}) {
 export async function GET() {
   try {
     const db = await getDatabase();
-    const [subjects, notes] = await Promise.all([
+    const [subjects, notes, savedLinks] = await Promise.all([
       db.collection('subjects').find({}).sort({ order: 1, name: 1 }).toArray(),
       db.collection('notes').find({}).sort({ subject: 1, number: 1 }).toArray(),
+      db.collection('savedLinks').find({}).sort({ order: 1, createdAt: -1 }).toArray(),
     ]);
 
     const backup = {
@@ -28,6 +29,7 @@ export async function GET() {
       exportedAt: new Date().toISOString(),
       subjects,
       notes,
+      savedLinks,
     };
     const filename = `enotes-backup-${new Date().toISOString().slice(0, 10)}.json`;
     return new Response(JSON.stringify(backup, null, 2), {
@@ -70,6 +72,7 @@ export async function POST(request) {
     const db = await getDatabase();
     const subjectsCollection = db.collection('subjects');
     const notesCollection = db.collection('notes');
+    const savedLinksCollection = db.collection('savedLinks');
     const existingSubjects = await subjectsCollection.find({}).toArray();
     const existingSlugs = new Set(existingSubjects.map((subject) => subject.slug || subject._id));
     const existingSubjectBySlug = new Map(existingSubjects.map((subject) => [subject.slug || subject._id, subject]));
@@ -141,13 +144,44 @@ export async function POST(request) {
       await subjectsCollection.updateOne({ _id: slug }, { $max: { nextNumber } });
     }
 
+    const existingSavedLinkIds = new Set((await savedLinksCollection.find({}, { projection: { _id: 1 } }).toArray()).map((link) => String(link._id)));
+    let savedLinksAdded = 0;
+    let savedLinksSkipped = 0;
+    for (const link of backup.savedLinks || []) {
+      const id = String(link.id || link._id);
+      if (existingSavedLinkIds.has(id)) {
+        savedLinksSkipped += 1;
+        continue;
+      }
+      try {
+        await savedLinksCollection.insertOne({
+          _id: id,
+          title: link.title.trim(),
+          url: new URL(link.url).toString(),
+          description: link.description || '',
+          category: link.category || '',
+          tags: Array.isArray(link.tags) ? link.tags : [],
+          order: Number.isInteger(link.order) && link.order >= 0 ? link.order : existingSavedLinkIds.size,
+          createdAt: link.createdAt ? new Date(link.createdAt) : new Date(),
+          updatedAt: link.updatedAt ? new Date(link.updatedAt) : new Date(),
+        });
+        existingSavedLinkIds.add(id);
+        savedLinksAdded += 1;
+      } catch (error) {
+        if (error?.code === 11000) savedLinksSkipped += 1;
+        else throw error;
+      }
+    }
+
     return json({
       ok: true,
       subjectsAdded: subjectsToInsert.length,
       notesAdded,
       notesSkipped,
+      savedLinksAdded,
+      savedLinksSkipped,
       mode: 'merge',
-      message: 'Restore complete. Existing subjects and notes were not overwritten.',
+      message: 'Restore complete. Existing subjects, notes, and saved links were not overwritten.',
     });
   } catch (error) {
     console.error('POST /api/backup failed:', error);
