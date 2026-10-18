@@ -16,6 +16,7 @@
     "test": "node --test"
   },
   "dependencies": {
+    "@vercel/blob": "^2.8.2",
     "mongodb": "^6.21.0",
     "next": "^16.4.1",
     "react": "^19.2.0",

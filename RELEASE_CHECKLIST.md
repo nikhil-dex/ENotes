@@ -14,40 +14,27 @@ Use this checklist before calling a production release complete. CI validates co
 - [ ] Set `MONGODB_URI` to the production MongoDB connection URI.
 - [ ] Set `MONGODB_DB` to the intended production database name.
 - [ ] Set `ENOTES_SESSION_SECRET` to a private, randomly generated value with at least 32 characters. Keep it stable across routine deployments.
-- [ ] Do not use values from `.env.example` in production.
-- [ ] Configure MongoDB network access and a database user with only the permissions the application requires.
-- [ ] Confirm credentials and secrets are stored only in the hosting provider's environment settings and trusted local secret storage.
+- [ ] Do not use a production database for restore tests unless the operation has been reviewed and explicitly approved.
+- [ ] Confirm no storage token, access string, or other secret appears in browser bundles or committed files.
 
-## 3. Deployment smoke tests
+## 3. Image & PDF Library (separate detour)
 
-Run these checks against the deployed app using a valid access session:
+- [ ] Connect a private Vercel Blob store to the project and confirm `OGE_STORE_ID` is set in the intended environments.
+- [ ] Confirm Vercel OIDC is available at runtime; never expose storage credentials to browser code.
+- [ ] Verify unauthenticated requests cannot reach media APIs and the app streams private content only after session authentication.
+- [ ] Upload, preview, download, move, and delete disposable files using a non-production database and private Blob store.
+- [ ] Confirm invalid MIME/signature combinations and oversized uploads are rejected.
+- [ ] Remember JSON backups include media metadata only; keep the private Blob store and binary objects separately available.
+- [ ] Monitor stored bytes and monthly data transfer; the app's 8 GB tracked ceiling does not guarantee zero provider charges.
 
-- [ ] The access page loads and valid shared access grants a session.
-- [ ] An invalid access string is rejected.
-- [ ] An unauthenticated request to a protected page redirects to `/access`.
-- [ ] Notes, subjects, Settings, and the HTML resource pages load.
-- [ ] Create, edit, search, read, and delete a disposable test note; confirm the change persists after a reload.
-- [ ] Create and remove a disposable test subject only after confirming it contains no needed notes.
-- [ ] Confirm browser theme and learned-note state behave as expected.
+## 4. Backup and restore
 
-## 4. Backup and recovery
+- [ ] Create a fresh JSON backup and verify its format and timestamp.
+- [ ] Restore into a disposable or otherwise approved test database.
+- [ ] Confirm the restore reports added/skipped records accurately and preserves existing data.
+- [ ] Keep the backup outside the public web root and do not commit it to the repository.
 
-- [ ] Download a fresh JSON backup and store it privately outside the repository.
-- [ ] Verify the downloaded file is non-empty valid JSON and includes the expected subject and note counts.
-- [ ] Use a staging/test database to verify restoring a backup adds missing records and does not overwrite existing notes.
-- [ ] Test an invalid backup file and an oversized file; both should be rejected without modifying data.
-- [ ] Confirm the reported restore counts and inspect the restored data in the test database.
-- [ ] Do not run destructive restore experiments against production data.
+## 5. Final release decision
 
-## 5. Final sign-off
-
-- [ ] Inspect hosting logs after smoke tests; investigate unexpected 4xx/5xx errors.
-- [ ] Confirm the deployment is healthy after a fresh session and a second page load.
-- [ ] Record the deployed commit SHA, verification date, and any known limitations.
-- [ ] If any required check fails, pause release sign-off and fix the issue before proceeding.
-
-## Important limitations
-
-- The environment checker validates presence and basic format only; it does not connect to MongoDB or verify credentials.
-- CI uses test-only environment values and does not access production data.
-- Backup restore is merge-only and can partially add records if a database operation fails. Always keep a fresh backup and validate recovery against a staging database before relying on it.
+- [ ] Recheck the current branch, commit, tests, and deployment status.
+- [ ] Review changes and approve production deployment explicitly before releasing.

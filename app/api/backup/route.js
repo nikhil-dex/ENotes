@@ -1,6 +1,8 @@
 import { getDatabase } from '../../../lib/mongodb.js';
 import { MAX_BACKUP_BYTES, validateBackup } from '../../../lib/backup-validation.js';
 import { readLimitedBody } from '../../../lib/read-limited-body.js';
+import { headObject } from '../../../lib/blob-storage.js';
+import { MAX_MEDIA_TOTAL_BYTES } from '../../../lib/media-validation.js';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -17,11 +19,13 @@ function json(data, status = 200, headers = {}) {
 export async function GET() {
   try {
     const db = await getDatabase();
-    const [subjects, notes, savedLinks, quickNotes] = await Promise.all([
+    const [subjects, notes, savedLinks, quickNotes, mediaFolders, mediaFiles] = await Promise.all([
       db.collection('subjects').find({}).sort({ order: 1, name: 1 }).toArray(),
       db.collection('notes').find({}).sort({ subject: 1, number: 1 }).toArray(),
       db.collection('savedLinks').find({}).sort({ order: 1, createdAt: -1 }).toArray(),
       db.collection('quickNotes').find({}).sort({ updatedAt: -1, createdAt: -1 }).toArray(),
+      db.collection('mediaFolders').find({}).sort({ name: 1 }).toArray(),
+      db.collection('mediaFiles').find({ status: 'ready' }).sort({ updatedAt: -1, createdAt: -1 }).toArray(),
     ]);
 
     const backup = {
@@ -32,6 +36,9 @@ export async function GET() {
       notes,
       savedLinks,
       quickNotes,
+      mediaFolders,
+      mediaFiles,
+      mediaBackupMode: 'metadata-only',
     };
     const filename = `enotes-backup-${new Date().toISOString().slice(0, 10)}.json`;
     return new Response(JSON.stringify(backup, null, 2), {
@@ -72,6 +79,27 @@ export async function POST(request) {
     if (validationError) return json({ error: validationError }, 400);
 
     const db = await getDatabase();
+
+    // Verify storage objects before any restore writes, so missing private Blob configuration
+    // or a storage outage cannot leave a half-restored backup.
+    const existingMediaIds = new Set((await db.collection('mediaFiles').find({}, { projection: { _id: 1 } }).toArray()).map((file) => String(file._id)));
+    const verifiedMediaFiles = [];
+    let mediaFilesSkipped = 0;
+    for (const file of backup.mediaFiles || []) {
+      if (existingMediaIds.has(String(file._id))) { mediaFilesSkipped += 1; continue; }
+      const object = await headObject(file.objectKey);
+      if (!object.exists || (object.size !== file.size)) { mediaFilesSkipped += 1; continue; }
+      verifiedMediaFiles.push(file);
+    }
+    const currentMediaUsage = await db.collection('mediaFiles').aggregate([
+      { $match: { status: { $in: ['ready', 'pending'] } } },
+      { $group: { _id: null, bytes: { $sum: '$size' } } },
+    ]).toArray();
+    const incomingMediaBytes = verifiedMediaFiles.reduce((total, file) => total + file.size, 0);
+    if ((currentMediaUsage[0]?.bytes || 0) + incomingMediaBytes > MAX_MEDIA_TOTAL_BYTES) {
+      return json({ error: 'Restoring these media records would exceed the 8 GB tracked-storage safety limit.' }, 400);
+    }
+
     const subjectsCollection = db.collection('subjects');
     const notesCollection = db.collection('notes');
     const savedLinksCollection = db.collection('savedLinks');
@@ -201,8 +229,52 @@ export async function POST(request) {
       }
     }
 
+    const mediaFoldersCollection = db.collection('mediaFolders');
+    const existingMediaFolderIds = new Set((await mediaFoldersCollection.find({}, { projection: { _id: 1 } }).toArray()).map((folder) => String(folder._id)));
+    let mediaFoldersAdded = 0;
+    for (const folder of backup.mediaFolders || []) {
+      if (existingMediaFolderIds.has(String(folder._id))) continue;
+      try {
+        await mediaFoldersCollection.insertOne({
+          _id: folder._id,
+          name: folder.name.trim(),
+          createdAt: folder.createdAt ? new Date(folder.createdAt) : new Date(),
+          updatedAt: folder.updatedAt ? new Date(folder.updatedAt) : new Date(),
+        });
+        existingMediaFolderIds.add(String(folder._id));
+        mediaFoldersAdded += 1;
+      } catch (error) {
+        if (error?.code !== 11000) throw error;
+      }
+    }
+
+    let mediaFilesAdded = 0;
+    for (const file of verifiedMediaFiles) {
+      try {
+        await db.collection('mediaFiles').insertOne({
+          _id: file._id,
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          extension: file.extension || file.name.slice(file.name.lastIndexOf('.')).toLowerCase(),
+          folderId: file.folderId || null,
+          objectKey: file.objectKey,
+          status: 'ready',
+          createdAt: file.createdAt ? new Date(file.createdAt) : new Date(),
+          updatedAt: file.updatedAt ? new Date(file.updatedAt) : new Date(),
+        });
+        mediaFilesAdded += 1;
+      } catch (error) {
+        if (error?.code === 11000) mediaFilesSkipped += 1;
+        else throw error;
+      }
+    }
+
     return json({
       ok: true,
+      mediaFoldersAdded,
+      mediaFilesAdded,
+      mediaFilesSkipped,
       subjectsAdded: subjectsToInsert.length,
       notesAdded,
       notesSkipped,
@@ -211,7 +283,7 @@ export async function POST(request) {
       quickNotesAdded,
       quickNotesSkipped,
       mode: 'merge',
-      message: 'Restore complete. Existing subjects, notes, saved links, and quick notes were not overwritten.',
+      message: 'Restore complete. Existing records were not overwritten. Media JSON contains metadata only; verified objects must already exist in the configured private Vercel Blob store.',
     });
   } catch (error) {
     console.error('POST /api/backup failed:', error);
