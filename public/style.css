@@ -553,3 +553,54 @@
     height:40px;
   }
 }
+
+
+/* Visibility fix: preserve the original flex header and make all card actions visible. */
+.note-card .card-top{
+  display:flex;
+  flex-wrap:nowrap;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+}
+.note-card .note-subject-label{flex:1 1 auto;min-width:0}
+.note-card .note-badges{
+  display:flex;
+  flex:0 0 auto;
+  align-items:center;
+  justify-content:flex-end;
+  gap:6px;
+  min-width:0;
+  margin-left:auto;
+  padding:2px 0;
+}
+.note-card .note-card-actions{
+  display:flex !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  overflow:visible;
+  flex-wrap:nowrap;
+  align-items:center;
+}
+.note-card .note-card-actions button{
+  display:inline-grid !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  position:static !important;
+  place-items:center;
+  flex-shrink:0;
+  border:1px solid var(--line);
+  background:var(--paper);
+  color:var(--ink);
+  font-size:16px;
+  line-height:1;
+}
+.note-card .note-card-actions .metadata-action.selected{
+  border-color:var(--green);
+  background:var(--paper);
+  color:var(--green-dark);
+}
+.note-card .note-card-actions .metadata-action[aria-label^="Remove favorite"]{color:#b77912}
+.note-card .note-card-actions .edit-note{color:var(--ink)}
+.note-card .note-card-actions .delete-note{margin-left:auto;color:var(--muted)}
+.note-card .note-card-actions .delete-note:hover{color:#b42318;border-color:#e8c8c5}
