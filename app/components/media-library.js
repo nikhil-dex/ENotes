@@ -129,13 +129,13 @@ export default function MediaLibrary() {
   async function downloadFile(file) {
     setBusy(true); setError('');
     try {
-      const result = await readResponse(await fetch('/api/media?action=download&id=' + encodeURIComponent(file.id), { cache: 'no-store' }));
+      const result = await readResponse(await fetch('/api/media?action=download&disposition=attachment&id=' + encodeURIComponent(file.id), { cache: 'no-store' }));
       const link = document.createElement('a');
       link.href = result.url;
       link.download = file.name;
       link.rel = 'noopener';
       document.body.appendChild(link); link.click(); link.remove();
-      setMessage('A private download link was created. If the download does not start, open the preview and use its download control.');
+      setMessage('Download started using a short-lived private link.');
     } catch (err) { setError(err.message || 'Could not download this file.'); }
     finally { setBusy(false); }
   }
