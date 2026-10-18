@@ -133,8 +133,7 @@ Set these variables in `.env.local` for local development and in your hosting pr
 | `GEMINI_MODEL` | No | Primary Gemini model ID; defaults to `gemini-3.8-flash`. |
 | `GEMINI_FALLBACK_MODEL` | No | Fallback model after a primary-model HTTP 429; defaults to `gemini-3.6-flash`. |
 | `OGE_STORE_ID` | Optional for My Files | Vercel Blob store ID used by the private media library. |
-| `Vercel Blob store (identified by OGE_STORE_ID)` | Optional for My Files | Private Vercel Blob store connected to the project. |
-| `VERCEL_OIDC_TOKEN` | Optional for My Files | Vercel-provided runtime OIDC token used with OGE_STORE_ID; do not copy or expose it. |
+| `VERCEL_OIDC_TOKEN` | Injected by Vercel | Runtime OIDC token used with `OGE_STORE_ID`; do not set it manually, copy it, or expose it. |
 | `OGE_WEBHOOK_PUBLIC_KEY` | Optional for My Files | Optional Blob webhook verification key; not used by the current upload flow. |
 
 Example configuration:
