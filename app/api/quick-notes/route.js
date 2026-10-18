@@ -12,7 +12,7 @@ function json(data, status = 200) {
 
 async function readJson(request) {
   try {
-    return { data: JSON.parse(await readLimitedBody(request, 24 * 1024)) };
+    return { data: JSON.parse(await readLimitedBody(request, 96 * 1024)) };
   } catch (error) {
     return { error: json({ error: error?.status === 413 ? 'Request body is too large.' : 'Enter valid JSON.' }, error?.status || 400) };
   }
