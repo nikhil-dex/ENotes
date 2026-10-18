@@ -58,6 +58,13 @@ export default function HomePage() {
           <p>Review how to bring your existing Markdown notes into ENotes.</p>
           <span className="hub-card-link">Read guide <span aria-hidden="true">→</span></span>
         </a>
+        <a className="hub-card" href="/files">
+          <span className="hub-card-icon" aria-hidden="true">▧</span>
+          <span className="hub-card-kicker">07 · COLLECT</span>
+          <h2>Image & PDF library <span aria-hidden="true">↗</span></h2>
+          <p>Privately store images and PDFs, organize them into folders, preview, and download them.</p>
+          <span className="hub-card-link">Open My Files <span aria-hidden="true">→</span></span>
+        </a>
       </section>
 
       <footer><span>Built for learning, one note at a time.</span><span>ENOTES · YOUR PRIVATE WORKSPACE</span></footer>
