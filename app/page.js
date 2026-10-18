@@ -8,7 +8,7 @@ export default function HomePage() {
       <section className="hub-hero">
         <p className="eyebrow">YOUR PERSONAL KNOWLEDGE SPACE</p>
         <h1>Everything you learn,<br /><span>in one place.</span></h1>
-        <p className="hub-lead">A calmer home for your notes, revision history, and library settings. Choose where you want to go.</p>
+        <p className="hub-lead">A calmer home for your notes, saved links, revision history, and learning resources. Choose where you want to go.</p>
         <a className="add-button hub-primary" href="/notes"><span aria-hidden="true">↗</span> Open notes</a>
       </section>
 
@@ -19,6 +19,13 @@ export default function HomePage() {
           <h2>Notes library <span aria-hidden="true">↗</span></h2>
           <p>Browse subjects, search your notes, write new entries, and revise with flashcards.</p>
           <span className="hub-card-link">Open library <span aria-hidden="true">→</span></span>
+        </a>
+        <a className="hub-card" href="/saved-links">
+          <span className="hub-card-icon" aria-hidden="true">↗</span>
+          <span className="hub-card-kicker">02 · COLLECT</span>
+          <h2>Saved links <span aria-hidden="true">↗</span></h2>
+          <p>Save useful websites, documentation, tools, and references. Search, copy, reorder, or open them in one tap.</p>
+          <span className="hub-card-link">Open saved links <span aria-hidden="true">→</span></span>
         </a>
         <a className="hub-card" href="/settings">
           <span className="hub-card-icon" aria-hidden="true">⚙</span>
