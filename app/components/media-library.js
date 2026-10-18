@@ -83,7 +83,7 @@ export default function MediaLibrary() {
   }
 
   async function deleteFolder(folder) {
-    if (!window.confirm(`Delete the empty folder “${folder.name}”?`)) return;
+    if (!window.confirm(`Delete folder “${folder.name}” and permanently delete all files inside it from private storage? This cannot be undone.`)) return;
     setBusy(true); setError(''); setMessage('');
     try {
       await readResponse(await fetch('/api/media?id=' + encodeURIComponent(folder.id) + '&type=folder', { method: 'DELETE' }));
