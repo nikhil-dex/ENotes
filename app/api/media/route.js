@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { getDatabase } from '../../../lib/mongodb.js';
 import { readLimitedBody } from '../../../lib/read-limited-body.js';
 import { hasValidMediaSignature, isValidFolderId, isValidMediaId, MAX_MEDIA_FILES, MAX_MEDIA_FOLDERS, MAX_MEDIA_TOTAL_BYTES, normalizeFolderName, normalizeMediaFile } from '../../../lib/media-validation.js';
-import { createPresignedUrl, deleteObject, headObject, readObjectPrefix } from '../../../lib/r2-storage.js';
+import { createPresignedUrl, deleteObject, getObject, headObject, readObjectPrefix } from '../../../lib/blob-storage.js';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -28,14 +28,35 @@ export async function GET(request) {
   try {
     const db = await getDatabase();
     const params = new URL(request.url).searchParams;
+    if (params.get('action') === 'content') {
+      const id = params.get('id') || '';
+      if (!isValidMediaId(id)) return json({ error: 'Choose a valid file.' }, 400);
+      const file = await db.collection('mediaFiles').findOne({ _id: id, status: 'ready' });
+      if (!file) return json({ error: 'File not found.' }, 404);
+      const object = await getObject(file.objectKey, request.headers.get('range') || undefined);
+      if (!object || !object.stream) return json({ error: 'File content was not found in private storage.' }, 404);
+      const contentRange = object.headers.get('content-range');
+      const disposition = params.get('disposition') === 'attachment' ? 'attachment' : 'inline';
+      const safeName = file.name.replace(/[^\x20-\x7E]|["\\\r\n]/g, '_') || 'download';
+      const headers = {
+        'Content-Type': file.type,
+        'Content-Length': object.headers.get('content-length') || String(file.size),
+        'Content-Disposition': `${disposition}; filename="${safeName}"`,
+        'Cache-Control': 'private, no-store, max-age=0',
+        'X-Content-Type-Options': 'nosniff',
+        'Accept-Ranges': 'bytes',
+      };
+      if (contentRange) headers['Content-Range'] = contentRange;
+      return new Response(object.stream, { status: contentRange ? 206 : 200, headers });
+    }
     if (params.get('action') === 'download') {
       const id = params.get('id') || '';
       if (!isValidMediaId(id)) return json({ error: 'Choose a valid file.' }, 400);
       const file = await db.collection('mediaFiles').findOne({ _id: id, status: 'ready' });
       if (!file) return json({ error: 'File not found.' }, 404);
-      const disposition = params.get('disposition') === 'attachment' ? `attachment; filename="${file.name.replace(/["\\\\\r\n]/g, '_')}"` : '';
-      const url = createPresignedUrl('GET', file.objectKey, 300, new Date(), disposition);
-      return json({ url, expiresIn: 300, file: serialize(file) });
+      const attachment = params.get('disposition') === 'attachment' ? '&disposition=attachment' : '';
+      const url = `/api/media?action=content&id=${encodeURIComponent(id)}${attachment}`;
+      return json({ url, file: serialize(file) });
     }
     const folderId = params.get('folderId') || null;
     if (!isValidFolderId(folderId)) return json({ error: 'Choose a valid folder.' }, 400);
@@ -49,7 +70,7 @@ export async function GET(request) {
     return json({ folders: folders.map(serialize), files: files.map(serialize), currentFolderId: folderId });
   } catch (error) {
     console.error('GET /api/media failed:', error);
-    return json({ error: error.message?.includes('R2 environment') || error.message?.includes('storage is not configured') ? error.message : 'Could not load the file library. Check the database and private storage configuration.' }, 500);
+    return json({ error: error.message?.includes('OGE_STORE_ID') || error.message?.includes('storage is not configured') ? error.message : 'Could not load the file library. Check the database and private storage configuration.' }, 500);
   }
 }
 
@@ -99,7 +120,8 @@ export async function POST(request) {
       };
       await db.collection('mediaFiles').insertOne(file);
       try {
-        return json({ id, uploadUrl: createPresignedUrl('PUT', file.objectKey, 300), expiresIn: 300 }, 201);
+        const uploadUrl = await createPresignedUrl('PUT', file.objectKey, 300, { contentType: file.type, size: file.size });
+        return json({ id, uploadUrl, expiresIn: 300 }, 201);
       } catch (error) {
         await db.collection('mediaFiles').deleteOne({ _id: id, status: 'pending' });
         throw error;
@@ -123,7 +145,7 @@ export async function POST(request) {
       if (!file) return json({ error: 'Pending upload not found. Start the upload again.' }, 404);
       const object = await headObject(file.objectKey);
       if (!object.exists) return json({ error: 'The upload could not be verified in private storage.' }, 409);
-      if (object.size && object.size !== file.size) {
+      if (object.size !== file.size) {
         await deleteObject(file.objectKey);
         await db.collection('mediaFiles').deleteOne({ _id: id, status: 'pending' });
         return json({ error: 'The uploaded file size did not match. Please upload it again.' }, 400);
@@ -145,7 +167,7 @@ export async function POST(request) {
     return json({ error: 'Unsupported file-library action.' }, 400);
   } catch (error) {
     console.error('POST /api/media failed:', error);
-    return json({ error: error.message?.includes('storage is not configured') || error.message?.includes('R2_') ? error.message : 'Could not complete the file-library request. Check private storage configuration.' }, 500);
+    return json({ error: error.message?.includes('storage is not configured') || error.message?.includes('OGE_STORE_ID') ? error.message : 'Could not complete the file-library request. Check private storage configuration.' }, 500);
   }
 }
 
