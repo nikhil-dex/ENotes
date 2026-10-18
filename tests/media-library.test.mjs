@@ -64,7 +64,9 @@ test('creates short-lived signed URLs without exposing public bucket access', ()
     assert.equal(url.searchParams.get('X-Amz-Algorithm'), 'AWS4-HMAC-SHA256');
     assert.match(url.searchParams.get('X-Amz-Signature') || '', /^[a-f0-9]{64}$/);
     assert.equal(url.searchParams.has('X-Amz-Signature'), true);
-    assert.match(createPresignedUrl('GET', 'media/f47ac10b-58cc-4372-a567-0e02b2c3d479', 300, new Date('2026-10-18T12:00:00.000Z'), 'attachment; filename="lecture.pdf"'), /response-content-disposition=attachment/);
+    const downloadUrl = new URL(createPresignedUrl('GET', 'media/f47ac10b-58cc-4372-a567-0e02b2c3d479', 300, new Date('2026-10-18T12:00:00.000Z'), 'attachment; filename="lecture.pdf"'));
+    assert.match(downloadUrl.searchParams.get('response-content-disposition') || '', /^attachment/);
+    assert.ok(downloadUrl.searchParams.get('X-Amz-Signature'));
     assert.throws(() => createPresignedUrl('GET', 'private/other', 300), /Invalid storage object key/);
     assert.throws(() => createPresignedUrl('GET', 'media/f47ac10b-58cc-4372-a567-0e02b2c3d479', 3600), /1–900/);
   } finally {
