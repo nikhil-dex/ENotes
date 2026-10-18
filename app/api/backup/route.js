@@ -1,7 +1,7 @@
 import { getDatabase } from '../../../lib/mongodb.js';
 import { MAX_BACKUP_BYTES, validateBackup } from '../../../lib/backup-validation.js';
 import { readLimitedBody } from '../../../lib/read-limited-body.js';
-import { headObject } from '../../../lib/r2-storage.js';
+import { headObject } from '../../../lib/blob-storage.js';
 import { MAX_MEDIA_TOTAL_BYTES } from '../../../lib/media-validation.js';
 
 export const runtime = 'nodejs';
@@ -80,7 +80,7 @@ export async function POST(request) {
 
     const db = await getDatabase();
 
-    // Verify storage objects before any restore writes, so missing R2 configuration
+    // Verify storage objects before any restore writes, so missing private Blob configuration
     // or a storage outage cannot leave a half-restored backup.
     const existingMediaIds = new Set((await db.collection('mediaFiles').find({}, { projection: { _id: 1 } }).toArray()).map((file) => String(file._id)));
     const verifiedMediaFiles = [];
@@ -88,7 +88,7 @@ export async function POST(request) {
     for (const file of backup.mediaFiles || []) {
       if (existingMediaIds.has(String(file._id))) { mediaFilesSkipped += 1; continue; }
       const object = await headObject(file.objectKey);
-      if (!object.exists || (object.size && object.size !== file.size)) { mediaFilesSkipped += 1; continue; }
+      if (!object.exists || (object.size !== file.size)) { mediaFilesSkipped += 1; continue; }
       verifiedMediaFiles.push(file);
     }
     const currentMediaUsage = await db.collection('mediaFiles').aggregate([
@@ -283,7 +283,7 @@ export async function POST(request) {
       quickNotesAdded,
       quickNotesSkipped,
       mode: 'merge',
-      message: 'Restore complete. Existing records were not overwritten. Media JSON contains metadata only; verified objects must already exist in the configured private R2 bucket.',
+      message: 'Restore complete. Existing records were not overwritten. Media JSON contains metadata only; verified objects must already exist in the configured private Vercel Blob store.',
     });
   } catch (error) {
     console.error('POST /api/backup failed:', error);
