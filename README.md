@@ -39,7 +39,7 @@ A subject-based study notes application built with **Next.js**, **React**, and *
 - **JSON backup and restore** — download a full backup and safely merge missing records from a validated backup without overwriting existing notes.
 - **Starter note import** — migrate the Markdown files in `notes/` into MongoDB using the included script.
 - **Additional learning resources** — includes HTML library and import-guide pages.
-- **Private Image & PDF Library (detour)** — organize PDF, JPEG, PNG, and WebP files into folders, preview and download them using short-lived signed links, and keep binary files in a private Cloudflare R2 bucket.
+- **Private Image & PDF Library (detour)** — organize PDF, JPEG, PNG, and WebP files into folders, preview and download them using short-lived signed links, and keep binary files in a private Vercel Blob store.
 
 ## Tech stack
 
@@ -132,10 +132,10 @@ Set these variables in `.env.local` for local development and in your hosting pr
 | `GEMINI_API_KEY` | Optional for Gemini cleanup | Server-side Google Gemini API key. Never expose it in client-side code or commit the value. |
 | `GEMINI_MODEL` | No | Primary Gemini model ID; defaults to `gemini-3.8-flash`. |
 | `GEMINI_FALLBACK_MODEL` | No | Fallback model after a primary-model HTTP 429; defaults to `gemini-3.6-flash`. |
-| `R2_ACCOUNT_ID` | Optional for My Files | Cloudflare account ID used by the private media library. |
-| `R2_BUCKET_NAME` | Optional for My Files | Name of the private R2 bucket. |
-| `R2_ACCESS_KEY_ID` | Optional for My Files | Server-side R2 S3-compatible access key ID, scoped to the bucket. |
-| `R2_SECRET_ACCESS_KEY` | Optional for My Files | Server-side R2 S3-compatible secret. Never expose or commit it. |
+| `OGE_STORE_ID` | Optional for My Files | Vercel Blob store ID used by the private media library. |
+| `Vercel Blob store (identified by OGE_STORE_ID)` | Optional for My Files | Private Vercel Blob store connected to the project. |
+| `VERCEL_OIDC_TOKEN` | Optional for My Files | Vercel-provided runtime OIDC token used with OGE_STORE_ID; do not copy or expose it. |
+| `OGE_WEBHOOK_PUBLIC_KEY` | Optional for My Files | Optional Blob webhook verification key; not used by the current upload flow. |
 
 Example configuration:
 
@@ -194,7 +194,7 @@ ENotes/
 ├── lib/
 │   ├── access-session.js  # Signed session creation and validation
 │   ├── media-validation.js # File, folder, and signature validation
-│   ├── r2-storage.js      # Private R2 signed URL and object operations
+│   ├── blob-storage.js    # Private Vercel Blob signed URL and object operations
 │   ├── offline-notes.js   # Browser cache helpers for offline reading
 │   ├── backup-validation.js # Backup schema validation
 │   ├── read-limited-body.js # Bounded request-body reader
@@ -223,7 +223,7 @@ The application stores these main kinds of documents:
 - **Subjects** — subject name, slug, display order, next note number, and related metadata.
 - **Notes** — subject slug, note number, heading, content, and saved-time metadata.
 - **Media folders** — UUID, folder name, and creation/update timestamps.
-- **Media files** — UUID, display name, MIME type, size, folder ID, generated private object key, status, and timestamps. Binary contents are stored in the private R2 bucket, not MongoDB.
+- **Media files** — UUID, display name, MIME type, size, folder ID, generated private object key, status, and timestamps. Binary contents are stored in the private Vercel Blob store, not MongoDB.
 
 MongoDB indexes support subject lookup and note ordering, with a unique constraint on the subject-and-note-number pair.
 
@@ -243,7 +243,7 @@ Do not expose database credentials in client-side code or commit them to source 
 
 Use **Download backup** in the dashboard to export ENotes metadata to a JSON file. Keep this file somewhere private because it contains your study notes and saved links.
 
-To restore, choose a backup JSON file from the dashboard. ENotes validates the file format, record limits, subject slugs, note identifiers, and content lengths before writing. Restore uses **merge-only** behavior: missing subjects and notes are added, existing subject metadata and note contents are not overwritten, and duplicate note IDs are skipped. Backup uploads are limited to 10 MB. Media backups include folder/file metadata only, not binary contents. Restore checks that referenced objects already exist in the configured private R2 bucket; a JSON backup alone cannot migrate the files. Keep the same R2 bucket and its objects available when restoring. Restore is not a substitute for an independent MongoDB backup; keep multiple copies of important backups.
+To restore, choose a backup JSON file from the dashboard. ENotes validates the file format, record limits, subject slugs, note identifiers, and content lengths before writing. Restore uses **merge-only** behavior: missing subjects and notes are added, existing subject metadata and note contents are not overwritten, and duplicate note IDs are skipped. Backup uploads are limited to 10 MB. Media backups include folder/file metadata only, not binary contents. Restore checks that referenced objects already exist in the configured private Vercel Blob store; a JSON backup alone cannot migrate the files. Keep the same private Blob store and its objects available when restoring. Restore is not a substitute for an independent MongoDB backup; keep multiple copies of important backups.
 
 ## Release readiness
 
@@ -259,7 +259,7 @@ This is a format check only; it does **not** connect to MongoDB, validate creden
 
 ## Private Image & PDF Library setup
 
-The optional My Files page uses a private Cloudflare R2 bucket for binary data and MongoDB for metadata. See [docs/IMAGE-PDF-LIBRARY.md](docs/IMAGE-PDF-LIBRARY.md) for bucket-scoped credentials, exact-origin CORS, and local testing instructions. The feature accepts PDF, JPEG, PNG, and WebP files up to 20 MB each. Do not enable a public bucket or commit R2 credentials.
+The optional My Files page uses a private Vercel Blob store for binary data and MongoDB for metadata. See [docs/IMAGE-PDF-LIBRARY.md](docs/IMAGE-PDF-LIBRARY.md) for OGE_STORE_ID setup and local testing instructions. The feature accepts PDF, JPEG, PNG, and WebP files up to 20 MiB each. Keep the Blob store private and never commit storage credentials.
 
 ## Security notes
 
