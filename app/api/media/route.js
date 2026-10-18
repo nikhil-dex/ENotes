@@ -217,10 +217,26 @@ export async function DELETE(request) {
     if (type === 'folder') {
       const folder = await db.collection('mediaFolders').findOne({ _id: id });
       if (!folder) return json({ error: 'Folder not found.' }, 404);
-      const hasFiles = await db.collection('mediaFiles').findOne({ folderId: id, status: { $ne: 'deleted' } }, { projection: { _id: 1 } });
-      if (hasFiles) return json({ error: 'Move or delete the folder’s files before deleting this folder.' }, 409);
+
+      // Delete the folder's files from private storage before removing their metadata.
+      // Keep the folder and any remaining records if a storage deletion fails.
+      const files = await db.collection('mediaFiles')
+        .find({ folderId: id, status: { $in: ['ready', 'pending'] } })
+        .toArray();
+      let deletedFiles = 0;
+      for (const file of files) {
+        if (file.status === 'ready') {
+          await deleteObject(file.objectKey);
+        } else {
+          const object = await headObject(file.objectKey);
+          if (object.exists) await deleteObject(file.objectKey);
+        }
+        await db.collection('mediaFiles').deleteOne({ _id: file._id, status: file.status });
+        deletedFiles += 1;
+      }
+
       await db.collection('mediaFolders').deleteOne({ _id: id });
-      return json({ deleted: id, type: 'folder' });
+      return json({ deleted: id, type: 'folder', deletedFiles });
     }
     const file = await db.collection('mediaFiles').findOne({ _id: id, status: { $in: ['ready', 'pending'] } });
     if (!file) return json({ error: 'File not found.' }, 404);
