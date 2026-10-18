@@ -81,7 +81,7 @@ export async function POST(request) {
         { $group: { _id: null, bytes: { $sum: '$size' } } },
       ]).toArray();
       if ((usage[0]?.bytes || 0) + normalized.value.size > MAX_MEDIA_TOTAL_BYTES) {
-        return json({ error: 'The library has reached its 9 GiB tracked-storage safety limit. Delete unneeded files before uploading more.' }, 400);
+        return json({ error: 'The library has reached its 8 GB tracked-storage safety limit. Delete unneeded files before uploading more.' }, 400);
       }
       const id = randomUUID();
       const now = new Date();
