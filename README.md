@@ -179,9 +179,12 @@ Back up your database before making manual data changes. The migration script is
 ```text
 ENotes/
 ├── app/
+│   ├── files/             # Private image/PDF library page
+│   ├── components/media-library.js # Folder navigation, uploads and previews
 │   ├── notes/             # Notes workspace
 │   ├── settings/          # Subject management, appearance, backup/restore
 │   ├── api/
+│   │   ├── media/         # Protected private media API
 │   │   ├── notes/         # Note API routes
 │   │   └── subjects/      # Subject API routes
 │   ├── html-library/      # HTML learning-resource page
@@ -189,7 +192,9 @@ ENotes/
 │   ├── layout.js          # Root application layout
 │   └── page.js            # Home hub / app launcher
 ├── lib/
-│   ├── access-session.js  # Signed session creation and validation\n│   ├── media-validation.js # File, folder, and signature validation\n│   ├── r2-storage.js      # Private R2 signed URL and object operations
+│   ├── access-session.js  # Signed session creation and validation
+│   ├── media-validation.js # File, folder, and signature validation
+│   ├── r2-storage.js      # Private R2 signed URL and object operations
 │   ├── offline-notes.js   # Browser cache helpers for offline reading
 │   ├── backup-validation.js # Backup schema validation
 │   ├── read-limited-body.js # Bounded request-body reader
@@ -212,10 +217,12 @@ ENotes/
 
 ## Data model
 
-The application stores two main kinds of documents:
+The application stores these main kinds of documents:
 
 - **Subjects** — subject name, slug, display order, next note number, and related metadata.
-- **Notes** — subject slug, note number, heading, content, and saved-time metadata.\n- **Media folders** — UUID, folder name, and creation/update timestamps.\n- **Media files** — UUID, display name, MIME type, size, folder ID, generated private object key, status, and timestamps. Binary contents are stored in the private R2 bucket, not MongoDB.
+- **Notes** — subject slug, note number, heading, content, and saved-time metadata.
+- **Media folders** — UUID, folder name, and creation/update timestamps.
+- **Media files** — UUID, display name, MIME type, size, folder ID, generated private object key, status, and timestamps. Binary contents are stored in the private R2 bucket, not MongoDB.
 
 MongoDB indexes support subject lookup and note ordering, with a unique constraint on the subject-and-note-number pair.
 
