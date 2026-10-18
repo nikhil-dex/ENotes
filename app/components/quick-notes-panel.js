@@ -141,6 +141,8 @@ export default function QuickNotesPanel({ fullPage = false }) {
     }
   }, []);
 
+  const visibleNotes = fullPage ? notes : notes.slice(0, 3);
+
   return (
     <section className={'quick-notes-section' + (fullPage ? ' quick-notes-full-page' : '')} aria-labelledby="quick-notes-heading">
       {fullPage && <SiteNavbar />}
@@ -159,7 +161,7 @@ export default function QuickNotesPanel({ fullPage = false }) {
 
       {loading ? <p className="quick-notes-loading">Loading quick notes…</p> : notes.length ? (
         <div className="quick-notes-grid">
-          {notes.map((note, index) => (
+          {visibleNotes.map((note, index) => (
             <QuickNoteCard
               key={note.id}
               note={note}
