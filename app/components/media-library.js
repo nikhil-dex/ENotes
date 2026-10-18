@@ -101,14 +101,22 @@ export default function MediaLibrary() {
     let uploaded = 0;
     try {
       for (const file of selected) {
-        const started = await readResponse(await fetch('/api/media', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'start-upload', name: file.name, type: file.type, size: file.size, folderId }),
-        }));
-        const transfer = await fetch(started.uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
-        if (!transfer.ok) throw new Error(`Upload failed for “${file.name}” (HTTP ${transfer.status}). Check the bucket CORS settings and try again.`);
-        await readResponse(await fetch('/api/media', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'complete-upload', id: started.id }) }));
-        uploaded += 1;
+        let started;
+        try {
+          started = await readResponse(await fetch('/api/media', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'start-upload', name: file.name, type: file.type, size: file.size, folderId }),
+          }));
+          const transfer = await fetch(started.uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
+          if (!transfer.ok) throw new Error(`Upload failed for “${file.name}” (HTTP ${transfer.status}). Check the bucket CORS settings and try again.`);
+          await readResponse(await fetch('/api/media', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'complete-upload', id: started.id }) }));
+          uploaded += 1;
+        } catch (uploadError) {
+          if (started?.id) {
+            await fetch('/api/media', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'abort-upload', id: started.id }) }).catch(() => {});
+          }
+          throw uploadError;
+        }
       }
       setMessage(`${uploaded} file${uploaded === 1 ? '' : 's'} uploaded.`);
       await loadLibrary(folderId);
