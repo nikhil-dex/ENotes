@@ -99,7 +99,17 @@ export async function POST(request) {
       }
     }
 
-    if (data?.action === 'abort-upload') {\n      if (!isValidMediaId(data.id)) return json({ error: 'Choose a valid upload.' }, 400);\n      const pending = await db.collection('mediaFiles').findOne({ _id: data.id, status: 'pending' });\n      if (!pending) return json({ aborted: false });\n      const object = await headObject(pending.objectKey);\n      if (object.exists) await deleteObject(pending.objectKey);\n      await db.collection('mediaFiles').deleteOne({ _id: data.id, status: 'pending' });\n      return json({ aborted: true });\n    }\n\n    if (data?.action === 'complete-upload') {
+    if (data?.action === 'abort-upload') {
+      if (!isValidMediaId(data.id)) return json({ error: 'Choose a valid upload.' }, 400);
+      const pending = await db.collection('mediaFiles').findOne({ _id: data.id, status: 'pending' });
+      if (!pending) return json({ aborted: false });
+      const object = await headObject(pending.objectKey);
+      if (object.exists) await deleteObject(pending.objectKey);
+      await db.collection('mediaFiles').deleteOne({ _id: data.id, status: 'pending' });
+      return json({ aborted: true });
+    }
+
+    if (data?.action === 'complete-upload') {
       const id = data.id;
       if (!isValidMediaId(id)) return json({ error: 'Choose a valid upload.' }, 400);
       const file = await db.collection('mediaFiles').findOne({ _id: id, status: 'pending' });
@@ -107,9 +117,15 @@ export async function POST(request) {
       const object = await headObject(file.objectKey);
       if (!object.exists) return json({ error: 'The upload could not be verified in private storage.' }, 409);
       if (object.size && object.size !== file.size) {
-        await deleteObject(file.objectKey).catch(() => {});
+        await deleteObject(file.objectKey);
         await db.collection('mediaFiles').deleteOne({ _id: id, status: 'pending' });
         return json({ error: 'The uploaded file size did not match. Please upload it again.' }, 400);
+      }
+      const inspected = await readObjectPrefix(file.objectKey);
+      if (!inspected.exists || !hasValidMediaSignature(inspected.prefix, file.type)) {
+        await deleteObject(file.objectKey);
+        await db.collection('mediaFiles').deleteOne({ _id: id, status: 'pending' });
+        return json({ error: 'The file contents do not match the selected PDF or image type.' }, 400);
       }
       const result = await db.collection('mediaFiles').findOneAndUpdate(
         { _id: id, status: 'pending' },
