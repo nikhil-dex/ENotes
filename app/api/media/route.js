@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { getDatabase } from '../../../lib/mongodb.js';
 import { readLimitedBody } from '../../../lib/read-limited-body.js';
-import { isValidFolderId, isValidMediaId, MAX_MEDIA_FILES, MAX_MEDIA_FOLDERS, normalizeFolderName, normalizeMediaFile } from '../../../lib/media-validation.js';
-import { createPresignedUrl, deleteObject, headObject } from '../../../lib/r2-storage.js';
+import { hasValidMediaSignature, isValidFolderId, isValidMediaId, MAX_MEDIA_FILES, MAX_MEDIA_FOLDERS, normalizeFolderName, normalizeMediaFile } from '../../../lib/media-validation.js';
+import { createPresignedUrl, deleteObject, headObject, readObjectPrefix } from '../../../lib/r2-storage.js';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -99,7 +99,7 @@ export async function POST(request) {
       }
     }
 
-    if (data?.action === 'complete-upload') {
+    if (data?.action === 'abort-upload') {\n      if (!isValidMediaId(data.id)) return json({ error: 'Choose a valid upload.' }, 400);\n      const pending = await db.collection('mediaFiles').findOne({ _id: data.id, status: 'pending' });\n      if (!pending) return json({ aborted: false });\n      const object = await headObject(pending.objectKey);\n      if (object.exists) await deleteObject(pending.objectKey);\n      await db.collection('mediaFiles').deleteOne({ _id: data.id, status: 'pending' });\n      return json({ aborted: true });\n    }\n\n    if (data?.action === 'complete-upload') {
       const id = data.id;
       if (!isValidMediaId(id)) return json({ error: 'Choose a valid upload.' }, 400);
       const file = await db.collection('mediaFiles').findOne({ _id: id, status: 'pending' });
