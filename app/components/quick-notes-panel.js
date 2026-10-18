@@ -20,14 +20,14 @@ function formatDate(value) {
   return date.toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
-const QuickNoteCard = memo(function QuickNoteCard({ note, index, onContentChange, onDelete, saveError, saving }) {
+const QuickNoteCard = memo(function QuickNoteCard({ note, index, title, onContentChange, onDelete, saveError, saving }) {
   const [characterCount, setCharacterCount] = useState((note.content || '').length);
   return (
     <article className="quick-note-section">
       <div className="quick-note-topline">
         <span className="quick-note-index">{String(index + 1).padStart(2, '0')}</span>
         <span className="quick-note-date">{saving ? 'Saving…' : saveError ? 'Not saved' : formatDate(note.updatedAt || note.createdAt)}</span>
-        <button className="quick-note-delete" type="button" onClick={() => onDelete(note)} aria-label={'Delete ' + titleOf(note.content)} title="Delete note">×</button>
+        <button className="quick-note-delete" type="button" onClick={() => onDelete(note)} aria-label={'Delete ' + title} title="Delete note">×</button>
       </div>
       <div
         className="quick-note-editor"
@@ -163,6 +163,7 @@ export default function QuickNotesPanel({ fullPage = false }) {
             <QuickNoteCard
               key={note.id}
               note={note}
+              title={titleOf(dirty[note.id] !== undefined ? dirty[note.id] : note.content)}
               index={index}
               onContentChange={updateContent}
               onDelete={deleteNote}
