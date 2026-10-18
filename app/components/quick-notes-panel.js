@@ -120,13 +120,12 @@ export default function QuickNotesPanel({ fullPage = false }) {
   }
 
   const updateContent = useCallback((id, content) => {
-    setNotes((current) => current.map((note) => note.id === id ? { ...note, content } : note));
     setDirty((current) => ({ ...current, [id]: content }));
     setSaveErrors((current) => ({ ...current, [id]: '' }));
     setMessage('');
   }, []);
 
-  async function deleteNote(note) {
+  const deleteNote = useCallback(async (note) => {
     if (!window.confirm('Delete "' + titleOf(note.content) + '"? This cannot be undone.')) return;
     setError('');
     setMessage('');
@@ -139,7 +138,7 @@ export default function QuickNotesPanel({ fullPage = false }) {
     } catch (err) {
       setError(err.message || 'Could not delete this quick note.');
     }
-  }
+  }, []);
 
   return (
     <section className={'quick-notes-section' + (fullPage ? ' quick-notes-full-page' : '')} aria-labelledby="quick-notes-heading">
