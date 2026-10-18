@@ -2,6 +2,7 @@ import { getDatabase } from '../../../lib/mongodb.js';
 import { MAX_BACKUP_BYTES, validateBackup } from '../../../lib/backup-validation.js';
 import { readLimitedBody } from '../../../lib/read-limited-body.js';
 import { headObject } from '../../../lib/r2-storage.js';
+import { MAX_MEDIA_TOTAL_BYTES } from '../../../lib/media-validation.js';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -89,6 +90,14 @@ export async function POST(request) {
       const object = await headObject(file.objectKey);
       if (!object.exists || (object.size && object.size !== file.size)) { mediaFilesSkipped += 1; continue; }
       verifiedMediaFiles.push(file);
+    }
+    const currentMediaUsage = await db.collection('mediaFiles').aggregate([
+      { $match: { status: { $in: ['ready', 'pending'] } } },
+      { $group: { _id: null, bytes: { $sum: '$size' } } },
+    ]).toArray();
+    const incomingMediaBytes = verifiedMediaFiles.reduce((total, file) => total + file.size, 0);
+    if ((currentMediaUsage[0]?.bytes || 0) + incomingMediaBytes > MAX_MEDIA_TOTAL_BYTES) {
+      return json({ error: 'Restoring these media records would exceed the 8 GB tracked-storage safety limit.' }, 400);
     }
 
     const subjectsCollection = db.collection('subjects');
