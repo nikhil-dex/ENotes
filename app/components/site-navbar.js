@@ -7,6 +7,7 @@ const links = [
   { href: '/', label: 'Home' },
   { href: '/notes', label: 'Notes' },
   { href: '/saved-links', label: 'Saved Links' },
+  { href: '/quick-notes', label: 'Quick Notes' },
   { href: '/settings', label: 'Settings' },
   { href: '/html-library', label: 'HTML files' },
   { href: '/revision-history', label: 'Revision history' },
