@@ -73,3 +73,26 @@ test('creates short-lived signed URLs without exposing public bucket access', ()
     }
   }
 });
+
+
+test('accepts correct file signatures and rejects mismatched contents', () => {
+  assert.equal(hasValidMediaSignature(Buffer.from('%PDF-1.7'), 'application/pdf'), true);
+  assert.equal(hasValidMediaSignature(Buffer.from([0xff, 0xd8, 0xff, 0xdb]), 'image/jpeg'), true);
+  assert.equal(hasValidMediaSignature(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), 'image/png'), true);
+  assert.equal(hasValidMediaSignature(Buffer.from('RIFF1234WEBP'), 'image/webp'), true);
+  assert.equal(hasValidMediaSignature(Buffer.from('<html>'), 'application/pdf'), false);
+  assert.equal(hasValidMediaSignature(Buffer.from('not a webp'), 'image/webp'), false);
+});
+
+test('backup validator accepts media metadata but rejects invalid keys and orphan folders', async () => {
+  const { validateBackup } = await import('../lib/backup-validation.js');
+  const base = { format: 'enotes-backup', version: 1, subjects: [], notes: [] };
+  const folderId = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
+  const fileId = 'f47ac10b-58cc-4372-a567-0e02b2c3d480';
+  const folder = { _id: folderId, name: 'PDFs' };
+  const file = { _id: fileId, name: 'lecture.pdf', type: 'application/pdf', size: 1024, folderId, objectKey: `media/${fileId}`, status: 'ready' };
+  assert.equal(validateBackup({ ...base, mediaFolders: [folder], mediaFiles: [file] }), null);
+  assert.match(validateBackup({ ...base, mediaFolders: [folder], mediaFiles: [{ ...file, objectKey: 'media/other' }] }), /storage key/);
+  assert.match(validateBackup({ ...base, mediaFolders: [], mediaFiles: [file] }), /folder missing/);
+  assert.match(validateBackup({ ...base, mediaFolders: [folder], mediaFiles: [{ ...file, name: '../lecture.pdf' }] }), /invalid name/);
+});
