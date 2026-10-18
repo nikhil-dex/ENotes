@@ -1,4 +1,5 @@
 import SiteNavbar from './components/site-navbar';
+import QuickNotesPanel from './components/quick-notes-panel';
 
 export default function HomePage() {
   return (
@@ -11,6 +12,8 @@ export default function HomePage() {
         <p className="hub-lead">A calmer home for your notes, saved links, revision history, and learning resources. Choose where you want to go.</p>
         <a className="add-button hub-primary" href="/notes"><span aria-hidden="true">↗</span> Open notes</a>
       </section>
+
+      <QuickNotesPanel />
 
       <section className="hub-grid" aria-label="ENotes destinations">
         <a className="hub-card hub-card-featured" href="/notes">
