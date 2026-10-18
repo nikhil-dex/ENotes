@@ -108,7 +108,7 @@ export default function MediaLibrary() {
             body: JSON.stringify({ action: 'start-upload', name: file.name, type: file.type, size: file.size, folderId }),
           }));
           const transfer = await fetch(started.uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
-          if (!transfer.ok) throw new Error(`Upload failed for “${file.name}” (HTTP ${transfer.status}). Check the bucket CORS settings and try again.`);
+          if (!transfer.ok) throw new Error(`Upload failed for “${file.name}” (HTTP ${transfer.status}). Check that the private Blob store is connected to Vercel and try again.`);
           await readResponse(await fetch('/api/media', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'complete-upload', id: started.id }) }));
           uploaded += 1;
         } catch (uploadError) {
@@ -143,7 +143,7 @@ export default function MediaLibrary() {
       link.download = file.name;
       link.rel = 'noopener';
       document.body.appendChild(link); link.click(); link.remove();
-      setMessage('Download started using a short-lived private link.');
+      setMessage('Download started through the protected file route.');
     } catch (err) { setError(err.message || 'Could not download this file.'); }
     finally { setBusy(false); }
   }
