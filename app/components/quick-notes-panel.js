@@ -21,6 +21,7 @@ function formatDate(value) {
 }
 
 const QuickNoteCard = memo(function QuickNoteCard({ note, index, onContentChange, onDelete, saveError, saving }) {
+  const [characterCount, setCharacterCount] = useState((note.content || '').length);
   return (
     <article className="quick-note-section">
       <div className="quick-note-topline">
@@ -36,11 +37,11 @@ const QuickNoteCard = memo(function QuickNoteCard({ note, index, onContentChange
         aria-label={'Quick note ' + (index + 1)}
         aria-multiline="true"
         data-placeholder="Start writing…"
-        onInput={(event) => onContentChange(note.id, event.currentTarget.innerText)}
+        onInput={(event) => { const content = event.currentTarget.innerText; setCharacterCount(content.length); onContentChange(note.id, content); }}
       >{note.content || ''}</div>
       {saveError && <p className="quick-note-save-error" role="alert">{saveError}</p>}
       <div className="quick-note-bottomline">
-        <span>{(note.content || '').length} characters</span>
+        <span>{characterCount} characters</span>
         <span>{saveError ? 'Save failed' : saving ? 'Auto-saving' : 'Saved'}</span>
       </div>
     </article>
@@ -85,7 +86,7 @@ export default function QuickNotesPanel({ fullPage = false }) {
             body: JSON.stringify({ id, content }),
           }));
           setNotes((current) => current.map((note) => note.id === id
-            ? { ...note, title: result.title, updatedAt: result.updatedAt, content }
+            ? { ...note, title: result.title, updatedAt: result.updatedAt }
             : note));
           setSaveErrors((current) => ({ ...current, [id]: '' }));
           setDirty((current) => current[id] === content ? Object.fromEntries(Object.entries(current).filter(([key]) => key !== id)) : current);
