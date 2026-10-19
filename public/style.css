@@ -668,3 +668,93 @@
     height:42px !important;
   }
 }
+
+
+/* Wide-screen layout: use available desktop space without forcing the navbar into its compact menu. */
+@media (min-width: 1400px) {
+  .shell {
+    width: min(100% - 64px, 1480px);
+    max-width: 1480px;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .site-navbar {
+    padding-left: max(32px, calc((100vw - 1480px) / 2));
+    padding-right: max(32px, calc((100vw - 1480px) / 2));
+  }
+
+  .notes-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+  }
+
+  .revision-layout {
+    grid-template-columns: minmax(250px, 0.75fr) minmax(0, 2fr);
+    gap: 24px;
+  }
+}
+
+/* The navbar should switch to its menu based on usable viewport width, not monitor pixel count. */
+@media (min-width: 1201px) {
+  .site-navbar {
+    flex-wrap: nowrap;
+  }
+
+  .site-navbar-toggle {
+    display: none;
+  }
+
+  .site-navbar-content {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 0;
+    border-top: 0;
+  }
+
+  .site-navbar-links {
+    display: flex;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 2px;
+  }
+
+  .site-navbar-link {
+    padding-left: clamp(6px, 0.55vw, 11px);
+    padding-right: clamp(6px, 0.55vw, 11px);
+  }
+
+  .site-navbar-actions {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+  }
+}
+
+@media (min-width: 1600px) {
+  .shell {
+    width: min(100% - 96px, 1600px);
+    max-width: 1600px;
+  }
+
+  .site-navbar {
+    padding-left: max(48px, calc((100vw - 1600px) / 2));
+    padding-right: max(48px, calc((100vw - 1600px) / 2));
+  }
+
+  .notes-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 20px;
+  }
+}
+
+/* Prevent wide desktop cards and navigation labels from shrinking their grid tracks. */
+.notes-grid > *,
+.site-navbar > *,
+.site-navbar-content > * {
+  min-width: 0;
+}
