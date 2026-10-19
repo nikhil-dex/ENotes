@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 export const metadata = {
-  title: 'HTML Files | Study Notes',
+  title: 'HTML Files',
   description: 'Browse the HTML study pages saved in the HTML library folder.',
 };
 
