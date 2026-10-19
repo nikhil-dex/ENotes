@@ -19,7 +19,7 @@ export default function HomePage() {
 
       <QuickNotesPanel />
 
-      <section className="hub-grid" aria-label="ENotes destinations">
+      <section className="hub-grid" aria-label="OgeNotes destinations">
         <a className="hub-card hub-card-featured" href="/notes">
           <span className="hub-card-icon" aria-hidden="true">▤</span>
           <span className="hub-card-kicker">01 · LEARN</span>
@@ -59,7 +59,7 @@ export default function HomePage() {
           <span className="hub-card-icon" aria-hidden="true">⇧</span>
           <span className="hub-card-kicker">06 · MIGRATE</span>
           <h2>Import guide <span aria-hidden="true">↗</span></h2>
-          <p>Review how to bring your existing Markdown notes into ENotes.</p>
+          <p>Review how to bring your existing Markdown notes into OgeNotes.</p>
           <span className="hub-card-link">Read guide <span aria-hidden="true">→</span></span>
         </a>
         <a className="hub-card" href="/files">
@@ -78,7 +78,7 @@ export default function HomePage() {
         </a>
       </section>
 
-      <footer><span>Built for learning, one note at a time.</span><span>ENOTES · YOUR PRIVATE WORKSPACE</span></footer>
+      <footer><span>Built for learning, one note at a time.</span><span>OGENOTES · YOUR PRIVATE WORKSPACE</span></footer>
     </main>
   );
 }
