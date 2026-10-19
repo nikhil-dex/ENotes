@@ -6,14 +6,6 @@ import { usePathname } from 'next/navigation';
 const links = [
   { href: '/', label: 'Home' },
   { href: '/notes', label: 'Notes' },
-  { href: '/saved-links', label: 'Saved Links' },
-  { href: '/quick-notes', label: 'Quick Notes' },
-  { href: '/extension-setup', label: 'Browser quick notes' },
-  { href: '/files', label: 'My Files' },
-  { href: '/settings', label: 'Settings' },
-  { href: '/html-library', label: 'HTML files' },
-  { href: '/revision-history', label: 'Revision history' },
-  { href: '/import-guide', label: 'Import guide' },
 ];
 
 export default function SiteNavbar({ actions = null }) {
