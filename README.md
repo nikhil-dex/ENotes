@@ -1,6 +1,6 @@
-# ENotes — Study Notes Dashboard
+# OgeNotes — Your Personal Knowledge Space
 
-A subject-based study notes application built with **Next.js**, **React**, and **MongoDB**. ENotes helps you organize technical learning notes, search through content, revise with flashcards, and manage notes from one focused dashboard.
+A subject-based study notes application built with **Next.js**, **React**, and **MongoDB**. OgeNotes helps you organize technical learning notes, search through content, revise with flashcards, and manage notes from one focused dashboard.
 
 ## Contents
 
@@ -33,7 +33,7 @@ A subject-based study notes application built with **Next.js**, **React**, and *
 - **Offline reading** — previously loaded subjects and their notes are cached in this browser and remain readable when the network is unavailable.
 - **Reconnect synchronization** — cached notes refresh from MongoDB when the connection returns; the header shows the current connection/sync state.
 - **Queued offline edits** — edits to existing notes and favorite/pin changes are stored locally and replayed in order when online again. Failed requests remain queued for retry; creating and deleting notes still require a connection.
-- **Single-device session lock** — only one browser can hold the active ENotes session. Log out to release the lock before switching devices. Pending offline edits must be synced first or explicitly discarded before logout; logging out while offline cannot release the server-side lock.
+- **Single-device session lock** — only one browser can hold the active OgeNotes session. Log out to release the lock before switching devices. Pending offline edits must be synced first or explicitly discarded before logout; logging out while offline cannot release the server-side lock.
 - **MongoDB persistence** — subjects and notes are stored in MongoDB.
 - **Dedicated Settings page** — manage subjects, choose a theme, and access JSON backup and restore outside the note-taking workspace.
 - **JSON backup and restore** — download a full backup and safely merge missing records from a validated backup without overwriting existing notes.
@@ -64,8 +64,8 @@ A subject-based study notes application built with **Next.js**, **React**, and *
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/nikhil-dex/ENotes.git
-cd ENotes
+git clone https://github.com/nikhil-dex/OgeNotes.git
+cd OgeNotes
 ```
 
 ### 2. Install dependencies
@@ -151,7 +151,7 @@ Replace the placeholders with your own database credentials and cluster host. **
 
 ## Shared access-string protection
 
-ENotes uses a single shared access string instead of individual user accounts. The access page is available at `/access`; the app checks the submitted string on the server and grants a signed, HTTP-only session cookie for one hour. Application pages and API routes are protected by `proxy.js`.
+OgeNotes uses a single shared access string instead of individual user accounts. The access page is available at `/access`; the app checks the submitted string on the server and grants a signed, HTTP-only session cookie for one hour. Application pages and API routes are protected by `proxy.js`.
 
 ### Configure the access string
 
@@ -176,7 +176,7 @@ Back up your database before making manual data changes. The migration script is
 ## Project structure
 
 ```text
-ENotes/
+OgeNotes/
 ├── app/
 │   ├── files/             # Private image/PDF library page
 │   ├── components/media-library.js # Folder navigation, uploads and previews
@@ -228,7 +228,7 @@ MongoDB indexes support subject lookup and note ordering, with a unique constrai
 
 ## Deployment
 
-ENotes can be deployed as a Next.js application on a platform such as Vercel.
+OgeNotes can be deployed as a Next.js application on a platform such as Vercel.
 
 1. Import the repository into your hosting provider.
 2. Configure `MONGODB_URI` and `MONGODB_DB` in the project's environment variables.
@@ -240,9 +240,9 @@ Do not expose database credentials in client-side code or commit them to source 
 
 ## Backups and restore
 
-Use **Download backup** in the dashboard to export ENotes metadata to a JSON file. Keep this file somewhere private because it contains your study notes and saved links.
+Use **Download backup** in the dashboard to export OgeNotes metadata to a JSON file. Keep this file somewhere private because it contains your study notes and saved links.
 
-To restore, choose a backup JSON file from the dashboard. ENotes validates the file format, record limits, subject slugs, note identifiers, and content lengths before writing. Restore uses **merge-only** behavior: missing subjects and notes are added, existing subject metadata and note contents are not overwritten, and duplicate note IDs are skipped. Backup uploads are limited to 10 MB. Media backups include folder/file metadata only, not binary contents. Restore checks that referenced objects already exist in the configured private Vercel Blob store; a JSON backup alone cannot migrate the files. Keep the same private Blob store and its objects available when restoring. Restore is not a substitute for an independent MongoDB backup; keep multiple copies of important backups.
+To restore, choose a backup JSON file from the dashboard. OgeNotes validates the file format, record limits, subject slugs, note identifiers, and content lengths before writing. Restore uses **merge-only** behavior: missing subjects and notes are added, existing subject metadata and note contents are not overwritten, and duplicate note IDs are skipped. Backup uploads are limited to 10 MB. Media backups include folder/file metadata only, not binary contents. Restore checks that referenced objects already exist in the configured private Vercel Blob store; a JSON backup alone cannot migrate the files. Keep the same private Blob store and its objects available when restoring. Restore is not a substitute for an independent MongoDB backup; keep multiple copies of important backups.
 
 ## Release readiness
 
