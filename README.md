@@ -64,8 +64,8 @@ A subject-based study notes application built with **Next.js**, **React**, and *
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/nikhil-dex/OgeNotes.git
-cd OgeNotes
+git clone https://github.com/nikhil-dex/ogenotes.git
+cd ogenotes
 ```
 
 ### 2. Install dependencies
@@ -176,7 +176,7 @@ Back up your database before making manual data changes. The migration script is
 ## Project structure
 
 ```text
-OgeNotes/
+ogenotes/
 ├── app/
 │   ├── files/             # Private image/PDF library page
 │   ├── components/media-library.js # Folder navigation, uploads and previews
