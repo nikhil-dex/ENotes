@@ -10,7 +10,7 @@ A Manifest V3 extension that adds a floating note widget to web pages and saves 
 4. Open your authenticated OgeNotes website and visit **Browser quick notes** in the navigation.
 5. Generate a one-time pairing code.
 6. Click the extension icon, enter the OgeNotes base URL, paste the code, and connect. Approve host access for that OgeNotes origin.
-7. Visit a website; use the floating **N** button in the bottom-right corner to write and save a note.
+7. Visit a website; use the floating **O** button in the bottom-right corner to write and save a note.
 
 The first line becomes the title, matching OgeNotes' existing Quick Notes behavior. Notes are saved to the same `quickNotes` MongoDB collection and appear in the existing Quick Notes page.
 
