@@ -20,13 +20,25 @@ function formatDate(value) {
   return date.toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
-const QuickNoteCard = memo(function QuickNoteCard({ note, index, title, onContentChange, onDelete, saveError, saving }) {
-  const [characterCount, setCharacterCount] = useState((note.content || '').length);
+const QuickNoteCard = memo(function QuickNoteCard({ note, content, index, title, onContentChange, onDelete, saveError, saving }) {
+  const [characterCount, setCharacterCount] = useState((content || '').length);
+  const [copied, setCopied] = useState(false);
+
+  async function copyNote() {
+    try {
+      await navigator.clipboard.writeText(content || '');
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      setCopied(false);
+    }
+  }
   return (
     <article className="quick-note-section">
       <div className="quick-note-topline">
         <span className="quick-note-index">{String(index + 1).padStart(2, '0')}</span>
         <span className="quick-note-date">{saving ? 'Saving…' : saveError ? 'Not saved' : formatDate(note.updatedAt || note.createdAt)}</span>
+        <button className="quick-note-copy" type="button" onClick={copyNote} aria-label={'Copy ' + title} title={copied ? 'Copied to clipboard' : 'Copy note'}>{copied ? 'Copied!' : 'Copy'}</button>
         <button className="quick-note-delete" type="button" onClick={() => onDelete(note)} aria-label={'Delete ' + title} title="Delete note">×</button>
       </div>
       <div
@@ -38,7 +50,7 @@ const QuickNoteCard = memo(function QuickNoteCard({ note, index, title, onConten
         aria-multiline="true"
         data-placeholder="Start writing…"
         onInput={(event) => { const content = event.currentTarget.innerText; setCharacterCount(content.length); onContentChange(note.id, content); }}
-      >{note.content || ''}</div>
+      >{content || ''}</div>
       {saveError && <p className="quick-note-save-error" role="alert">{saveError}</p>}
       <div className="quick-note-bottomline">
         <span>{characterCount} characters</span>
@@ -165,6 +177,7 @@ export default function QuickNotesPanel({ fullPage = false }) {
             <QuickNoteCard
               key={note.id}
               note={note}
+              content={dirty[note.id] !== undefined ? dirty[note.id] : note.content}
               title={titleOf(dirty[note.id] !== undefined ? dirty[note.id] : note.content)}
               index={index}
               onContentChange={updateContent}
