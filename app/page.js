@@ -66,6 +66,13 @@ export default function HomePage() {
           <p>Privately store images and PDFs, organize them into folders, preview, and download them.</p>
           <span className="hub-card-link">Open My Files <span aria-hidden="true">→</span></span>
         </a>
+        <a className="hub-card" href="/extension-setup">
+          <span className="hub-card-icon" aria-hidden="true">⌁</span>
+          <span className="hub-card-kicker">08 · CAPTURE</span>
+          <h2>Browser extension <span aria-hidden="true">↗</span></h2>
+          <p>Connect your browser quick-note extension to capture ideas from websites and save them to OgeNotes.</p>
+          <span className="hub-card-link">Set up extension <span aria-hidden="true">→</span></span>
+        </a>
       </section>
 
       <footer><span>Built for learning, one note at a time.</span><span>ENOTES · YOUR PRIVATE WORKSPACE</span></footer>
