@@ -48,7 +48,7 @@ export default function HomePage() {
   const [tagInput, setTagInput] = useState('');
   const [favoriteDraft, setFavoriteDraft] = useState(false);
   const [pinnedDraft, setPinnedDraft] = useState(false);
-  const [theme, setTheme] = useState('light');
+  const [theme, setTheme] = useState('dark');
   const [noteDialog, setNoteDialog] = useState(false);
   const [editingNote, setEditingNote] = useState(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -111,7 +111,10 @@ export default function HomePage() {
     try { setPendingSyncCount(getPendingOfflineMutations(localStorage).length); } catch {}
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('/service-worker.js').catch(() => {});
     const storedTheme = localStorage.getItem('theme');
-    if (storedTheme === 'dark' || storedTheme === 'light') setTheme(storedTheme);
+    const initialTheme = storedTheme === 'light' || storedTheme === 'dark' ? storedTheme : 'dark';
+    setTheme(initialTheme);
+    document.documentElement.dataset.theme = initialTheme;
+    localStorage.setItem('theme', initialTheme);
     const storedSubject = localStorage.getItem('activeSubject');
     const requestedSubject = new URLSearchParams(window.location.search).get('subject');
     fetch('/api/subjects')
