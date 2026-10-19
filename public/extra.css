@@ -630,7 +630,7 @@ button[aria-disabled="true"] {
 .quick-note-topline{display:flex;align-items:center;gap:8px;min-width:0;margin-bottom:12px}
 .quick-note-index{color:var(--muted);font:10px var(--mono);letter-spacing:.5px}
 .quick-note-date{min-width:0;margin-left:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font:9px var(--mono)}
-.quick-note-delete{display:grid;place-items:center;flex:0 0 27px;width:27px;height:27px;border:0;border-radius:6px;background:transparent;color:var(--muted);font:22px/1 var(--sans);cursor:pointer}
+.quick-note-copy{flex:0 0 auto;padding:5px 9px;border:1px solid var(--line);border-radius:6px;background:var(--wash);color:var(--ink);font:10px var(--mono);cursor:pointer;transition:background .15s,border-color .15s}.quick-note-copy:hover{border-color:var(--green);background:color-mix(in srgb,var(--green) 9%,var(--paper))}.quick-note-delete{display:grid;place-items:center;flex:0 0 27px;width:27px;height:27px;border:0;border-radius:6px;background:transparent;color:var(--muted);font:22px/1 var(--sans);cursor:pointer}
 .quick-note-delete:hover{background:#fbeceb;color:#b42318}
 .quick-note-editor{flex:1;min-height:132px;max-height:320px;overflow:auto;outline:0;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ink);font:12px/1.8 var(--sans);caret-color:var(--green)}
 .quick-note-editor:empty:before{content:attr(data-placeholder);color:var(--muted);pointer-events:none}
