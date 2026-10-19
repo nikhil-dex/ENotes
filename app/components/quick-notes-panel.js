@@ -199,7 +199,7 @@ export default function QuickNotesPanel({ fullPage = false }) {
         </div>
       )}
       {!fullPage && <a className="quick-notes-view-all" href="/quick-notes">Open Quick Notes <span aria-hidden="true">→</span></a>}
-      {fullPage && <footer><span>Your ideas, saved as you write.</span><span>ENOTES · QUICK NOTES</span></footer>}
+      {fullPage && <footer><span>Your ideas, saved as you write.</span><span>OGENOTES · QUICK NOTES</span></footer>}
     </section>
   );
 }

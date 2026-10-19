@@ -33,9 +33,9 @@ export default function AccessPage() {
   return (
     <main style={styles.page}>
       <section style={styles.card} aria-labelledby="access-title">
-        <div style={styles.mark} aria-hidden="true">N</div>
+        <div style={styles.mark} aria-hidden="true">O</div>
         <p style={styles.eyebrow}>PRIVATE STUDY SPACE</p>
-        <h1 id="access-title" style={styles.title}>Welcome to <span style={styles.accent}>ENotes.</span></h1>
+        <h1 id="access-title" style={styles.title}>Welcome to <span style={styles.accent}>OgeNotes.</span></h1>
         <p style={styles.description}>Enter your access string to open your notes.</p>
 
         <form onSubmit={submit} style={styles.form}>
@@ -57,7 +57,7 @@ export default function AccessPage() {
           />
           {error && <p id="access-error" role="alert" style={styles.error}>{error}</p>}
           <button type="submit" disabled={submitting || !accessKey} style={{ ...styles.button, opacity: submitting || !accessKey ? 0.7 : 1 }}>
-            {submitting ? 'Checking…' : 'Unlock ENotes'}
+            {submitting ? 'Checking…' : 'Unlock OgeNotes'}
             <span aria-hidden="true">→</span>
           </button>
         </form>

@@ -96,7 +96,7 @@ export default function SettingsPage() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `enotes-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      link.download = `ogogenotes-backup-${new Date().toISOString().slice(0, 10)}.json`;
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -184,7 +184,7 @@ export default function SettingsPage() {
         <div className="settings-backup-actions">
           <button type="button" className="add-button" onClick={downloadBackup} disabled={backupBusy}>{backupBusy ? 'Working…' : '↓ Download backup'}</button>
           <button type="button" className="settings-secondary-button" onClick={() => fileRef.current?.click()} disabled={backupBusy}>Restore from JSON</button>
-          <input ref={fileRef} className="backup-file-input" type="file" accept="application/json,.json" onChange={restoreBackup} aria-label="Choose an ENotes JSON backup" />
+          <input ref={fileRef} className="backup-file-input" type="file" accept="application/json,.json" onChange={restoreBackup} aria-label="Choose an OgeNotes JSON backup" />
         </div>
         <p className="settings-muted">Maximum file size: 10 MB. Existing subject metadata and notes are not overwritten.</p>
         {backupMessage && <p className="settings-message" role="status" aria-live="polite">{backupMessage}</p>}

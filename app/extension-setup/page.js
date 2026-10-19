@@ -18,7 +18,7 @@ export default function ExtensionSetupPage() {
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || 'Could not create a pairing code.');
       setCode(data.code); setExpiresAt(data.expiresAt);
-      setMessage('Copy this code into the ENotes Quick Note extension. It works once and expires in five minutes.');
+      setMessage('Copy this code into the OgeNotes Quick Note extension. It works once and expires in five minutes.');
     } catch (err) { setError(err.message || 'Could not create a pairing code.'); }
     finally { setLoading(false); }
   }
@@ -41,10 +41,10 @@ export default function ExtensionSetupPage() {
   }
 
   return <main className="shell"><SiteNavbar /><section style={styles.wrap}>
-    <p style={styles.eyebrow}>ENOTES · QUICK CAPTURE</p><h1 style={styles.title}>Browser quick notes</h1>
+    <p style={styles.eyebrow}>OGOGENOTES · QUICK CAPTURE</p><h1 style={styles.title}>Browser quick notes</h1>
     <p style={styles.lead}>Capture an idea from any website and save it to your existing Quick Notes. Pairing grants permission to create Quick Notes only; it cannot read, edit, or delete your notes.</p>
     <div style={styles.card}><h2 style={styles.cardTitle}>Connect your extension</h2>
-      <ol style={styles.steps}><li>Load the extension folder in Chrome using <strong>Manage extensions → Developer mode → Load unpacked</strong>.</li><li>Enter your ENotes website URL in the extension popup.</li><li>Generate a pairing code here, then paste it into the extension popup within five minutes.</li></ol>
+      <ol style={styles.steps}><li>Load the extension folder in Chrome using <strong>Manage extensions → Developer mode → Load unpacked</strong>.</li><li>Enter your OgeNotes website URL in the extension popup.</li><li>Generate a pairing code here, then paste it into the extension popup within five minutes.</li></ol>
       <button type="button" onClick={generateCode} disabled={loading} style={styles.primary}>{loading ? 'Generating…' : 'Generate one-time pairing code'}</button>
       {code && <div style={styles.codeBox}><code style={styles.code}>{code}</code><button type="button" onClick={copyCode} style={styles.secondary}>Copy code</button><p style={styles.expiry}>Expires: {new Date(expiresAt).toLocaleTimeString()}</p></div>}
       {message && <p role="status" style={styles.success}>{message}</p>}{error && <p role="alert" style={styles.error}>{error}</p>}

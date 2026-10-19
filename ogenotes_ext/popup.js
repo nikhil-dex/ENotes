@@ -17,7 +17,7 @@ function showStatus(message, isError = false) {
 function showConnected({ baseUrl, expiresAt }) {
   pairingForm.hidden = true;
   connectedPanel.hidden = false;
-  connectedUrl.textContent = baseUrl || 'Your ENotes site';
+  connectedUrl.textContent = baseUrl || 'Your OgeNotes site';
   connectedExpiry.textContent = expiresAt
     ? 'Token expires ' + new Date(expiresAt).toLocaleString() + '.'
     : 'Connection expiry is unknown.';
@@ -57,9 +57,9 @@ async function restorePopupState() {
 
   showPairingForm();
   if (state.token || state.expiresAt) {
-    showStatus('Your extension connection has expired. Generate a new pairing code in ENotes and reconnect.', true);
+    showStatus('Your extension connection has expired. Generate a new pairing code in OgeNotes and reconnect.', true);
   } else {
-    showStatus('Enter your ENotes URL and a one-time pairing code. Your progress is saved if this popup closes.');
+    showStatus('Enter your OgeNotes URL and a one-time pairing code. Your progress is saved if this popup closes.');
   }
 }
 
@@ -86,17 +86,17 @@ connectButton.addEventListener('click', async () => {
     if (url.username || url.password || url.search || url.hash) throw new Error();
     baseUrl = url.origin;
   } catch {
-    showStatus('Enter a valid HTTPS ENotes URL (or localhost for development).', true);
+    showStatus('Enter a valid HTTPS OgeNotes URL (or localhost for development).', true);
     return;
   }
 
   if (!code) {
-    showStatus('Generate a one-time pairing code in ENotes and paste it here.', true);
+    showStatus('Generate a one-time pairing code in OgeNotes and paste it here.', true);
     return;
   }
 
   connectButton.disabled = true;
-  showStatus('Requesting access to your ENotes website…');
+  showStatus('Requesting access to your OgeNotes website…');
 
   try {
     const permission = await chrome.permissions.request({ origins: [baseUrl + '/*'] });

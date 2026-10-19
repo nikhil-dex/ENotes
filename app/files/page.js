@@ -1,8 +1,8 @@
 import MediaLibrary from '../components/media-library';
 
 export const metadata = {
-  title: 'My Files | ENotes',
-  description: 'Privately organize images and PDFs in ENotes.',
+  title: 'My Files',
+  description: 'Privately organize images and PDFs in OgeNotes.',
 };
 
 export default function FilesPage() {
