@@ -560,6 +560,10 @@ button[aria-disabled="true"] {
 .saved-links-search input::placeholder{color:var(--muted)}
 .saved-links-search button{width:30px;height:30px;flex:0 0 auto;border:0;border-radius:6px;background:transparent;color:var(--muted);font-size:20px;cursor:pointer}
 .saved-links-count{flex:0 0 auto;color:var(--muted);font:10px var(--mono);letter-spacing:.5px}
+.saved-links-category-filter{display:flex;align-items:center;gap:8px;flex:0 0 auto;min-width:0;color:var(--muted);font:10px var(--mono);letter-spacing:.3px}
+.saved-links-category-filter select{max-width:190px;min-width:0;height:42px;padding:0 30px 0 11px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font:12px var(--sans)}
+.saved-links-category-filter select:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+
 .saved-links-feedback{margin:14px 0 0;color:var(--green);font:12px/1.6 var(--sans);overflow-wrap:anywhere}
 .saved-links-feedback.is-error{color:#b84b43}
 .saved-links-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;padding:22px 0 52px}
