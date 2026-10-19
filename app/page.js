@@ -1,10 +1,11 @@
 import SiteNavbar from './components/site-navbar';
 import QuickNotesPanel from './components/quick-notes-panel';
+import ThemeToggle from './components/theme-toggle';
 
 export default function HomePage() {
   return (
     <main className="shell hub-shell">
-      <SiteNavbar />
+      <SiteNavbar actions={<ThemeToggle />} />
 
       <section className="hub-hero">
         <p className="eyebrow">YOUR PERSONAL KNOWLEDGE SPACE</p>
