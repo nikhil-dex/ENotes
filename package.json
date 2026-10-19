@@ -1,8 +1,8 @@
 {
-  "name": "linux-notes-dashboard",
+  "name": "ogenotes",
   "version": "1.0.0",
   "private": true,
-  "description": "A subject-based study notes dashboard built with Next.js and MongoDB.",
+  "description": "OgeNotes — a private workspace for notes, saved links, and learning resources.",
   "engines": {
     "node": ">=20.9.0"
   },
