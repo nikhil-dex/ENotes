@@ -18,6 +18,7 @@ function hostName(value) {
 export default function SavedLinksPage() {
   const [links, setLinks] = useState([]);
   const [query, setQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
   const [formOpen, setFormOpen] = useState(false);
@@ -42,12 +43,18 @@ export default function SavedLinksPage() {
 
   useEffect(() => { loadLinks(); }, [loadLinks]);
 
+  const categories = useMemo(() => [...new Set(links.map((link) => String(link.category || '').trim()).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })), [links]);
+
   const visibleLinks = useMemo(() => {
     const term = query.trim().toLowerCase();
-    if (!term) return links;
-    return links.filter((link) => [link.title, link.url, link.description, link.category, ...(link.tags || [])]
-      .some((value) => String(value || '').toLowerCase().includes(term)));
-  }, [links, query]);
+    return links.filter((link) => {
+      const matchesCategory = !selectedCategory || String(link.category || '').trim() === selectedCategory;
+      const matchesQuery = !term || [link.title, link.url, link.description, link.category, ...(link.tags || [])]
+        .some((value) => String(value || '').toLowerCase().includes(term));
+      return matchesCategory && matchesQuery;
+    });
+  }, [links, query, selectedCategory]);
 
   function startCreate() {
     setEditingId(null);
@@ -175,7 +182,14 @@ export default function SavedLinksPage() {
           <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search title, URL, category, or tag…" aria-label="Search saved links" />
           {query && <button type="button" onClick={() => setQuery('')} aria-label="Clear search">×</button>}
         </label>
-        <span className="saved-links-count">{visibleLinks.length} {visibleLinks.length === 1 ? 'LINK' : 'LINKS'}{query ? ' FOUND' : ' SAVED'}</span>
+        <label className="saved-links-category-filter">
+          <span>Category</span>
+          <select value={selectedCategory} onChange={(event) => setSelectedCategory(event.target.value)} aria-label="Filter saved links by category">
+            <option value="">All categories</option>
+            {categories.map((category) => <option key={category} value={category}>{category}</option>)}
+          </select>
+        </label>
+        <span className="saved-links-count">{visibleLinks.length} {visibleLinks.length === 1 ? 'LINK' : 'LINKS'}{query || selectedCategory ? ' FOUND' : ' SAVED'}</span>
       </section>
 
       {(error || message) && !formOpen && <p className={'saved-links-feedback' + (error ? ' is-error' : '')} role="status">{error || message}</p>}
@@ -236,8 +250,8 @@ export default function SavedLinksPage() {
       ) : (
         <div className="saved-links-empty">
           <span className="saved-links-empty-icon" aria-hidden="true">↗</span>
-          <h2>{query ? 'No matching links' : 'Your link library starts here'}</h2>
-          <p>{query ? 'Try another search term.' : 'Save docs, tools, tutorials, and useful websites so you can find them whenever you need them.'}</p>
+          <h2>{query || selectedCategory ? 'No matching links' : 'Your link library starts here'}</h2>
+          <p>{query || selectedCategory ? 'Try another search term or choose a different category.' : 'Save docs, tools, tutorials, and useful websites so you can find them whenever you need them.'}</p>
           {!query && <button className="add-button" type="button" onClick={startCreate}>＋ Save your first link</button>}
         </div>
       )}

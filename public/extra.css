@@ -560,6 +560,10 @@ button[aria-disabled="true"] {
 .saved-links-search input::placeholder{color:var(--muted)}
 .saved-links-search button{width:30px;height:30px;flex:0 0 auto;border:0;border-radius:6px;background:transparent;color:var(--muted);font-size:20px;cursor:pointer}
 .saved-links-count{flex:0 0 auto;color:var(--muted);font:10px var(--mono);letter-spacing:.5px}
+.saved-links-category-filter{display:flex;align-items:center;gap:8px;flex:0 0 auto;min-width:0;color:var(--muted);font:10px var(--mono);letter-spacing:.3px}
+.saved-links-category-filter select{max-width:190px;min-width:0;height:42px;padding:0 30px 0 11px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font:12px var(--sans)}
+.saved-links-category-filter select:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+
 .saved-links-feedback{margin:14px 0 0;color:var(--green);font:12px/1.6 var(--sans);overflow-wrap:anywhere}
 .saved-links-feedback.is-error{color:#b84b43}
 .saved-links-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;padding:22px 0 52px}
@@ -772,3 +776,5 @@ button[aria-disabled="true"] {
 [data-theme="dark"] .home-dashboard-stat,[data-theme="dark"] .home-dashboard-recent,[data-theme="dark"] .home-dashboard-actions{background:var(--paper)}
 @media(max-width:850px){.home-dashboard-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.home-dashboard-content{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:600px){.home-dashboard{padding-bottom:34px}.home-dashboard-heading{align-items:flex-start;flex-direction:column;gap:12px}.home-dashboard-heading h2{font-size:25px}.home-dashboard-view-all{align-self:flex-start}.home-dashboard-stats{gap:8px}.home-dashboard-stat{padding:12px;column-gap:8px}.home-dashboard-stat-icon{width:30px;height:30px}.home-dashboard-stat strong{font-size:20px}.home-dashboard-recent,.home-dashboard-actions{padding:15px}.home-dashboard-note{gap:8px}.home-dashboard-note-date{display:none}.home-dashboard-note-copy strong{font-size:11px}}
+
+@media(max-width:620px){.saved-links-category-filter{align-items:stretch;flex-direction:column;gap:6px;width:100%}.saved-links-category-filter select{width:100%;max-width:none;min-height:44px}}
