@@ -1,2 +1,46 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ENotes Quick Note</title><link rel="stylesheet" href="popup.css"></head><body><main><header><span class="mark">N</span><div><strong>ENotes Quick Note</strong><small>Save ideas without leaving the page</small></div></header><label for="base-url">ENotes website URL</label><input id="base-url" type="url" placeholder="https://your-enotes.vercel.app" autocomplete="url"><label for="pairing-code">One-time pairing code</label><input id="pairing-code" type="text" placeholder="Paste code from ENotes" autocomplete="off"><button id="connect" class="primary">Connect extension</button><p id="status" role="status"></p><div class="foot">Paired extensions can create Quick Notes only. Revoke access anytime in ENotes → Browser quick notes.</div></main><script src="popup.js"></script></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ENotes Quick Note</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main>
+    <header>
+      <span class="mark">N</span>
+      <div>
+        <strong>ENotes Quick Note</strong>
+        <small>Save ideas without leaving the page</small>
+      </div>
+    </header>
+
+    <section id="pairing-form">
+      <label for="base-url">ENotes website URL</label>
+      <input id="base-url" type="url" placeholder="https://your-enotes.vercel.app" autocomplete="url">
+
+      <label for="pairing-code">One-time pairing code</label>
+      <input id="pairing-code" type="text" placeholder="Paste code from ENotes" autocomplete="off">
+
+      <button id="connect" class="primary" type="button">Connect extension</button>
+    </section>
+
+    <section id="connected-panel" hidden>
+      <div class="connected-mark">✓</div>
+      <strong class="connected-title">Extension connected</strong>
+      <p class="connected-copy">ENotes Quick Note is ready to use.</p>
+      <div class="connection-detail">
+        <span class="detail-label">ENotes website</span>
+        <span id="connected-url" class="detail-value"></span>
+      </div>
+      <p id="connected-expiry" class="expiry"></p>
+      <p class="connected-copy">Open any website and use the floating <strong>N</strong> widget to save a note.</p>
+    </section>
+
+    <p id="status" role="status"></p>
+    <div class="foot">The extension can create Quick Notes only. Revoke access anytime in ENotes → Browser quick notes.</div>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>
