@@ -17,7 +17,7 @@ export default function SettingsPage() {
   const [subjectError, setSubjectError] = useState('');
   const [backupBusy, setBackupBusy] = useState(false);
   const [backupMessage, setBackupMessage] = useState('');
-  const [theme, setTheme] = useState('light');
+  const [theme, setTheme] = useState('dark');
   const fileRef = useRef(null);
 
   async function refreshSubjects() {
@@ -28,7 +28,10 @@ export default function SettingsPage() {
   useEffect(() => {
     refreshSubjects().catch((error) => setSubjectError(error.message));
     const storedTheme = localStorage.getItem('theme');
-    if (storedTheme === 'dark' || storedTheme === 'light') setTheme(storedTheme);
+    const initialTheme = storedTheme === 'light' || storedTheme === 'dark' ? storedTheme : 'dark';
+    setTheme(initialTheme);
+    document.documentElement.dataset.theme = initialTheme;
+    localStorage.setItem('theme', initialTheme);
   }, []);
 
   useEffect(() => {
