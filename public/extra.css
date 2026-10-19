@@ -725,3 +725,50 @@ button[aria-disabled="true"] {
 [data-theme="dark"] .media-folder-actions button,[data-theme="dark"] .media-file-actions button,[data-theme="dark"] .media-preview-header button{background:#202923}
 @media(max-width:850px){.media-folder-grid,.media-file-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.media-hero{padding:32px 0 18px}.media-title-row{align-items:flex-start;flex-direction:column;gap:12px}.media-private-pill{padding:6px 9px}.media-toolbar{align-items:stretch}.media-search{max-width:none;flex-basis:100%}.media-toolbar-actions{display:grid;grid-template-columns:1fr 1fr}.media-toolbar-actions .add-button,.media-toolbar-actions .study-button{justify-content:center;padding:10px}.media-folder-grid,.media-file-grid{grid-template-columns:minmax(0,1fr);gap:9px}.media-file-preview{min-height:95px}.media-filter-row{align-items:flex-start;flex-direction:column}.media-preview-backdrop{padding:8px}.media-preview-dialog{height:94vh;border-radius:8px}.media-preview-header{padding:9px}.media-file-actions button{min-height:34px}}
+
+
+/* Homepage dashboard */
+.home-dashboard{padding:0 0 48px}
+.home-dashboard-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin:0 0 18px}
+.home-dashboard-heading h2{font:700 clamp(24px,3vw,32px)/1.15 var(--display);letter-spacing:-1px;color:var(--ink);margin:7px 0 0}
+.home-dashboard-lead{font:12px/1.7 var(--sans);color:var(--muted);margin:9px 0 0}
+.home-dashboard-view-all,.home-dashboard-section-heading>a,.home-dashboard-action-link{color:var(--green);font:600 11px var(--sans);text-decoration:none;white-space:nowrap}
+.home-dashboard-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.home-dashboard-stat{display:grid;grid-template-columns:auto 1fr;align-items:center;column-gap:10px;row-gap:3px;padding:16px;border:1px solid var(--line);border-radius:9px;background:var(--paper);text-decoration:none;color:var(--ink);min-width:0;transition:border-color .18s,transform .18s}
+.home-dashboard-stat:hover{border-color:#a9c4b0;transform:translateY(-1px)}
+.home-dashboard-stat-icon{grid-row:span 2;display:grid;place-items:center;width:34px;height:34px;border-radius:8px;background:#e6efe8;color:var(--green);font-size:17px}
+.home-dashboard-stat-label{font:10px var(--sans);color:var(--muted)}
+.home-dashboard-stat strong{font:700 23px/1 var(--display);letter-spacing:-.5px}
+.home-dashboard-content{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(260px,1fr);gap:15px}
+.home-dashboard-recent,.home-dashboard-actions{min-width:0;border:1px solid var(--line);border-radius:10px;background:var(--paper);padding:21px}
+.home-dashboard-section-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.home-dashboard-section-heading .eyebrow,.home-dashboard-actions>.eyebrow{margin:0 0 7px}
+.home-dashboard-section-heading h3,.home-dashboard-actions h3{font:700 19px var(--display);letter-spacing:-.5px;color:var(--ink);margin:0}
+.home-dashboard-note-list{display:flex;flex-direction:column}
+.home-dashboard-note{display:flex;align-items:center;gap:11px;padding:13px 0;border-bottom:1px solid var(--line);min-width:0;text-decoration:none;color:var(--ink)}
+.home-dashboard-note:last-child{border-bottom:0;padding-bottom:2px}
+.home-dashboard-note:hover .home-dashboard-note-copy strong{color:var(--green)}
+.home-dashboard-note-mark{flex:none;display:grid;place-items:center;width:34px;height:34px;border-radius:8px;background:var(--surface, #f1f4f1);color:var(--green);font-size:17px}
+.home-dashboard-note-copy{display:flex;flex:1;flex-direction:column;gap:5px;min-width:0}
+.home-dashboard-note-copy strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:600 12px var(--sans);transition:color .15s}
+.home-dashboard-note-copy span{font:10px var(--sans);color:var(--muted)}
+.home-dashboard-note-date{flex:none;font:9px var(--mono);color:var(--muted);white-space:nowrap}
+.home-dashboard-note-arrow{flex:none;color:var(--green);font-size:13px}
+.home-dashboard-empty{display:flex;align-items:flex-start;flex-direction:column;gap:8px;padding:20px 0;color:var(--muted);font:12px/1.6 var(--sans)}
+.home-dashboard-empty>span{font-size:22px;color:var(--green)}
+.home-dashboard-empty strong{font:600 14px var(--sans);color:var(--ink)}
+.home-dashboard-empty p{margin:0}
+.home-dashboard-actions h3{margin-bottom:12px}
+.home-dashboard-actions>a{display:flex;align-items:center;gap:10px;padding:13px 0;border-bottom:1px solid var(--line);color:var(--ink);text-decoration:none}
+.home-dashboard-actions>a:last-child{border-bottom:0;padding-bottom:0}
+.home-dashboard-actions>a>span:last-child{margin-left:auto;color:var(--green)}
+.home-dashboard-actions>a:hover strong{color:var(--green)}
+.home-dashboard-action-icon{display:grid;place-items:center;flex:none;width:34px;height:34px;border:1px solid var(--line);border-radius:8px;color:var(--green);font-size:16px}
+.home-dashboard-actions>a>span:nth-child(2){display:flex;flex-direction:column;gap:4px;min-width:0}
+.home-dashboard-actions strong{font:600 11px var(--sans);transition:color .15s}
+.home-dashboard-actions small{font:10px var(--sans);color:var(--muted)}
+.home-dashboard-error{font:10px/1.6 var(--sans);color:#b84b43;margin:12px 0 0}
+[data-theme="dark"] .home-dashboard-stat-icon,[data-theme="dark"] .home-dashboard-note-mark{background:#26352a}
+[data-theme="dark"] .home-dashboard-stat,[data-theme="dark"] .home-dashboard-recent,[data-theme="dark"] .home-dashboard-actions{background:var(--paper)}
+@media(max-width:850px){.home-dashboard-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.home-dashboard-content{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){.home-dashboard{padding-bottom:34px}.home-dashboard-heading{align-items:flex-start;flex-direction:column;gap:12px}.home-dashboard-heading h2{font-size:25px}.home-dashboard-view-all{align-self:flex-start}.home-dashboard-stats{gap:8px}.home-dashboard-stat{padding:12px;column-gap:8px}.home-dashboard-stat-icon{width:30px;height:30px}.home-dashboard-stat strong{font-size:20px}.home-dashboard-recent,.home-dashboard-actions{padding:15px}.home-dashboard-note{gap:8px}.home-dashboard-note-date{display:none}.home-dashboard-note-copy strong{font-size:11px}}
