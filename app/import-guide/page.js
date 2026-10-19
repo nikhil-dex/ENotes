@@ -1,7 +1,7 @@
 import SiteNavbar from '../components/site-navbar';
 
 export const metadata = {
-  title: 'MongoDB Import Guide | Study Notes',
+  title: 'MongoDB Import Guide',
   description: 'MongoDB document schema and instructions for importing notes.',
 };
 
