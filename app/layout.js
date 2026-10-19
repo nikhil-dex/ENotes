@@ -9,7 +9,9 @@ export default function RootLayout({ children }) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: "try { document.documentElement.dataset.theme = localStorage.getItem('theme') || 'dark'; } catch { document.documentElement.dataset.theme = 'dark'; }" }} />
         <link rel="icon" href="/ogenotes-icon.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/ogenotes-icon.svg" />
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<link rel="manifest" href="/manifest.webmanifest" />
         <meta name="application-name" content="OgeNotes" />
         <meta name="theme-color" content="#40795e" />
         <link rel="manifest" href="/manifest.webmanifest"/>
