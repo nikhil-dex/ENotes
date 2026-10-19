@@ -14,14 +14,19 @@ function withSecurityHeaders(response) {
 
 export async function proxy(request) {
   const { pathname } = request.nextUrl;
+  const extensionApiPaths = new Set(['/api/extension/token', '/api/extension/quick-notes']);
+  const extensionId = process.env.ENOTES_EXTENSION_ID || '';
+  const allowedExtensionOrigin = /^[a-p]{32}$/.test(extensionId) ? 'chrome-extension://' + extensionId : null;
   if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method)) {
     const origin = request.headers.get('origin');
-    if (origin && origin !== request.nextUrl.origin) {
+    const extensionRequest = extensionApiPaths.has(pathname) && origin && origin === allowedExtensionOrigin;
+    if (origin && origin !== request.nextUrl.origin && !extensionRequest) {
       return withSecurityHeaders(NextResponse.json({ error: 'Cross-origin requests are not allowed.' }, { status: 403 }));
     }
   }
   const publicPaths = new Set([
-    '/access', '/api/access/verify', '/api/access/logout', '/api/access/heartbeat', '/service-worker.js',
+    '/access', '/api/access/verify', '/api/access/logout', '/api/access/heartbeat',
+    '/api/extension/token', '/api/extension/quick-notes', '/service-worker.js',
     '/style.css', '/extra.css', '/favicon.ico', '/robots.txt', '/sitemap.xml',
   ]);
   if (publicPaths.has(pathname)) {
