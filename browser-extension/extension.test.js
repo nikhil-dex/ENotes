@@ -19,6 +19,6 @@ test('browser extension manifest is valid and keeps a stable ID key', async () =
 test('extension JavaScript files parse without syntax errors', async () => {
   for (const path of ['content.js', 'popup.js', 'service-worker.js']) {
     const source = await read(path);
-    assert.doesNotThrow(() => new vm.Script(source, { filename: path }), path + ' should parse');
+    try { new vm.Script(source, { filename: path }); } catch (error) { assert.fail(path + ' failed to parse: ' + error.stack); }
   }
 });
