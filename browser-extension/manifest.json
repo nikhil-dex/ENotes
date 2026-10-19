@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "ENotes Quick Note",
+  "version": "0.1.0",
+  "description": "Capture quick notes from any website and save them to your private ENotes Quick Notes.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAo+YRjya5HpmkTxLt+ddttyyENPRztDI94/L81kmlRV52r79CAXEgUES1veqqCdB9BmC9F7vxWQF6tQwnSQIyJz9VZxKWcRUxb+xvR1ZAkNiw1+9669U465X0HQnN7XkT6nigfA+GKFBUD/toe9ZA7V+TBv4yPiJ7Mdkyj9UaW23h9yKc28lnJI2TLhlQ8hVcfkV27LGtqbddBF1K7I70qTNzN/MNeajuCXUYXjEUvB4ewrJB7aAIYzsZxD4LsTYN/UbVOPccEsu81FDTdV30vVzyqwPKKCTBHAugd8iiu/9e7zGot/OED2hJYcaR2NmA5dp82CSuJwzDT5tqPh8IgwIDAQAB",
+  "permissions": [
+    "storage"
+  ],
+  "optional_host_permissions": [
+    "https://*/*",
+    "http://localhost:3000/*"
+  ],
+  "background": {
+    "service_worker": "service-worker.js"
+  },
+  "action": {
+    "default_title": "ENotes Quick Note",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}
