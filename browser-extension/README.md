@@ -21,7 +21,7 @@ The first line becomes the title, matching ENotes' existing Quick Notes behavior
 - The extension receives a random bearer token with only the `quick-notes:create` scope; the server stores a SHA-256 hash.
 - Tokens expire after 90 days. Use **Browser quick notes → Revoke all extension access** to invalidate all extension tokens immediately.
 - The token API accepts requests only from the extension's fixed Chrome origin. Do not change the public manifest key after release, or the extension ID will change.
-- The extension requests host permission only for the ENotes origin entered by the user. Its floating widget runs on HTTP/HTTPS pages.
+- The extension requests network access only for the ENotes origin entered by the user. To display the floating widget on arbitrary HTTP/HTTPS pages, Chrome also requires page access for those sites; the content script does not read page content or send page data to ENotes.
 
 ## Server configuration
 
