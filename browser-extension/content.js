@@ -6,16 +6,16 @@
  const panel=document.createElement('section');panel.className='panel hidden';panel.innerHTML='<header class="top"><span class="mark">N</span><span class="heading">ENotes Quick Note</span><button class="close" aria-label="Close">×</button></header><div class="body"><p class="hint">Capture an idea from this page. The first line becomes the note title.</p><textarea maxlength="20000" placeholder="Topic or heading&#10;&#10;Write your note…"></textarea><button class="save">Save to Quick Notes</button><p class="status" role="status"></p></div>';
  const launcher=document.createElement('button');launcher.className='launcher';launcher.type='button';launcher.textContent='N';launcher.title='Write a quick note in ENotes';shadow.append(style,panel,launcher);
  const textarea=panel.querySelector('textarea'),saveButton=panel.querySelector('.save'),status=panel.querySelector('.status');
- // Keep website keyboard shortcuts (for example YouTube's "i" shortcut) from
- // firing while the user is typing in this extension-owned textarea. Do not
- // preventDefault: normal text entry, editing shortcuts, and IME input remain usable.
+ // Intercept keyboard events at window capture, before they reach page-level
+ // document/bubble handlers (including media shortcuts such as YouTube's "i").
+ // Do not preventDefault: the textarea must still receive normal typing/editing.
  const stopPageShortcutsWhileTyping = event => {
   if (panel.classList.contains('hidden') || shadow.activeElement !== textarea) return;
   event.stopPropagation();
   event.stopImmediatePropagation();
  };
  for (const eventName of ['keydown','keyup','keypress']) {
-  document.addEventListener(eventName, stopPageShortcutsWhileTyping, true);
+  window.addEventListener(eventName, stopPageShortcutsWhileTyping, true);
  }
  let dragging=false,startX=0,startY=0,originX=0,originY=0;
  const dragHandle=panel.querySelector('.top');dragHandle.addEventListener('pointerdown',event=>{if(event.target.closest('button'))return;dragging=true;startX=event.clientX;startY=event.clientY;const rect=host.getBoundingClientRect();originX=rect.left;originY=rect.top;host.style.left=rect.left+'px';host.style.top=rect.top+'px';host.style.right='auto';host.style.bottom='auto';dragHandle.setPointerCapture(event.pointerId)});dragHandle.addEventListener('pointermove',event=>{if(!dragging)return;const left=Math.max(0,Math.min(window.innerWidth-host.offsetWidth,originX+event.clientX-startX));const top=Math.max(0,Math.min(window.innerHeight-host.offsetHeight,originY+event.clientY-startY));host.style.left=left+'px';host.style.top=top+'px'});dragHandle.addEventListener('pointerup',()=>{dragging=false});dragHandle.addEventListener('pointercancel',()=>{dragging=false});
