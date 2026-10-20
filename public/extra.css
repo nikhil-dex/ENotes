@@ -1003,3 +1003,29 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 [data-theme="dark"] .settings-accent-option{background:var(--surface-raised);color:var(--ink)}
 [data-theme="dark"] .settings-accent-option.selected{background:var(--accent-soft);border-color:var(--green)}
 @media(max-width:680px){.settings-appearance-controls{align-items:stretch;min-width:0}.settings-accent-picker{justify-content:flex-start}.settings-accent-option{flex:1 1 calc(50% - 7px);justify-content:flex-start}}
+
+
+/* Independent primary and secondary accent palettes */
+:root{--primary:var(--green);--primary-strong:var(--green-dark);--secondary:#84908a;--secondary-strong:#68756e;--secondary-soft:var(--wash)}
+[data-theme="dark"]{--secondary:#a2afa7;--secondary-strong:#c0cbc3;--secondary-soft:#29332c}
+:root[data-primary="green"]{--primary:#40795e;--primary-strong:#2d5d46}
+:root[data-theme="dark"][data-primary="green"]{--primary:#78ad8d;--primary-strong:#649a79}
+:root[data-primary="blue"]{--primary:#376fc0;--primary-strong:#28549a}
+:root[data-theme="dark"][data-primary="blue"]{--primary:#8db9ff;--primary-strong:#6ca2f0}
+:root[data-primary="purple"]{--primary:#7955b5;--primary-strong:#5c3c91}
+:root[data-theme="dark"][data-primary="purple"]{--primary:#b69ae8;--primary-strong:#9b7bd5}
+:root[data-primary="rose"]{--primary:#b94f70;--primary-strong:#913954}
+:root[data-theme="dark"][data-primary="rose"]{--primary:#ed91ad;--primary-strong:#d87392}
+:root[data-secondary="green"]{--secondary:#40795e;--secondary-strong:#2d5d46;--secondary-soft:#eff4f0}
+:root[data-theme="dark"][data-secondary="green"]{--secondary:#78ad8d;--secondary-strong:#a8d2b7;--secondary-soft:#29382e}
+:root[data-secondary="blue"]{--secondary:#376fc0;--secondary-strong:#28549a;--secondary-soft:#eaf2ff}
+:root[data-theme="dark"][data-secondary="blue"]{--secondary:#8db9ff;--secondary-strong:#b5d2ff;--secondary-soft:#26364e}
+:root[data-secondary="purple"]{--secondary:#7955b5;--secondary-strong:#5c3c91;--secondary-soft:#f0eafd}
+:root[data-theme="dark"][data-secondary="purple"]{--secondary:#b69ae8;--secondary-strong:#d0bcf4;--secondary-soft:#342944}
+:root[data-secondary="rose"]{--secondary:#b94f70;--secondary-strong:#913954;--secondary-soft:#fcecf1}
+:root[data-theme="dark"][data-secondary="rose"]{--secondary:#ed91ad;--secondary-strong:#ffc0d0;--secondary-soft:#402832}
+/* Primary drives main actions; secondary drives supporting/quiet UI. */
+.add-button,.submit-button,.subject-tab.active,.mobile-bottom-nav-item.is-active{background:var(--primary)}
+.add-button:hover,.submit-button:hover{background:var(--primary-strong)}
+.secondary-button,.settings-secondary-button,.subject-add,.settings-muted,.stat-label,.sort-label{--secondary-current:var(--secondary);color:var(--secondary-current)}
+.count-pill,.note-mark,.subject-tab:hover,.subject-add:hover,.settings-accent-option.selected{background:var(--secondary-soft)}
