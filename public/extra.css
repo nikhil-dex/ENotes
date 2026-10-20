@@ -895,3 +895,14 @@ button[aria-disabled="true"] {
 [data-theme="dark"] .note-share-menu button{color:var(--ink)}
 [data-theme="dark"] .note-share-menu button:hover{background:#29382e}
 [data-theme="dark"] .note-share-menu small{color:var(--muted)}
+
+/* Collapsible homepage news feed */
+.home-news-header{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}
+.home-news-header> :last-child{flex-shrink:0}
+.home-news-collapse{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:38px;padding:8px 13px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--ink);font:500 12px var(--sans);cursor:pointer;white-space:nowrap}
+.home-news-collapse:hover{background:var(--wash)}
+.home-news-collapse span{font-size:17px;line-height:1}
+.home-news-content{margin-top:18px}
+[data-theme="dark"] .home-news-collapse{background:#1b231d;color:var(--ink);border-color:#3b4940}
+[data-theme="dark"] .home-news-collapse:hover{background:#29382e}
+@media(max-width:520px){.home-news-header{gap:10px}.home-news-collapse{padding:7px 10px;font-size:11px}.home-news-header .home-news-refresh{padding:7px 10px}}
