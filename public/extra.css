@@ -883,3 +883,15 @@ button[aria-disabled="true"] {
   .reader-answer img { max-width: 100% !important; }
 }
 
+
+/* Share menu theme-aware colors */
+.note-share-button{background:var(--paper);color:var(--ink);border-color:var(--line)}
+.note-share-menu{background:var(--paper);color:var(--ink);border-color:var(--line);box-shadow:0 12px 32px #10201624}
+.note-share-menu button{color:var(--ink)}
+.note-share-menu button:hover{background:var(--wash)}
+.note-share-menu small{color:var(--muted);opacity:1}
+[data-theme="dark"] .note-share-button{background:#1b231d;color:var(--ink);border-color:#3b4940}
+[data-theme="dark"] .note-share-menu{background:#1b231d;color:var(--ink);border-color:#3b4940;box-shadow:0 12px 32px #0008}
+[data-theme="dark"] .note-share-menu button{color:var(--ink)}
+[data-theme="dark"] .note-share-menu button:hover{background:#29382e}
+[data-theme="dark"] .note-share-menu small{color:var(--muted)}
