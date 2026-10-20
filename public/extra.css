@@ -948,3 +948,46 @@ button[aria-disabled="true"] {
   .ios-route-stage,.reader-panel,.study-panel,.dialog,.media-preview-dialog,.mobile-bottom-nav-item,.mobile-bottom-nav-icon{animation:none!important;transition:none!important}
   .ios-pull-spinner{animation:none!important}
 }
+
+
+/* Centralized design tokens — shared by every page and component. */
+:root{
+  --ink:#1e2925;--muted:#84908a;--line:#e8ece9;
+  --green:#40795e;--green-dark:#2d5d46;--paper:#fcfdfb;
+  --surface:#fff;--surface-raised:#fff;--surface-input:#fff;
+  --wash:#f1f6f2;--accent-soft:#eff4f0;--accent-border:#c9d9cd;
+  --danger:#b94e46;--danger-soft:#f8e9e8;--code-surface:#f1f4f2;
+  --overlay:rgba(12,22,16,.72);--shadow-soft:0 8px 24px rgba(7,16,10,.10);
+  --shadow-popover:0 12px 32px rgba(16,32,22,.14);
+  --nav-surface:color-mix(in srgb,var(--paper) 94%,transparent);--focus-ring:#8caf98;
+}
+[data-theme="dark"]{
+  --ink:#e4ebe6;--muted:#a2afa7;--line:#303b35;
+  --green:#78ad8d;--green-dark:#649a79;--paper:#171d19;
+  --surface:#202923;--surface-raised:#1b231d;--surface-input:#1a211c;
+  --wash:#29382e;--accent-soft:#29382e;--accent-border:#385341;
+  --danger:#f08a80;--danger-soft:#482d2b;--code-surface:#151b17;
+  --overlay:rgba(3,8,5,.78);--shadow-soft:0 8px 24px rgba(0,0,0,.24);
+  --shadow-popover:0 12px 32px rgba(0,0,0,.5);
+  --nav-surface:color-mix(in srgb,var(--paper) 94%,transparent);--focus-ring:#8caf98;
+}
+:root[data-accent="blue"]{--green:#376fc0;--green-dark:#28549a;--focus-ring:#8bb7f0}
+:root[data-theme="dark"][data-accent="blue"]{--green:#8db9ff;--green-dark:#6ca2f0;--focus-ring:#8bb7f0}
+:root[data-accent="purple"]{--green:#7955b5;--green-dark:#5c3c91;--focus-ring:#b5a0e6}
+:root[data-theme="dark"][data-accent="purple"]{--green:#b69ae8;--green-dark:#9b7bd5;--focus-ring:#b5a0e6}
+:root[data-accent="rose"]{--green:#b94f70;--green-dark:#913954;--focus-ring:#e4a1b4}
+:root[data-theme="dark"][data-accent="rose"]{--green:#ed91ad;--green-dark:#d87392;--focus-ring:#e4a1b4}
+
+/* Consume shared tokens instead of duplicating theme-specific surfaces. */
+body{background:var(--paper);color:var(--ink)}
+.search-wrap,.dialog,.reader-panel,.study-panel,.media-preview-dialog{background:var(--surface);color:var(--ink);border-color:var(--line)}
+.search-wrap input,.dialog input,.dialog textarea{background:var(--surface-input);color:var(--ink);border-color:var(--line)}
+.note-card,.html-file-card,.home-news-card,.site-navbar,.mobile-bottom-nav{color:var(--ink);border-color:var(--line)}
+.note-mark,.count-pill,.subject-tab:hover,.subject-add:hover,.note-share-menu button:hover,.home-news-collapse:hover{background:var(--accent-soft)}
+.add-button,.submit-button,.subject-tab.active{background:var(--green)}
+.add-button:hover,.submit-button:hover{background:var(--green-dark)}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline-color:var(--focus-ring)}
+[data-theme="dark"] .search-wrap,[data-theme="dark"] .note-card,[data-theme="dark"] .dialog,[data-theme="dark"] .reader-panel,[data-theme="dark"] .study-panel{background:var(--surface);border-color:var(--line);color:var(--ink)}
+[data-theme="dark"] .search-wrap input,[data-theme="dark"] .dialog input,[data-theme="dark"] .dialog textarea{background:var(--surface-input);border-color:var(--line);color:var(--ink)}
+[data-theme="dark"] .note-mark,[data-theme="dark"] .count-pill,[data-theme="dark"] .subject-tab:hover,[data-theme="dark"] .subject-add:hover{background:var(--accent-soft);color:var(--green)}
+[data-theme="dark"] .reader-answer code,[data-theme="dark"] .answer-preview pre,[data-theme="dark"] .reader-answer pre,[data-theme="dark"] .study-answer pre{background:var(--code-surface)}
