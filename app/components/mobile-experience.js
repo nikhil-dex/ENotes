@@ -1,11 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 
 export default function MobileExperience({ children }) {
   const pathname = usePathname();
-  const router = useRouter();
   const touchStart = useRef(null);
   const refreshing = useRef(false);
   const [pullDistance, setPullDistance] = useState(0);
@@ -34,7 +33,7 @@ export default function MobileExperience({ children }) {
         refreshing.current = true;
         setRefreshingState(true);
         setPullDistance(58);
-        router.refresh();
+        window.setTimeout(() => window.location.reload(), 120);
         window.setTimeout(() => {
           refreshing.current = false;
           setRefreshingState(false);
@@ -53,7 +52,7 @@ export default function MobileExperience({ children }) {
       window.removeEventListener('touchend', end);
       window.removeEventListener('touchcancel', end);
     };
-  }, [pullDistance, router]);
+  }, [pullDistance]);
 
   useEffect(() => {
     document.documentElement.dataset.route = pathname || '/';
