@@ -189,6 +189,20 @@ export async function PATCH(request) {
       if (!result) return json({ error: 'Folder not found.' }, 404);
       return json(serialize(result));
     }
+    if (data?.action === 'rename-file') {
+      if (!isValidMediaId(data.id)) return json({ error: 'Choose a valid file.' }, 400);
+      const current = await db.collection('mediaFiles').findOne({ _id: data.id, status: 'ready' });
+      if (!current) return json({ error: 'File not found.' }, 404);
+      const normalized = normalizeMediaFile({ name: data.name, type: current.type, size: current.size });
+      if (normalized.error) return json({ error: normalized.error }, 400);
+      const result = await db.collection('mediaFiles').findOneAndUpdate(
+        { _id: data.id, status: 'ready' },
+        { $set: { name: normalized.value.name, extension: normalized.value.extension, updatedAt: new Date() } },
+        { returnDocument: 'after', includeResultMetadata: false },
+      );
+      if (!result) return json({ error: 'File not found.' }, 404);
+      return json(serialize(result));
+    }
     if (data?.action === 'move-file') {
       if (!isValidMediaId(data.id) || !isValidFolderId(data.folderId)) return json({ error: 'Choose a valid file and folder.' }, 400);
       if (data.folderId && !await db.collection('mediaFolders').findOne({ _id: data.folderId })) return json({ error: 'Folder not found.' }, 404);
