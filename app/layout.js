@@ -1,3 +1,5 @@
+import MobileBottomNavigation from './components/mobile-bottom-navigation';
+
 export const metadata = {
   title: { default: 'OgeNotes', template: '%s | OgeNotes' },
   description: 'OgeNotes keeps your notes, saved links, learning resources, and revision tools together in one private workspace.',
@@ -16,7 +18,7 @@ export default function RootLayout({ children }) {
         <link rel="stylesheet" href="/style.css" />
         <link rel="stylesheet" href="/extra.css" />
       </head>
-      <body>{children}</body>
+      <body>{children}<MobileBottomNavigation /></body>
     </html>
   );
 }
