@@ -22,6 +22,7 @@ export default function HomeNewsFeed() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const refresh = useCallback(async (manual = false) => {
     if (manual) setRefreshing(true);
@@ -60,12 +61,14 @@ export default function HomeNewsFeed() {
           <h1 id="home-news-title">India &amp; tech, <span>in the know.</span></h1>
           <p className="home-news-lead">Indian headlines, politics, and technology stories from around the world.</p>
         </div>
+        <button className="home-news-collapse" type="button" onClick={() => setIsExpanded((expanded) => !expanded)} aria-expanded={isExpanded} aria-controls="home-news-content"><span aria-hidden="true">{isExpanded ? "−" : "+"}</span> {isExpanded ? "Collapse" : "Show news"}</button>
         <button className="home-news-refresh" type="button" onClick={() => refresh(true)} disabled={refreshing || loading} aria-label="Refresh news now">
           <span aria-hidden="true" className={refreshing ? 'home-news-refresh-icon is-spinning' : 'home-news-refresh-icon'}>↻</span>
           {refreshing ? 'Refreshing…' : 'Refresh'}
         </button>
       </div>
 
+      {isExpanded && <div id="home-news-content" className="home-news-content">
       <div className="home-news-toolbar">
         <div className="home-news-filters" role="group" aria-label="Filter news">
           <button type="button" className={filter === 'all' ? 'is-active' : ''} onClick={() => setFilter('all')}>Top stories</button>
@@ -101,6 +104,7 @@ export default function HomeNewsFeed() {
       <div className="home-news-footer">
         <span>{lastUpdated ? `Updated ${lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'Headlines may change as publishers update their feeds.'}</span>
         <span>Stories open on their original publisher · Headlines via Google News RSS</span>
+      </div>}
       </div>
     </section>
   );
