@@ -866,9 +866,9 @@ button[aria-disabled="true"] {
 .note-share-menu small{font-size:12px;opacity:.72}
 @media print{
   html,body{height:auto!important;min-height:0!important;overflow:visible!important;margin:0!important;padding:0!important;background:#fff!important}
-  body *{display:none!important;visibility:hidden!important}
-  .reader-backdrop{display:block!important;visibility:visible!important;position:static!important}
-  .reader-backdrop *{display:revert!important;visibility:visible!important}
+  /* body *{display:none!important;visibility:hidden!important} */
+  /* .reader-backdrop{display:block!important;visibility:visible!important;position:static!important} */
+  /* .reader-backdrop *{display:revert!important;visibility:visible!important} */
   .reader-backdrop{position:static!important;display:block!important;overflow:visible!important;padding:0!important;margin:0!important;background:#fff!important;backdrop-filter:none!important}
   .reader-panel{position:static!important;width:100%!important;max-width:none!important;max-height:none!important;overflow:visible!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:#fff!important;color:#111!important}
   .reader-toolbar,.reader-close,.note-share-wrap,.note-links-section,.reader-meta{display:none!important}
