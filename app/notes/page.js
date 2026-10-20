@@ -53,6 +53,7 @@ export default function HomePage() {
   const [editingNote, setEditingNote] = useState(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [readerNote, setReaderNote] = useState(null);
+  const [shareMenuOpen, setShareMenuOpen] = useState(false);
   const [studyOpen, setStudyOpen] = useState(false);
   const [heading, setHeading] = useState('');
   const [answer, setAnswer] = useState('');
@@ -413,6 +414,24 @@ export default function HomePage() {
     return () => document.removeEventListener('pointerdown', closeOnOutsideClick);
   }, [mobileNavOpen]);
 
+  async function shareReaderNote() {
+    if (!readerNote) return;
+    const subjectName = readerNote.subjectName || subjects.find((subject) => subject.slug === (readerNote.subject || activeSubject))?.name || active?.name || 'OgeNotes';
+    const text = String(readerNote.heading || 'Untitled note') + '\n\n' + String(readerNote.answer || '') + '\n\n' + subjectName + ' · OgeNotes';
+    try {
+      if (navigator.share) await navigator.share({ title: readerNote.heading || 'OgeNotes note', text });
+      else if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(text); window.alert('Note text copied. Paste it into WhatsApp or another app.'); }
+      else window.prompt('Copy your note text:', text);
+    } catch (error) { if (!error || error.name !== 'AbortError') window.alert('Sharing failed. Try Print / Save PDF instead.'); }
+    setShareMenuOpen(false);
+  }
+
+  function printReaderNote() {
+    if (!readerNote) return;
+    setShareMenuOpen(false);
+    window.print();
+  }
+
   function saveLearned(next) {
     setLearnedNotes(next);
     localStorage.setItem(`learnedNotes:${activeSubject}`, JSON.stringify([...next]));
@@ -715,7 +734,7 @@ export default function HomePage() {
           {formError && <p className="form-error" role="alert">{formError}</p>}<button className="submit-button" type="submit" disabled={saving}><span>{saving ? 'Saving…' : editingNote ? 'Save changes' : 'Save note'}</span><span aria-hidden="true">→</span></button></form>
       </section></div>}
 
-      {readerNote && <div className="reader-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setReaderNote(null); }}><article className="reader-panel" role="dialog" aria-modal="true" aria-labelledby="readerTitle"><div className="reader-toolbar"><span className="reader-kicker">NOTE {String(readerNote.number).padStart(2, '0')}</span><button className="close-button reader-close" onClick={() => setReaderNote(null)} aria-label="Close note">×</button></div><div className="reader-content"><p className="eyebrow">{readerNote.subjectName || subjects.find((subject) => subject.slug === (readerNote.subject || activeSubject))?.name || active?.name}</p><h2 id="readerTitle">{readerNote.heading}</h2><div className="reader-meta">Saved {readerNote.saved}</div><div className="reader-answer" dangerouslySetInnerHTML={{ __html: markdownHtml(readerNote.answer) }}/>
+      {readerNote && <div className="reader-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setReaderNote(null); }}><article className="reader-panel" role="dialog" aria-modal="true" aria-labelledby="readerTitle"><div className="reader-toolbar"><span className="reader-kicker">NOTE {String(readerNote.number).padStart(2, '0')}</span><div className="reader-toolbar-actions"><div className="note-share-wrap"><button type="button" className="note-share-button" aria-expanded={shareMenuOpen} onClick={() => setShareMenuOpen((open) => !open)}>↗ Share</button>{shareMenuOpen && <div className="note-share-menu" role="menu"><button type="button" role="menuitem" onClick={shareReaderNote}><strong>Share note</strong><small>Send text to available apps</small></button><button type="button" role="menuitem" onClick={printReaderNote}><strong>Print / Save PDF</strong><small>Keep the rendered note formatting</small></button></div>}</div><button className="close-button reader-close" onClick={() => { setShareMenuOpen(false); setReaderNote(null); }} aria-label="Close note">×</button></div></div><div className="reader-content"><p className="eyebrow">{readerNote.subjectName || subjects.find((subject) => subject.slug === (readerNote.subject || activeSubject))?.name || active?.name}</p><h2 id="readerTitle">{readerNote.heading}</h2><div className="reader-meta">Saved {readerNote.saved}</div><div className="reader-answer" dangerouslySetInnerHTML={{ __html: markdownHtml(readerNote.answer) }}/>
           <section className="note-links-section" aria-label="Linked notes">
             <h3>Linked notes</h3>
             {notes.filter((note) => (note.subject || activeSubject) === (readerNote.subject || activeSubject) && note.number !== readerNote.number && referencesNote(readerNote.answer, note.heading)).length
