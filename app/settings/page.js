@@ -20,6 +20,11 @@ export default function SettingsPage() {
   const [theme, setTheme] = useState('dark');
   const [accent, setAccent] = useState('green');
   const [secondary, setSecondary] = useState('blue');
+  const [pixelEnabled, setPixelEnabled] = useState(true);
+  const [pixelColor, setPixelColor] = useState('accent');
+  const [pixelMode, setPixelMode] = useState('random');
+  const [pixelSpeed, setPixelSpeed] = useState('normal');
+  const [pixelDensity, setPixelDensity] = useState('normal');
   const fileRef = useRef(null);
 
   async function refreshSubjects() {
@@ -29,6 +34,14 @@ export default function SettingsPage() {
 
   useEffect(() => {
     refreshSubjects().catch((error) => setSubjectError(error.message));
+    try {
+      const pixel = JSON.parse(localStorage.getItem('ogenotes-pixel-strip-settings') || '{}');
+      setPixelEnabled(pixel.enabled !== false);
+      setPixelColor(pixel.color === 'white' ? 'white' : 'accent');
+      setPixelMode(['random', 'wave', 'sparkle', 'rain', 'pulse', 'heartbeat', 'geometry', 'glitch', 'orbit'].includes(pixel.mode) ? pixel.mode : 'random');
+      setPixelSpeed(['slow', 'normal', 'fast'].includes(pixel.speed) ? pixel.speed : 'normal');
+      setPixelDensity(['fine', 'normal', 'bold'].includes(pixel.density) ? pixel.density : 'normal');
+    } catch { /* Use defaults when saved settings are invalid. */ }
     const storedTheme = localStorage.getItem('theme');
     const initialTheme = storedTheme === 'light' || storedTheme === 'dark' ? storedTheme : 'dark';
     setTheme(initialTheme);
@@ -62,6 +75,22 @@ export default function SettingsPage() {
     document.documentElement.dataset.secondary = secondary;
     localStorage.setItem('secondary', secondary);
   }, [secondary]);
+
+  function savePixelSettings(next) {
+    const settings = { enabled: pixelEnabled, color: pixelColor, mode: pixelMode, speed: pixelSpeed, density: pixelDensity, ...next };
+    setPixelEnabled(settings.enabled);
+    setPixelColor(settings.color);
+    setPixelMode(settings.mode);
+    setPixelSpeed(settings.speed);
+    setPixelDensity(settings.density);
+    localStorage.setItem('ogenotes-pixel-strip-settings', JSON.stringify(settings));
+    window.dispatchEvent(new Event('ogenotes-pixel-settings'));
+    window.dispatchEvent(new Event('storage'));
+  }
+
+  function previewPixelAnimation() {
+    window.dispatchEvent(new Event('ogenotes-pixel-preview'));
+  }
 
   async function createSubject(event) {
     event.preventDefault();
@@ -228,6 +257,21 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
+      </section>
+
+
+      <section className="settings-section pixel-settings-section" aria-labelledby="pixel-strip-heading">
+        <div className="settings-section-title"><div><p className="eyebrow">04 · PERSONALIZATION</p><h2 id="pixel-strip-heading">Pixel Strip</h2></div><span className="settings-count">8 effects</span></div>
+        <p className="settings-copy">Customize the animated pixel display shown below the navigation bar throughout OgeNotes.</p>
+        <div className="pixel-settings-preview" aria-hidden="true"><span className="pixel-preview-dot" /><span className="pixel-preview-dot" /><span className="pixel-preview-dot" /><span className="pixel-preview-dot" /><span className="pixel-preview-dot" /><span className="pixel-preview-dot" /><span className="pixel-preview-dot" /><span className="pixel-preview-dot" /><span className="pixel-preview-dot" /><span className="pixel-preview-dot" /><span className="pixel-preview-dot" /><span className="pixel-preview-dot" /><span className="pixel-preview-dot" /><span className="pixel-preview-dot" /><span className="pixel-preview-dot" /><span className="pixel-preview-dot" /><span className="pixel-preview-dot" /><span className="pixel-preview-dot" /><span className="pixel-preview-dot" /><span className="pixel-preview-dot" /><span className="pixel-preview-dot" /></div>
+        <div className="pixel-settings-grid">
+          <label className="pixel-setting-toggle"><span><strong>Enable Pixel Strip</strong><small>Show or hide the strip on all pages.</small></span><input type="checkbox" checked={pixelEnabled} onChange={(event) => savePixelSettings({ enabled: event.target.checked })} /></label>
+          <label className="pixel-setting-control"><span><strong>Pixel color</strong><small>Follow the primary theme accent or use white.</small></span><select value={pixelColor} onChange={(event) => savePixelSettings({ color: event.target.value })}><option value="accent">Theme accent</option><option value="white">Monochrome white</option></select></label>
+          <label className="pixel-setting-control"><span><strong>Animation mode</strong><small>Random rotation or a preferred effect.</small></span><select value={pixelMode} onChange={(event) => savePixelSettings({ mode: event.target.value })}><option value="random">Random rotation</option><option value="wave">Pixel waves</option><option value="sparkle">Random sparkles</option><option value="rain">Digital rain</option><option value="pulse">Pulse grid</option><option value="heartbeat">Pixel heartbeat</option><option value="geometry">Geometric shapes</option><option value="glitch">Glitch</option><option value="orbit">Orbit rings</option></select></label>
+          <label className="pixel-setting-control"><span><strong>Animation speed</strong><small>Adjust how quickly the pixels move.</small></span><select value={pixelSpeed} onChange={(event) => savePixelSettings({ speed: event.target.value })}><option value="slow">Slow</option><option value="normal">Normal</option><option value="fast">Fast</option></select></label>
+          <label className="pixel-setting-control"><span><strong>Pixel density</strong><small>Choose finer or bolder pixels.</small></span><select value={pixelDensity} onChange={(event) => savePixelSettings({ density: event.target.value })}><option value="fine">Fine</option><option value="normal">Balanced</option><option value="bold">Bold</option></select></label>
+        </div>
+        <div className="pixel-settings-actions"><button type="button" className="add-button" onClick={previewPixelAnimation} disabled={!pixelEnabled}>↻ Preview another animation</button><span className="settings-muted">Preferences save automatically on this device.</span></div>
       </section>
 
       <footer><span>Built for learning, one note at a time.</span><span>SETTINGS · ENotes</span></footer>
