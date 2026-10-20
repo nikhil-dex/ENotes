@@ -1150,14 +1150,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 :root:not([data-theme="dark"]){
   --accent-soft:var(--secondary-soft);
   --accent-border:var(--line);
-  --green:var(--primary);
-  --green-dark:var(--primary-strong);
 }
 :root[data-theme="dark"]{
   --accent-soft:var(--secondary-soft);
   --accent-border:var(--line);
-  --green:var(--primary);
-  --green-dark:var(--primary-strong);
 }
 :root:not([data-theme="dark"]) .brand-light,
 :root:not([data-theme="dark"]) .topbar-right,
