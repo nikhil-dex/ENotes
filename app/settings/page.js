@@ -18,6 +18,7 @@ export default function SettingsPage() {
   const [backupBusy, setBackupBusy] = useState(false);
   const [backupMessage, setBackupMessage] = useState('');
   const [theme, setTheme] = useState('dark');
+  const [accent, setAccent] = useState('green');
   const fileRef = useRef(null);
 
   async function refreshSubjects() {
@@ -32,12 +33,23 @@ export default function SettingsPage() {
     setTheme(initialTheme);
     document.documentElement.dataset.theme = initialTheme;
     localStorage.setItem('theme', initialTheme);
+    const storedAccent = localStorage.getItem('accent');
+    const initialAccent = ['green', 'blue', 'purple', 'rose'].includes(storedAccent) ? storedAccent : 'green';
+    setAccent(initialAccent);
+    if (initialAccent === 'green') delete document.documentElement.dataset.accent;
+    else document.documentElement.dataset.accent = initialAccent;
   }, []);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     localStorage.setItem('theme', theme);
   }, [theme]);
+
+  useEffect(() => {
+    if (accent === 'green') delete document.documentElement.dataset.accent;
+    else document.documentElement.dataset.accent = accent;
+    localStorage.setItem('accent', accent);
+  }, [accent]);
 
   async function createSubject(event) {
     event.preventDefault();
@@ -191,8 +203,13 @@ export default function SettingsPage() {
       </section>
 
       <section className="settings-section settings-appearance" aria-labelledby="appearance-heading">
-        <div><p className="eyebrow">03 · COMFORT</p><h2 id="appearance-heading">Appearance</h2><p className="settings-copy">Choose the theme for your workspace.</p></div>
-        <div className="settings-theme-switch"><button type="button" className={theme === 'light' ? 'selected' : ''} aria-pressed={theme === 'light'} onClick={() => setTheme('light')}>☼ Light</button><button type="button" className={theme === 'dark' ? 'selected' : ''} aria-pressed={theme === 'dark'} onClick={() => setTheme('dark')}>◐ Dark</button></div>
+        <div><p className="eyebrow">03 · COMFORT</p><h2 id="appearance-heading">Appearance</h2><p className="settings-copy">Choose a workspace mode and accent palette. Changes apply across the app.</p></div>
+        <div className="settings-appearance-controls">
+          <div className="settings-theme-switch"><button type="button" className={theme === 'light' ? 'selected' : ''} aria-pressed={theme === 'light'} onClick={() => setTheme('light')}>☼ Light</button><button type="button" className={theme === 'dark' ? 'selected' : ''} aria-pressed={theme === 'dark'} onClick={() => setTheme('dark')}>◐ Dark</button></div>
+          <div className="settings-accent-picker" role="group" aria-label="Accent color">
+            {[{ id: 'green', label: 'Forest green', color: '#40795e' }, { id: 'blue', label: 'Ocean blue', color: '#376fc0' }, { id: 'purple', label: 'Violet', color: '#7955b5' }, { id: 'rose', label: 'Rose', color: '#b94f70' }].map((option) => <button key={option.id} type="button" className={'settings-accent-option' + (accent === option.id ? ' selected' : '')} onClick={() => setAccent(option.id)} aria-label={option.label} aria-pressed={accent === option.id} title={option.label}><span style={{ background: option.color }} />{option.label}</button>)}
+          </div>
+        </div>
       </section>
 
       <footer><span>Built for learning, one note at a time.</span><span>SETTINGS · ENotes</span></footer>
