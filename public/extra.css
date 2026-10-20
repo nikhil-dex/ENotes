@@ -1325,3 +1325,69 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 :root:not([data-theme="dark"]) [role="alert"]{
   color:var(--danger);
 }
+
+
+/* Close remaining legacy light-mode button color gaps found during audit. */
+:root:not([data-theme="dark"]) .study-button:hover:not(:disabled),
+:root:not([data-theme="dark"]) .reveal-button,
+:root:not([data-theme="dark"]) .global-search-toggle.active{
+  background:var(--secondary-soft);
+  color:var(--primary-strong);
+  border-color:var(--accent-border);
+}
+:root:not([data-theme="dark"]) .reveal-button:hover,
+:root:not([data-theme="dark"]) .study-button:hover:not(:disabled),
+:root:not([data-theme="dark"]) .global-search-toggle.active:hover{
+  background:var(--wash);
+  color:var(--primary-strong);
+}
+:root:not([data-theme="dark"]) .editor-toolbar button{
+  background:var(--surface-raised);
+  color:var(--ink);
+  border-color:var(--line);
+}
+:root:not([data-theme="dark"]) .editor-toolbar button:hover{
+  background:var(--secondary-soft);
+  color:var(--primary-strong);
+  border-color:var(--accent-border);
+}
+:root:not([data-theme="dark"]) .settings-theme-switch button.selected{
+  background:var(--primary);
+  color:#fff;
+  border-color:var(--primary);
+}
+:root:not([data-theme="dark"]) .subject-tab.active{
+  background:var(--primary);
+  color:#fff;
+  border-color:var(--primary);
+}
+:root:not([data-theme="dark"]) .subject-tab.active:hover{
+  background:var(--primary-strong);
+  color:#fff;
+  border-color:var(--primary-strong);
+}
+:root:not([data-theme="dark"]) .backup-button.primary{
+  background:var(--primary);
+  border-color:var(--primary);
+  color:#fff;
+}
+:root:not([data-theme="dark"]) .backup-button.primary:hover{
+  background:var(--primary-strong);
+  border-color:var(--primary-strong);
+  color:#fff;
+}
+:root:not([data-theme="dark"]) .note-card-actions button.metadata-action[aria-pressed="true"]{
+  color:var(--primary-strong);
+}
+:root:not([data-theme="dark"]) .note-card-actions button.edit-note:hover,
+:root:not([data-theme="dark"]) .note-card-actions button.metadata-action:hover{
+  background:var(--secondary-soft);
+  border-color:var(--accent-border);
+  color:var(--primary-strong);
+}
+:root:not([data-theme="dark"]) .mobile-bottom-nav-item.is-active{
+  color:var(--primary-strong);
+}
+:root:not([data-theme="dark"]) .mobile-bottom-nav-item.is-active:before{
+  background:var(--primary);
+}
