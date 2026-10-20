@@ -1,4 +1,5 @@
 import MobileBottomNavigation from './components/mobile-bottom-navigation';
+import MobileExperience from './components/mobile-experience';
 
 export const metadata = {
   title: { default: 'OgeNotes', template: '%s | OgeNotes' },
@@ -20,7 +21,7 @@ export default function RootLayout({ children }) {
         <link rel="stylesheet" href="/extra.css" />
         <link rel="stylesheet" href="/news.css" />
       </head>
-      <body>{children}<MobileBottomNavigation /></body>
+      <body><MobileExperience>{children}</MobileExperience><MobileBottomNavigation /></body>
     </html>
   );
 }
