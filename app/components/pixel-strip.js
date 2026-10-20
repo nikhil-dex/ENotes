@@ -172,6 +172,7 @@ export default function PixelStrip() {
     resizeObserver.observe(host);
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-primary', 'data-accent', 'data-theme'] });
     window.addEventListener('storage', applySettings);
+    window.addEventListener('ogenotes-pixel-settings', applySettings);
     window.addEventListener('ogenotes-pixel-preview', onPreview);
     document.addEventListener('visibilitychange', onVisibility);
     const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -186,6 +187,7 @@ export default function PixelStrip() {
       resizeObserver.disconnect();
       observer.disconnect();
       window.removeEventListener('storage', applySettings);
+      window.removeEventListener('ogenotes-pixel-settings', applySettings);
       window.removeEventListener('ogenotes-pixel-preview', onPreview);
       document.removeEventListener('visibilitychange', onVisibility);
       motion.removeEventListener?.('change', applySettings);
