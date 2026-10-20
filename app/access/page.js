@@ -39,6 +39,17 @@ export default function AccessPage() {
         <p style={styles.description}>Enter your access string to open your notes.</p>
 
         <form onSubmit={submit} style={styles.form}>
+          <label htmlFor="username" style={styles.label}>Username</label>
+          <input
+            id="username"
+            name="username"
+            type="username"
+            autoComplete="current-username"
+            autoFocus
+            placeholder="Enter your username"
+            style={styles.input}
+          
+          />
           <label htmlFor="access-key" style={styles.label}>Access string</label>
           <input
             id="access-key"
