@@ -429,7 +429,20 @@ export default function HomePage() {
   function printReaderNote() {
     if (!readerNote) return;
     setShareMenuOpen(false);
-    window.print();
+    const printWindow = window.open('', '_blank', 'width=900,height=700');
+    if (!printWindow) {
+      window.alert('Please allow pop-ups for OgeNotes to print or save this note as a PDF.');
+      return;
+    }
+    const title = String(readerNote.heading || 'Untitled note');
+    const subjectName = String(readerNote.subjectName || subjects.find((subject) => subject.slug === (readerNote.subject || activeSubject))?.name || active?.name || 'OgeNotes');
+    const escapeHtml = (value) => value.replace(/[&<>\"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', "'": '&#39;' }[char]));
+    const noteHtml = markdownHtml(readerNote.answer || '');
+    printWindow.document.open();
+    printWindow.document.write(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)}</title><style>
+      @page{size:auto;margin:16mm}*{box-sizing:border-box}body{margin:0;color:#171717;background:#fff;font:11pt/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow-wrap:anywhere}header{margin:0 0 22px;padding:0 0 14px;border-bottom:1px solid #ddd}.subject{margin:0 0 8px;color:#666;font-size:9pt;letter-spacing:.08em;text-transform:uppercase}h1{margin:0;font-size:25pt;line-height:1.2;break-after:avoid}main{width:100%}h2,h3,h4{break-after:avoid;line-height:1.3}p,li{orphans:3;widows:3}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f4f4f5;border:1px solid #e4e4e7;border-radius:6px;padding:12px;break-inside:avoid;font:9pt/1.5 ui-monospace,SFMono-Regular,Menlo,monospace}code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;overflow-wrap:anywhere}blockquote{margin-left:0;padding-left:14px;border-left:3px solid #ccc;color:#444}table{width:100%;border-collapse:collapse;break-inside:auto}tr{break-inside:avoid}th,td{padding:6px;border:1px solid #bbb;text-align:left}a{color:inherit;text-decoration:underline}img{max-width:100%;height:auto}ul,ol{padding-left:24px}button{display:none!important}
+    </style></head><body><header><p class="subject">${escapeHtml(subjectName)}</p><h1>${escapeHtml(title)}</h1></header><main>${noteHtml}</main><script>window.addEventListener('load',function(){setTimeout(function(){window.focus();window.print();},250)});window.addEventListener('afterprint',function(){window.close()});</script></body></html>`);
+    printWindow.document.close();
   }
 
   function saveLearned(next) {
