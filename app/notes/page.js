@@ -54,6 +54,7 @@ export default function HomePage() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [readerNote, setReaderNote] = useState(null);
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const [savingReaderPdf, setSavingReaderPdf] = useState(false);
   const [studyOpen, setStudyOpen] = useState(false);
   const [heading, setHeading] = useState('');
   const [answer, setAnswer] = useState('');
@@ -426,6 +427,167 @@ export default function HomePage() {
     setShareMenuOpen(false);
   }
 
+
+  async function saveReaderPdfToFiles() {
+    if (!readerNote || savingReaderPdf) return;
+    setSavingReaderPdf(true);
+    setShareMenuOpen(false);
+    let uploadId = null;
+    try {
+      if (!navigator.onLine) throw new Error('Connect to the internet before saving a PDF to My Files.');
+      let PdfConstructor = window.jspdf?.jsPDF || window.jsPDF;
+      if (typeof PdfConstructor !== 'function') {
+        const loadPdfEngine = (src) => new Promise((resolve, reject) => {
+          const existing = document.querySelector('script[data-ogenotes-pdf-engine]');
+          if (existing) {
+            if (existing.dataset.loaded === 'true' && (window.jspdf?.jsPDF || window.jsPDF)) return resolve(window.jspdf?.jsPDF || window.jsPDF);
+            existing.addEventListener('load', () => resolve(window.jspdf?.jsPDF || window.jsPDF), { once: true });
+            existing.addEventListener('error', reject, { once: true });
+            return;
+          }
+          const script = document.createElement('script');
+          script.src = src;
+          script.async = true;
+          script.dataset.ogenotesPdfEngine = 'true';
+          script.onload = () => {
+            script.dataset.loaded = 'true';
+            const loaded = window.jspdf?.jsPDF || window.jsPDF;
+            loaded ? resolve(loaded) : reject(new Error('PDF library loaded without its constructor.'));
+          };
+          script.onerror = () => { script.remove(); reject(new Error('Could not load PDF library from ' + src)); };
+          document.head.appendChild(script);
+        });
+        const sources = [
+          'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js',
+          'https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js',
+        ];
+        for (const src of sources) {
+          try { PdfConstructor = await loadPdfEngine(src); if (typeof PdfConstructor === 'function') break; } catch {}
+        }
+      }
+      if (typeof PdfConstructor !== 'function') throw new Error('Could not load the PDF engine. Check your internet connection or content blocker, then try again.');
+      const title = String(readerNote.heading || 'Untitled note');
+      const subjectName = String(readerNote.subjectName || subjects.find((subject) => subject.slug === (readerNote.subject || activeSubject))?.name || active?.name || 'OgeNotes');
+      const filename = (title.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 70) || 'note') + '.pdf';
+      const pdf = new PdfConstructor({ unit: 'pt', format: 'a4', compress: true });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const left = 48;
+      const right = 48;
+      const usableWidth = pageWidth - left - right;
+      let y = 52;
+      const ensureSpace = (height = 18) => {
+        if (y + height > pageHeight - 48) { pdf.addPage(); y = 48; }
+      };
+      const addText = (text, options = {}) => {
+        const { size = 11, bold = false, color = [35, 35, 35], indent = 0, gapAfter = 7, font = 'helvetica' } = options;
+        pdf.setFont(font, bold ? 'bold' : 'normal');
+        pdf.setFontSize(size);
+        pdf.setTextColor(...color);
+        const lines = pdf.splitTextToSize(String(text), usableWidth - indent);
+        const lineHeight = size * 1.45;
+        ensureSpace(lines.length * lineHeight + gapAfter);
+        pdf.text(lines, left + indent, y);
+        y += lines.length * lineHeight + gapAfter;
+      };
+      const safeText = (value) => String(value)
+        .replace(/\r/g, '')
+        .replace(/\u00a0/g, ' ')
+        .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '')
+        .replace(/[“”]/g, '"').replace(/[‘’]/g, "'")
+        .replace(/[—–]/g, '-').replace(/…/g, '...');
+      addText(subjectName + ' · OgeNotes', { size: 9, color: [95, 105, 100], gapAfter: 8 });
+      addText(safeText(title), { size: 22, bold: true, gapAfter: 12 });
+      pdf.setDrawColor(215, 220, 217);
+      pdf.line(left, y, pageWidth - right, y);
+      y += 18;
+      const rawLines = String(readerNote.answer || '').replace(/\r/g, '').split('\n');
+      let inCodeBlock = false;
+      let previousBlank = false;
+      for (const rawLine of rawLines) {
+        const trimmed = rawLine.trim();
+        if (/^\s*```/.test(rawLine)) {
+          inCodeBlock = !inCodeBlock;
+          if (inCodeBlock) { ensureSpace(18); y += 3; }
+          else y += 5;
+          continue;
+        }
+        if (!trimmed) {
+          if (!previousBlank) y += 5;
+          previousBlank = true;
+          continue;
+        }
+        previousBlank = false;
+        if (inCodeBlock) {
+          addText(safeText(rawLine), { size: 9, font: 'courier', indent: 10, color: [45, 55, 65], gapAfter: 2 });
+          continue;
+        }
+        if (/^\s*([-*_]\s*){3,}$/.test(trimmed)) {
+          ensureSpace(12);
+          pdf.setDrawColor(215, 220, 217);
+          pdf.line(left, y, pageWidth - right, y);
+          y += 12;
+          continue;
+        }
+        if (/^\s*\|?\s*:?-{3,}/.test(trimmed) && trimmed.includes('|')) continue;
+        const headingMatch = trimmed.match(/^(#{1,6})\s+(.+)$/);
+        if (headingMatch) {
+          const size = [20, 17, 14, 12, 11, 10][headingMatch[1].length - 1];
+          addText(safeText(headingMatch[2].replace(/\*\*(.*?)\*\*/g, '$1')), { size, bold: true, color: [35, 65, 52], gapAfter: 5 });
+          continue;
+        }
+        if (/^>/.test(trimmed)) {
+          addText(safeText(trimmed.replace(/^>\s?/, '').replace(/\*\*(.*?)\*\*/g, '$1')), { size: 10, indent: 14, color: [85, 90, 95], gapAfter: 5 });
+          continue;
+        }
+        const listMatch = trimmed.match(/^([-*+]\s+|\d+[.)]\s+)(.*)$/);
+        if (listMatch) {
+          const bullet = /^\d/.test(listMatch[1]) ? listMatch[1].trim() + ' ' : '• ';
+          addText(safeText(bullet + listMatch[2].replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1').replace(/`([^`]+)`/g, '$1')), { size: 10.5, indent: 12, gapAfter: 4 });
+          continue;
+        }
+        if (trimmed.includes('|')) {
+          addText(safeText(trimmed.replace(/^\|/, '').replace(/\|$/, '').split('|').map((cell) => cell.trim()).join('   •   ')), { size: 9.5, gapAfter: 4 });
+          continue;
+        }
+        const paragraph = safeText(trimmed
+          .replace(/!?\[([^\]]+)\]\([^)]+\)/g, '$1')
+          .replace(/\*\*(.*?)\*\*/g, '$1')
+          .replace(/__(.*?)__/g, '$1')
+          .replace(/\*(.*?)\*/g, '$1')
+          .replace(/_(.*?)_/g, '$1')
+          .replace(/`([^`]+)`/g, '$1')
+          .replace(/~~(.*?)~~/g, '$1'));
+        addText(paragraph, { size: 10.5, gapAfter: 6 });
+      }
+      addText('Saved from OgeNotes', { size: 8, color: [115, 115, 115], gapAfter: 0 });
+      const pdfBlob = pdf.output('blob');
+      if (!(pdfBlob instanceof Blob) || pdfBlob.size < 1000) throw new Error('PDF generation returned an empty file. Please try again.');
+      const file = new File([pdfBlob], filename, { type: 'application/pdf' });
+      const started = await responseJson(await fetch('/api/media', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+        body: JSON.stringify({ action: 'start-upload', name: file.name, type: file.type, size: file.size, folderId: null }),
+      }));
+      uploadId = started.id;
+      const transfer = await fetch(started.uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
+      if (!transfer.ok) throw new Error('The PDF was generated, but upload failed. Check your private file storage connection and try again.');
+      await responseJson(await fetch('/api/media', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+        body: JSON.stringify({ action: 'complete-upload', id: uploadId }),
+      }));
+      uploadId = null;
+      window.alert('PDF saved to My Files. Open Files to preview or download it.');
+    } catch (error) {
+      if (uploadId) await fetch('/api/media', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+        body: JSON.stringify({ action: 'abort-upload', id: uploadId }),
+      }).catch(() => {});
+      window.alert(error.message || 'Could not save this note as a PDF. Please try again.');
+    } finally {
+      setSavingReaderPdf(false);
+    }
+  }
+
   function printReaderNote() {
     if (!readerNote) return;
     setShareMenuOpen(false);
@@ -440,8 +602,8 @@ export default function HomePage() {
     const noteHtml = markdownHtml(readerNote.answer || '');
     printWindow.document.open();
     printWindow.document.write(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)}</title><style>
-      @page{size:auto;margin:16mm}*{box-sizing:border-box}body{margin:0;color:#171717;background:#fff;font:11pt/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow-wrap:anywhere}header{margin:0 0 22px;padding:0 0 14px;border-bottom:1px solid #ddd}.subject{margin:0 0 8px;color:#666;font-size:9pt;letter-spacing:.08em;text-transform:uppercase}h1{margin:0;font-size:25pt;line-height:1.2;break-after:avoid}main{width:100%}h2,h3,h4{break-after:avoid;line-height:1.3}p,li{orphans:3;widows:3}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f4f4f5;border:1px solid #e4e4e7;border-radius:6px;padding:12px;break-inside:avoid;font:9pt/1.5 ui-monospace,SFMono-Regular,Menlo,monospace}code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;overflow-wrap:anywhere}blockquote{margin-left:0;padding-left:14px;border-left:3px solid #ccc;color:#444}table{width:100%;border-collapse:collapse;break-inside:auto}tr{break-inside:avoid}th,td{padding:6px;border:1px solid #bbb;text-align:left}a{color:inherit;text-decoration:underline}img{max-width:100%;height:auto}ul,ol{padding-left:24px}button{display:none!important}
-    </style></head><body><header><p class="subject">${escapeHtml(subjectName)}</p><h1>${escapeHtml(title)}</h1></header><main>${noteHtml}</main><script>window.addEventListener('load',function(){setTimeout(function(){window.focus();window.print();},250)});window.addEventListener('afterprint',function(){window.close()});</script></body></html>`);
+      @page{size:auto;margin:16mm}*{box-sizing:border-box}body{margin:0;color:#171717;background:#fff;font:11pt/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow-wrap:anywhere}.print-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 20px;padding:12px;border:1px solid #ddd;border-radius:10px;background:#f7f8f7}.print-actions button{border:1px solid #b7c3ba;border-radius:8px;background:#fff;color:#17231b;padding:10px 14px;font:600 14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;cursor:pointer}.print-help{margin:0;color:#4d5a51;font-size:12px}.print-header{margin:0 0 22px;padding:0 0 14px;border-bottom:1px solid #ddd}.subject{margin:0 0 8px;color:#666;font-size:9pt;letter-spacing:.08em;text-transform:uppercase}h1{margin:0;font-size:25pt;line-height:1.2;break-after:avoid}main{width:100%}h2,h3,h4{break-after:avoid;line-height:1.3}p,li{orphans:3;widows:3}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f4f4f6;border:1px solid #e4e4e7;border-radius:6px;padding:12px;break-inside:avoid;font:9pt/1.5 ui-monospace,SFMono-Regular,Menlo,monospace}code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;overflow-wrap:anywhere}blockquote{margin-left:0;padding-left:14px;border-left:3px solid #ccc;color:#444}table{width:100%;border-collapse:collapse;break-inside:auto}tr{break-inside:avoid}th,td{padding:6px;border:1px solid #bbb;text-align:left}a{color:inherit;text-decoration:underline}img{max-width:100%;height:auto}ul,ol{padding-left:24px}@media print{.print-actions{display:none!important}}
+    </style></head><body><div class="print-actions"><button type="button" onclick="window.location.href='/notes'">← Back to OgeNotes</button><button type="button" id="print-pdf-button">Print / Save PDF</button><p class="print-help" id="print-help">Tap Print / Save PDF. If the iOS app does not open print options, use Share → Open in Browser, then print from Safari.</p></div><header class="print-header"><p class="subject">${escapeHtml(subjectName)}</p><h1>${escapeHtml(title)}</h1></header><main>${noteHtml}</main><script>(function(){var standalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;var button=document.getElementById('print-pdf-button');var help=document.getElementById('print-help');if(button){button.addEventListener('click',function(){try{window.focus();window.print();if(standalone&&help){help.textContent='If no print sheet appeared, this iOS PWA may not support printing in-app. Use the browser share/open-in-browser option and print from Safari.';}}catch(error){if(help){help.textContent='Printing is not available in this view. Open this note in Safari and choose Print / Save PDF.';}}});}if(!standalone){window.addEventListener('load',function(){setTimeout(function(){window.focus();window.print();},250);});window.addEventListener('afterprint',function(){try{window.close()}catch(e){}});}})();</script></body></html>`);
     printWindow.document.close();
   }
 
@@ -747,7 +909,7 @@ export default function HomePage() {
           {formError && <p className="form-error" role="alert">{formError}</p>}<button className="submit-button" type="submit" disabled={saving}><span>{saving ? 'Saving…' : editingNote ? 'Save changes' : 'Save note'}</span><span aria-hidden="true">→</span></button></form>
       </section></div>}
 
-      {readerNote && <div className="reader-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setReaderNote(null); }}><article className="reader-panel" role="dialog" aria-modal="true" aria-labelledby="readerTitle"><div className="reader-toolbar"><span className="reader-kicker">NOTE {String(readerNote.number).padStart(2, '0')}</span><div className="reader-toolbar-actions"><div className="note-share-wrap"><button type="button" className="note-share-button" aria-expanded={shareMenuOpen} onClick={() => setShareMenuOpen((open) => !open)}>↗ Share</button>{shareMenuOpen && <div className="note-share-menu" role="menu"><button type="button" role="menuitem" onClick={shareReaderNote}><strong>Share note</strong><small>Send text to available apps</small></button><button type="button" role="menuitem" onClick={printReaderNote}><strong>Print / Save PDF</strong><small>Keep the rendered note formatting</small></button></div>}</div><button className="close-button reader-close" onClick={() => { setShareMenuOpen(false); setReaderNote(null); }} aria-label="Close note">×</button></div></div><div className="reader-content"><p className="eyebrow">{readerNote.subjectName || subjects.find((subject) => subject.slug === (readerNote.subject || activeSubject))?.name || active?.name}</p><h2 id="readerTitle">{readerNote.heading}</h2><div className="reader-meta">Saved {readerNote.saved}</div><div className="reader-answer" dangerouslySetInnerHTML={{ __html: markdownHtml(readerNote.answer) }}/>
+      {readerNote && <div className="reader-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setReaderNote(null); }}><article className="reader-panel" role="dialog" aria-modal="true" aria-labelledby="readerTitle"><div className="reader-toolbar"><span className="reader-kicker">NOTE {String(readerNote.number).padStart(2, '0')}</span><div className="reader-toolbar-actions"><div className="note-share-wrap"><button type="button" className="note-share-button" aria-expanded={shareMenuOpen} onClick={() => setShareMenuOpen((open) => !open)}>↗ Share</button>{shareMenuOpen && <div className="note-share-menu" role="menu"><button type="button" role="menuitem" onClick={shareReaderNote}><strong>Share note</strong><small>Send text to available apps</small></button><button type="button" role="menuitem" onClick={printReaderNote}><strong>Print / Save PDF</strong><small>Keep the rendered note formatting</small></button><button type="button" role="menuitem" onClick={saveReaderPdfToFiles} disabled={savingReaderPdf}><strong>{savingReaderPdf ? 'Saving PDF…' : 'Save PDF to My Files'}</strong><small>Generate a PDF and store it in Files</small></button></div>}</div><button className="close-button reader-close" onClick={() => { setShareMenuOpen(false); setReaderNote(null); }} aria-label="Close note">×</button></div></div><div className="reader-content"><p className="eyebrow">{readerNote.subjectName || subjects.find((subject) => subject.slug === (readerNote.subject || activeSubject))?.name || active?.name}</p><h2 id="readerTitle">{readerNote.heading}</h2><div className="reader-meta">Saved {readerNote.saved}</div><div className="reader-answer" dangerouslySetInnerHTML={{ __html: markdownHtml(readerNote.answer) }}/>
           <section className="note-links-section" aria-label="Linked notes">
             <h3>Linked notes</h3>
             {notes.filter((note) => (note.subject || activeSubject) === (readerNote.subject || activeSubject) && note.number !== readerNote.number && referencesNote(readerNote.answer, note.heading)).length

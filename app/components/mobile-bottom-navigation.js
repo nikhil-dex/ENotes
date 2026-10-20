@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const items = [
@@ -22,7 +23,7 @@ export default function MobileBottomNavigation() {
           ? pathname === '/'
           : pathname === item.href || pathname.startsWith(item.href + '/');
         return (
-          <a
+          <Link
             key={item.href}
             href={item.href}
             className={'mobile-bottom-nav-item' + (active ? ' is-active' : '')}
@@ -30,7 +31,7 @@ export default function MobileBottomNavigation() {
           >
             <span className="mobile-bottom-nav-icon" aria-hidden="true">{item.icon}</span>
             <span className="mobile-bottom-nav-label">{item.label}</span>
-          </a>
+          </Link>
         );
       })}
     </nav>
