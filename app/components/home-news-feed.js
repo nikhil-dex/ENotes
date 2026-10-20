@@ -25,7 +25,6 @@ export default function HomeNewsFeed() {
 
   const refresh = useCallback(async (manual = false) => {
     if (manual) setRefreshing(true);
-    else if (!stories.length) setLoading(true);
     setError('');
     try {
       const response = await fetch('/api/news', { cache: 'no-store' });
@@ -40,7 +39,7 @@ export default function HomeNewsFeed() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [stories.length]);
+  }, []);
 
   useEffect(() => {
     refresh();
