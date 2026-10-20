@@ -113,18 +113,29 @@ export async function POST(request) {
     let activeModel = model;
     let response;
     let primaryTimedOut = false;
+    let primaryFailure;
+    const retryableStatuses = new Set([408, 429, 500, 502, 503, 504]);
+
     try {
       response = await callModel(activeModel);
+      if (!response.ok && retryableStatuses.has(response.status) && fallbackModel !== activeModel) {
+        primaryFailure = { status: response.status };
+        console.warn('Gemini primary model returned a retryable status; trying fallback.', {
+          requestId, primaryModel: activeModel, fallbackModel, status: response.status,
+          elapsedMs: Date.now() - startedAt,
+        });
+        activeModel = fallbackModel;
+        response = await callModel(activeModel);
+      }
     } catch (error) {
-      if (!error?.geminiTimedOut || fallbackModel === activeModel) throw error;
-      primaryTimedOut = true;
-      console.warn('Gemini primary model timed out; trying fallback model.', { requestId, primaryModel: activeModel, fallbackModel, elapsedMs: Date.now() - startedAt });
-      activeModel = fallbackModel;
-      response = await callModel(activeModel);
-    }
-
-    if (response.status === 429 && fallbackModel !== activeModel) {
-      console.warn('Gemini primary model rate-limited; trying fallback model.', { requestId, primaryModel: activeModel, fallbackModel });
+      if (fallbackModel === activeModel) throw error;
+      primaryFailure = { name: error?.name || 'UnknownError', timedOut: Boolean(error?.geminiTimedOut) };
+      primaryTimedOut = Boolean(error?.geminiTimedOut);
+      console.warn('Gemini primary model request failed; trying fallback.', {
+        requestId, primaryModel: activeModel, fallbackModel,
+        errorName: error?.name || 'UnknownError', timedOut: primaryTimedOut,
+        elapsedMs: Date.now() - startedAt,
+      });
       activeModel = fallbackModel;
       response = await callModel(activeModel);
     }
@@ -134,16 +145,26 @@ export async function POST(request) {
       const providerMessage = typeof payload?.error?.message === 'string'
         ? payload.error.message.replace(/[\\r\\n]+/g, ' ').slice(0, 300)
         : 'No provider error message returned';
+      const errorContext = {
+        requestId, status: response.status, model: activeModel,
+        primaryModel: model, fallbackModel, primaryFailure,
+        elapsedMs: Date.now() - startedAt, providerMessage,
+      };
+
       if (response.status === 429) {
-        console.error('Gemini cleanup exhausted model quota.', { requestId, model: activeModel, elapsedMs: Date.now() - startedAt, providerMessage });
-        return json({ error: 'Gemini reached its usage limit on the primary/fallback model. Please wait for quota to reset and try again.' }, 429);
+        console.error('Gemini cleanup exhausted model quota.', errorContext);
+        return json({ error: 'Gemini usage limits were reached. Please wait a while and try again.' }, 429);
       }
-      if (response.status === 400 || response.status === 404) {
-        console.error('Gemini cleanup configuration/request rejected.', { requestId, status: response.status, model: activeModel, elapsedMs: Date.now() - startedAt, providerMessage });
-        return json({ error: 'Gemini rejected this request. Check GEMINI_MODEL and the API key’s model access.' }, 502);
+      if (response.status === 400 || response.status === 401 || response.status === 403 || response.status === 404) {
+        console.error('Gemini cleanup configuration/request rejected.', errorContext);
+        return json({ error: 'Gemini rejected the request. Check the server API key, model name, and model access.' }, 502);
       }
-      console.error('Gemini cleanup request failed.', { requestId, status: response.status, model: activeModel, elapsedMs: Date.now() - startedAt, providerMessage });
-      return json({ error: 'Gemini could not process this note right now. Please try again later.' }, 502);
+      if ([408, 500, 502, 503, 504].includes(response.status)) {
+        console.error('Gemini provider is temporarily unavailable after fallback.', errorContext);
+        return json({ error: 'Gemini is temporarily unavailable. Your note has not been changed; please try again shortly.' }, 503);
+      }
+      console.error('Gemini cleanup request failed.', errorContext);
+      return json({ error: 'Gemini could not process this note. Please try again later.' }, 502);
     }
 
     const candidate = payload?.candidates?.[0];
