@@ -104,8 +104,8 @@ export default function HomeNewsFeed() {
       <div className="home-news-footer">
         <span>{lastUpdated ? `Updated ${lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'Headlines may change as publishers update their feeds.'}</span>
         <span>Stories open on their original publisher · Headlines via Google News RSS</span>
-      </div>}
       </div>
+      </div>}
     </section>
   );
 }
