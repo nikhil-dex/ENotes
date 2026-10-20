@@ -433,30 +433,107 @@ export default function HomePage() {
     setSavingReaderPdf(true);
     setShareMenuOpen(false);
     let uploadId = null;
-    let container = null;
     try {
       if (!navigator.onLine) throw new Error('Connect to the internet before saving a PDF to My Files.');
-      if (typeof window.html2pdf !== 'function') throw new Error('The PDF helper has not loaded yet. Check your internet connection and try again.');
+      const PdfConstructor = window.jspdf?.jsPDF || window.jsPDF;
+      if (typeof PdfConstructor !== 'function') throw new Error('The PDF engine has not loaded. Refresh the page while online and try again.');
       const title = String(readerNote.heading || 'Untitled note');
       const subjectName = String(readerNote.subjectName || subjects.find((subject) => subject.slug === (readerNote.subject || activeSubject))?.name || active?.name || 'OgeNotes');
-      const filename = (title.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 70) || 'note') + '.pdf';
-      const escapeText = (value) => String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
-      container = document.createElement('div');
-      container.style.cssText = 'position:fixed;left:0;top:0;width:760px;max-height:85vh;overflow:auto;padding:36px;background:#fff;color:#171717;font:14px/1.65 Arial,sans-serif;overflow-wrap:anywhere;z-index:2147483647;pointer-events:none;box-shadow:0 0 0 100vmax rgba(0,0,0,.35);';
-      container.innerHTML = '<header style="margin-bottom:28px;border-bottom:1px solid #ddd;padding-bottom:18px"><p style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:#666;margin:0 0 8px">' + escapeText(subjectName) + ' · OgeNotes</p><h1 style="font-size:28px;line-height:1.25;margin:0">' + escapeText(title) + '</h1></header><main class="ogenotes-pdf-content">' + markdownHtml(readerNote.answer || '') + '</main><footer style="margin-top:32px;padding-top:12px;border-top:1px solid #ddd;font-size:10px;color:#777">Saved from OgeNotes</footer>';
-      const style = document.createElement('style');
-      style.textContent = '.ogenotes-pdf-content h1,.ogenotes-pdf-content h2,.ogenotes-pdf-content h3,.ogenotes-pdf-content h4{line-height:1.3;margin:1.3em 0 .55em;break-after:avoid}.ogenotes-pdf-content p,.ogenotes-pdf-content ul,.ogenotes-pdf-content ol,.ogenotes-pdf-content blockquote{margin:.65em 0}.ogenotes-pdf-content pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f3f4f6;padding:12px;border-radius:6px;font:11px/1.5 monospace}.ogenotes-pdf-content code{font: .9em monospace;background:#f3f4f6;padding:2px 4px;border-radius:3px}.ogenotes-pdf-content pre code{background:transparent;padding:0}.ogenotes-pdf-content blockquote{border-left:3px solid #bbb;padding-left:14px;color:#555}.ogenotes-pdf-content table{border-collapse:collapse;width:100%;font-size:12px}.ogenotes-pdf-content th,.ogenotes-pdf-content td{border:1px solid #ccc;padding:6px;text-align:left;vertical-align:top}.ogenotes-pdf-content img{max-width:100%;height:auto}.ogenotes-pdf-content a{color:#2458a6;text-decoration:underline}';
-      container.appendChild(style);
-      document.body.appendChild(container);
-      const pdfBlob = await window.html2pdf().set({
-        margin: [12, 12, 14, 12],
-        filename,
-        image: { type: 'jpeg', quality: 0.96 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false, windowWidth: 820 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['css', 'legacy'], avoid: ['pre', 'blockquote', 'tr', 'img'] },
-      }).from(container).outputPdf('blob');
-      if (!(pdfBlob instanceof Blob) || pdfBlob.size < 1000) throw new Error('The PDF generator returned an empty file. Please try again.');
+      const filename = (title.normalize('NFKD').replace(/[\\u0300-\\u036f]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 70) || 'note') + '.pdf';
+      const pdf = new PdfConstructor({ unit: 'pt', format: 'a4', compress: true });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const left = 48;
+      const right = 48;
+      const usableWidth = pageWidth - left - right;
+      let y = 52;
+      const ensureSpace = (height = 18) => {
+        if (y + height > pageHeight - 48) { pdf.addPage(); y = 48; }
+      };
+      const addText = (text, options = {}) => {
+        const { size = 11, bold = false, color = [35, 35, 35], indent = 0, gapAfter = 7, font = 'helvetica' } = options;
+        pdf.setFont(font, bold ? 'bold' : 'normal');
+        pdf.setFontSize(size);
+        pdf.setTextColor(...color);
+        const lines = pdf.splitTextToSize(String(text), usableWidth - indent);
+        const lineHeight = size * 1.45;
+        ensureSpace(lines.length * lineHeight + gapAfter);
+        pdf.text(lines, left + indent, y);
+        y += lines.length * lineHeight + gapAfter;
+      };
+      const safeText = (value) => String(value)
+        .replace(/\\r/g, '')
+        .replace(/\\u00a0/g, ' ')
+        .replace(/[\\u{1F000}-\\u{1FAFF}\\u{2600}-\\u{27BF}]/gu, '')
+        .replace(/[“”]/g, '"').replace(/[‘’]/g, "'")
+        .replace(/[—–]/g, '-').replace(/…/g, '...');
+      addText(subjectName + ' · OgeNotes', { size: 9, color: [95, 105, 100], gapAfter: 8 });
+      addText(safeText(title), { size: 22, bold: true, gapAfter: 12 });
+      pdf.setDrawColor(215, 220, 217);
+      pdf.line(left, y, pageWidth - right, y);
+      y += 18;
+      const rawLines = String(readerNote.answer || '').replace(/\\r/g, '').split('\\n');
+      let inCodeBlock = false;
+      let previousBlank = false;
+      for (const rawLine of rawLines) {
+        const trimmed = rawLine.trim();
+        if (/^\\s*```/.test(rawLine)) {
+          inCodeBlock = !inCodeBlock;
+          if (inCodeBlock) { ensureSpace(18); y += 3; }
+          else y += 5;
+          continue;
+        }
+        if (!trimmed) {
+          if (!previousBlank) y += 5;
+          previousBlank = true;
+          continue;
+        }
+        previousBlank = false;
+        if (inCodeBlock) {
+          addText(safeText(rawLine), { size: 9, font: 'courier', indent: 10, color: [45, 55, 65], gapAfter: 2 });
+          continue;
+        }
+        if (/^\\s*([-*_]\\s*){3,}$/.test(trimmed)) {
+          ensureSpace(12);
+          pdf.setDrawColor(215, 220, 217);
+          pdf.line(left, y, pageWidth - right, y);
+          y += 12;
+          continue;
+        }
+        if (/^\\s*\\|?\\s*:?-{3,}/.test(trimmed) && trimmed.includes('|')) continue;
+        const headingMatch = trimmed.match(/^(#{1,6})\\s+(.+)$/);
+        if (headingMatch) {
+          const size = [20, 17, 14, 12, 11, 10][headingMatch[1].length - 1];
+          addText(safeText(headingMatch[2].replace(/\\*\\*(.*?)\\*\\*/g, '$1')), { size, bold: true, color: [35, 65, 52], gapAfter: 5 });
+          continue;
+        }
+        if (/^>/.test(trimmed)) {
+          addText(safeText(trimmed.replace(/^>\\s?/, '').replace(/\\*\\*(.*?)\\*\\*/g, '$1')), { size: 10, indent: 14, color: [85, 90, 95], gapAfter: 5 });
+          continue;
+        }
+        const listMatch = trimmed.match(/^([-*+]\\s+|\\d+[.)]\\s+)(.*)$/);
+        if (listMatch) {
+          const bullet = /^\\d/.test(listMatch[1]) ? listMatch[1].trim() + ' ' : '• ';
+          addText(safeText(bullet + listMatch[2].replace(/\\*\\*(.*?)\\*\\*/g, '$1').replace(/\\*(.*?)\\*/g, '$1').replace(/`([^`]+)`/g, '$1')), { size: 10.5, indent: 12, gapAfter: 4 });
+          continue;
+        }
+        if (trimmed.includes('|')) {
+          addText(safeText(trimmed.replace(/^\\|/, '').replace(/\\|$/, '').split('|').map((cell) => cell.trim()).join('   •   ')), { size: 9.5, gapAfter: 4 });
+          continue;
+        }
+        const paragraph = safeText(trimmed
+          .replace(/!?\\[([^\\]]+)\\]\\([^)]+\\)/g, '$1')
+          .replace(/\\*\\*(.*?)\\*\\*/g, '$1')
+          .replace(/__(.*?)__/g, '$1')
+          .replace(/\\*(.*?)\\*/g, '$1')
+          .replace(/_(.*?)_/g, '$1')
+          .replace(/`([^`]+)`/g, '$1')
+          .replace(/~~(.*?)~~/g, '$1'));
+        addText(paragraph, { size: 10.5, gapAfter: 6 });
+      }
+      addText('Saved from OgeNotes', { size: 8, color: [115, 115, 115], gapAfter: 0 });
+      const pdfBlob = pdf.output('blob');
+      if (!(pdfBlob instanceof Blob) || pdfBlob.size < 1000) throw new Error('PDF generation returned an empty file. Please try again.');
       const file = new File([pdfBlob], filename, { type: 'application/pdf' });
       const started = await responseJson(await fetch('/api/media', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
@@ -478,7 +555,6 @@ export default function HomePage() {
       }).catch(() => {});
       window.alert(error.message || 'Could not save this note as a PDF. Please try again.');
     } finally {
-      container?.remove();
       setSavingReaderPdf(false);
     }
   }
