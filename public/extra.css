@@ -1036,3 +1036,111 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .settings-accent-option.selected{border-color:var(--primary);box-shadow:0 0 0 1px var(--primary)}
 .settings-accent-option.selected span{outline:2px solid var(--primary);outline-offset:2px}
 .settings-theme-switch button.selected{border-color:var(--primary);color:var(--primary);background:var(--secondary-soft)}
+
+
+/* Relaxed lo-fi light mode: warm paper, soft cream surfaces, muted ink. */
+:root:not([data-theme="dark"]){
+  color-scheme:light;
+  --ink:#37372f;
+  --muted:#817e70;
+  --line:#e2dac9;
+  --paper:#f2eddf;
+  --surface:#faf6ec;
+  --surface-raised:#fffaf0;
+  --surface-input:#fffaf1;
+  --wash:#eae3d3;
+  --accent-soft:#e8e2d2;
+  --accent-border:#d8cbb2;
+  --danger:#a9574e;
+  --danger-soft:#f4e3dc;
+  --code-surface:#e9e2d3;
+  --overlay:rgba(49,43,31,.48);
+  --shadow-soft:0 8px 24px rgba(71,59,37,.08);
+  --shadow-popover:0 12px 32px rgba(71,59,37,.15);
+  --nav-surface:color-mix(in srgb,var(--paper) 92%,transparent);
+  --focus-ring:#9a947c;
+  --secondary:#817e70;
+  --secondary-strong:#5f5b4e;
+  --secondary-soft:#e7e0cf;
+}
+:root:not([data-theme="dark"]) body,
+:root:not([data-theme="dark"]) .shell,
+:root:not([data-theme="dark"]) main{background-color:var(--paper);color:var(--ink)}
+:root:not([data-theme="dark"]) .note-card,
+:root:not([data-theme="dark"]) .dialog,
+:root:not([data-theme="dark"]) .reader-panel,
+:root:not([data-theme="dark"]) .study-panel,
+:root:not([data-theme="dark"]) .media-preview-dialog,
+:root:not([data-theme="dark"]) .search-wrap,
+:root:not([data-theme="dark"]) .home-news-card,
+:root:not([data-theme="dark"]) .html-file-card,
+:root:not([data-theme="dark"]) .settings-section,
+:root:not([data-theme="dark"]) .settings-subject-row,
+:root:not([data-theme="dark"]) .note-share-menu,
+:root:not([data-theme="dark"]) .mobile-bottom-nav{
+  background-color:var(--surface);
+  color:var(--ink);
+  border-color:var(--line);
+  box-shadow:var(--shadow-soft);
+}
+:root:not([data-theme="dark"]) input,
+:root:not([data-theme="dark"]) textarea,
+:root:not([data-theme="dark"]) select,
+:root:not([data-theme="dark"]) .search-wrap input,
+:root:not([data-theme="dark"]) .dialog input,
+:root:not([data-theme="dark"]) .dialog textarea{
+  background-color:var(--surface-input);
+  color:var(--ink);
+  border-color:var(--line);
+}
+:root:not([data-theme="dark"]) .topbar,
+:root:not([data-theme="dark"]) .stats,
+:root:not([data-theme="dark"]) .home-news,
+:root:not([data-theme="dark"]) .home-news-card-footer,
+:root:not([data-theme="dark"]) .settings-section{
+  border-color:var(--line);
+}
+:root:not([data-theme="dark"]) .note-preview,
+:root:not([data-theme="dark"]) .subtitle,
+:root:not([data-theme="dark"]) .settings-copy,
+:root:not([data-theme="dark"]) .settings-muted,
+:root:not([data-theme="dark"]) .stat-label,
+:root:not([data-theme="dark"]) .sort-label,
+:root:not([data-theme="dark"]) .home-news-lead{
+  color:var(--muted);
+}
+:root:not([data-theme="dark"]) .count-pill,
+:root:not([data-theme="dark"]) .note-mark,
+:root:not([data-theme="dark"]) .subject-tab:hover,
+:root:not([data-theme="dark"]) .subject-add:hover,
+:root:not([data-theme="dark"]) .home-news-collapse,
+:root:not([data-theme="dark"]) .settings-accent-option.selected{
+  background-color:var(--accent-soft);
+}
+:root:not([data-theme="dark"]) pre,
+:root:not([data-theme="dark"]) code,
+:root:not([data-theme="dark"]) .answer-preview,
+:root:not([data-theme="dark"]) .reader-answer pre{
+  background-color:var(--code-surface);
+}
+:root:not([data-theme="dark"]) .mobile-bottom-nav{
+  background:color-mix(in srgb,var(--surface-raised) 90%,transparent);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+}
+:root:not([data-theme="dark"]) .ios-pull-indicator{
+  background:var(--surface-raised);
+  color:var(--ink);
+  border-color:var(--line);
+  box-shadow:var(--shadow-soft);
+}
+:root:not([data-theme="dark"]) .note-share-button,
+:root:not([data-theme="dark"]) .home-news-refresh,
+:root:not([data-theme="dark"]) .settings-accent-option{
+  background-color:var(--surface-raised);
+  color:var(--ink);
+  border-color:var(--line);
+}
+:root:not([data-theme="dark"]) .settings-theme-switch button.selected{
+  background:var(--accent-soft);
+}
