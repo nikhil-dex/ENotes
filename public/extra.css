@@ -918,3 +918,33 @@ button[aria-disabled="true"] {
   body{-webkit-tap-highlight-color:transparent;}
   .mobile-bottom-nav{ -webkit-backface-visibility:hidden; backface-visibility:hidden; }
 }
+
+
+/* iOS-like mobile interaction polish */
+.ios-route-stage{min-height:1px;animation:ios-route-enter .24s cubic-bezier(.2,.75,.25,1) both;transform-origin:center top}
+@keyframes ios-route-enter{from{opacity:.72;transform:translate3d(0,8px,0)}to{opacity:1;transform:translate3d(0,0,0)}}
+.ios-pull-indicator{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:50%;z-index:3000;display:flex;align-items:center;gap:9px;min-height:38px;padding:0 14px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--ink);box-shadow:0 8px 24px #07100a1c;font:500 11px var(--sans);pointer-events:none;transition:opacity .14s,transform .12s;will-change:transform}
+.ios-pull-indicator[aria-label="Refreshing page"]{font-weight:600}
+.ios-pull-spinner{display:block;width:14px;height:14px;border:2px solid color-mix(in srgb,var(--green) 25%,transparent);border-top-color:var(--green);border-radius:50%}
+.ios-pull-indicator.is-refreshing .ios-pull-spinner{animation:ios-spin .7s linear infinite}
+@keyframes ios-spin{to{transform:rotate(360deg)}}
+@media(max-width:640px){
+  .mobile-bottom-nav{z-index:40;isolation:isolate;box-shadow:0 -8px 24px #0a170e0a;transition:background .2s,border-color .2s}
+  .mobile-bottom-nav-item{position:relative;overflow:hidden;min-height:54px;transition:background .2s,color .2s,transform .2s cubic-bezier(.2,.75,.25,1)}
+  .mobile-bottom-nav-item:active{transform:scale(.94)}
+  .mobile-bottom-nav-item.is-active:before{content:"";position:absolute;top:3px;left:50%;width:18px;height:3px;border-radius:4px;background:var(--green);transform:translateX(-50%);opacity:.85}
+  .mobile-bottom-nav-icon{transition:transform .22s cubic-bezier(.2,.75,.25,1)}
+  .mobile-bottom-nav-item.is-active .mobile-bottom-nav-icon{transform:translateY(-1px) scale(1.04)}
+  .mobile-bottom-nav-label{transition:opacity .18s}
+  .reader-backdrop,.study-backdrop,.study-panel-backdrop,.modal-backdrop,.media-preview-backdrop,.editor-backdrop{z-index:1200!important}
+  .reader-panel,.study-panel,.dialog,.media-preview-dialog{animation:ios-sheet-enter .26s cubic-bezier(.2,.8,.2,1) both}
+  .note-share-menu,.subject-dropdown,.site-navbar-content.is-open{z-index:1300}
+  .reader-backdrop,.media-preview-backdrop{overscroll-behavior:contain}
+  .reader-backdrop,.media-preview-backdrop,.modal-backdrop{padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
+  .reader-panel,.study-panel{margin-bottom:0;max-height:calc(100dvh - 18px - env(safe-area-inset-top,0px));}
+}
+@keyframes ios-sheet-enter{from{opacity:.7;transform:translate3d(0,14px,0) scale(.985)}to{opacity:1;transform:translate3d(0,0,0) scale(1)}}
+@media(prefers-reduced-motion:reduce){
+  .ios-route-stage,.reader-panel,.study-panel,.dialog,.media-preview-dialog,.mobile-bottom-nav-item,.mobile-bottom-nav-icon{animation:none!important;transition:none!important}
+  .ios-pull-spinner{animation:none!important}
+}
