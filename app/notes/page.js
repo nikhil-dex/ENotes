@@ -53,6 +53,7 @@ export default function HomePage() {
   const [editingNote, setEditingNote] = useState(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [readerNote, setReaderNote] = useState(null);
+  const [shareMenuOpen, setShareMenuOpen] = useState(false);
   const [studyOpen, setStudyOpen] = useState(false);
   const [heading, setHeading] = useState('');
   const [answer, setAnswer] = useState('');
@@ -413,6 +414,37 @@ export default function HomePage() {
     return () => document.removeEventListener('pointerdown', closeOnOutsideClick);
   }, [mobileNavOpen]);
 
+  async function shareReaderNote() {
+    if (!readerNote) return;
+    const subjectName = readerNote.subjectName || subjects.find((subject) => subject.slug === (readerNote.subject || activeSubject))?.name || active?.name || 'OgeNotes';
+    const text = String(readerNote.heading || 'Untitled note') + '\n\n' + String(readerNote.answer || '') + '\n\n' + subjectName + ' · OgeNotes';
+    try {
+      if (navigator.share) await navigator.share({ title: readerNote.heading || 'OgeNotes note', text });
+      else if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(text); window.alert('Note text copied. Paste it into WhatsApp or another app.'); }
+      else window.prompt('Copy your note text:', text);
+    } catch (error) { if (!error || error.name !== 'AbortError') window.alert('Sharing failed. Try Print / Save PDF instead.'); }
+    setShareMenuOpen(false);
+  }
+
+  function printReaderNote() {
+    if (!readerNote) return;
+    setShareMenuOpen(false);
+    const printWindow = window.open('', '_blank', 'width=900,height=700');
+    if (!printWindow) {
+      window.alert('Please allow pop-ups for OgeNotes to print or save this note as a PDF.');
+      return;
+    }
+    const title = String(readerNote.heading || 'Untitled note');
+    const subjectName = String(readerNote.subjectName || subjects.find((subject) => subject.slug === (readerNote.subject || activeSubject))?.name || active?.name || 'OgeNotes');
+    const escapeHtml = (value) => value.replace(/[&<>\"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', "'": '&#39;' }[char]));
+    const noteHtml = markdownHtml(readerNote.answer || '');
+    printWindow.document.open();
+    printWindow.document.write(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)}</title><style>
+      @page{size:auto;margin:16mm}*{box-sizing:border-box}body{margin:0;color:#171717;background:#fff;font:11pt/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow-wrap:anywhere}header{margin:0 0 22px;padding:0 0 14px;border-bottom:1px solid #ddd}.subject{margin:0 0 8px;color:#666;font-size:9pt;letter-spacing:.08em;text-transform:uppercase}h1{margin:0;font-size:25pt;line-height:1.2;break-after:avoid}main{width:100%}h2,h3,h4{break-after:avoid;line-height:1.3}p,li{orphans:3;widows:3}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f4f4f5;border:1px solid #e4e4e7;border-radius:6px;padding:12px;break-inside:avoid;font:9pt/1.5 ui-monospace,SFMono-Regular,Menlo,monospace}code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;overflow-wrap:anywhere}blockquote{margin-left:0;padding-left:14px;border-left:3px solid #ccc;color:#444}table{width:100%;border-collapse:collapse;break-inside:auto}tr{break-inside:avoid}th,td{padding:6px;border:1px solid #bbb;text-align:left}a{color:inherit;text-decoration:underline}img{max-width:100%;height:auto}ul,ol{padding-left:24px}button{display:none!important}
+    </style></head><body><header><p class="subject">${escapeHtml(subjectName)}</p><h1>${escapeHtml(title)}</h1></header><main>${noteHtml}</main><script>window.addEventListener('load',function(){setTimeout(function(){window.focus();window.print();},250)});window.addEventListener('afterprint',function(){window.close()});</script></body></html>`);
+    printWindow.document.close();
+  }
+
   function saveLearned(next) {
     setLearnedNotes(next);
     localStorage.setItem(`learnedNotes:${activeSubject}`, JSON.stringify([...next]));
@@ -715,7 +747,7 @@ export default function HomePage() {
           {formError && <p className="form-error" role="alert">{formError}</p>}<button className="submit-button" type="submit" disabled={saving}><span>{saving ? 'Saving…' : editingNote ? 'Save changes' : 'Save note'}</span><span aria-hidden="true">→</span></button></form>
       </section></div>}
 
-      {readerNote && <div className="reader-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setReaderNote(null); }}><article className="reader-panel" role="dialog" aria-modal="true" aria-labelledby="readerTitle"><div className="reader-toolbar"><span className="reader-kicker">NOTE {String(readerNote.number).padStart(2, '0')}</span><button className="close-button reader-close" onClick={() => setReaderNote(null)} aria-label="Close note">×</button></div><div className="reader-content"><p className="eyebrow">{readerNote.subjectName || subjects.find((subject) => subject.slug === (readerNote.subject || activeSubject))?.name || active?.name}</p><h2 id="readerTitle">{readerNote.heading}</h2><div className="reader-meta">Saved {readerNote.saved}</div><div className="reader-answer" dangerouslySetInnerHTML={{ __html: markdownHtml(readerNote.answer) }}/>
+      {readerNote && <div className="reader-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setReaderNote(null); }}><article className="reader-panel" role="dialog" aria-modal="true" aria-labelledby="readerTitle"><div className="reader-toolbar"><span className="reader-kicker">NOTE {String(readerNote.number).padStart(2, '0')}</span><div className="reader-toolbar-actions"><div className="note-share-wrap"><button type="button" className="note-share-button" aria-expanded={shareMenuOpen} onClick={() => setShareMenuOpen((open) => !open)}>↗ Share</button>{shareMenuOpen && <div className="note-share-menu" role="menu"><button type="button" role="menuitem" onClick={shareReaderNote}><strong>Share note</strong><small>Send text to available apps</small></button><button type="button" role="menuitem" onClick={printReaderNote}><strong>Print / Save PDF</strong><small>Keep the rendered note formatting</small></button></div>}</div><button className="close-button reader-close" onClick={() => { setShareMenuOpen(false); setReaderNote(null); }} aria-label="Close note">×</button></div></div><div className="reader-content"><p className="eyebrow">{readerNote.subjectName || subjects.find((subject) => subject.slug === (readerNote.subject || activeSubject))?.name || active?.name}</p><h2 id="readerTitle">{readerNote.heading}</h2><div className="reader-meta">Saved {readerNote.saved}</div><div className="reader-answer" dangerouslySetInnerHTML={{ __html: markdownHtml(readerNote.answer) }}/>
           <section className="note-links-section" aria-label="Linked notes">
             <h3>Linked notes</h3>
             {notes.filter((note) => (note.subject || activeSubject) === (readerNote.subject || activeSubject) && note.number !== readerNote.number && referencesNote(readerNote.answer, note.heading)).length
