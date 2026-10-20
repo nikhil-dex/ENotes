@@ -1144,3 +1144,92 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 :root:not([data-theme="dark"]) .settings-theme-switch button.selected{
   background:var(--accent-soft);
 }
+
+
+/* Consistency pass: use theme tokens for legacy hard-coded component colors. */
+:root:not([data-theme="dark"]){
+  --accent-soft:var(--secondary-soft);
+  --accent-border:var(--line);
+  --green:var(--primary);
+  --green-dark:var(--primary-strong);
+}
+:root[data-theme="dark"]{
+  --accent-soft:var(--secondary-soft);
+  --accent-border:var(--line);
+  --green:var(--primary);
+  --green-dark:var(--primary-strong);
+}
+:root:not([data-theme="dark"]) .brand-light,
+:root:not([data-theme="dark"]) .topbar-right,
+:root:not([data-theme="dark"]) .subtitle,
+:root:not([data-theme="dark"]) .note-preview,
+:root:not([data-theme="dark"]) .settings-muted,
+:root:not([data-theme="dark"]) .settings-copy,
+:root:not([data-theme="dark"]) .settings-palette-label,
+:root:not([data-theme="dark"]) .stat-label,
+:root:not([data-theme="dark"]) .sort-label,
+:root:not([data-theme="dark"]) .home-news-lead,
+:root:not([data-theme="dark"]) .site-navbar-link{color:var(--muted)}
+:root:not([data-theme="dark"]) .eyebrow,
+:root:not([data-theme="dark"]) .hub-card-kicker,
+:root:not([data-theme="dark"]) .hub-card-link,
+:root:not([data-theme="dark"]) .period,
+:root:not([data-theme="dark"]) .mobile-bottom-nav-item.is-active{color:var(--primary)}
+:root:not([data-theme="dark"]) .brand-mark,
+:root:not([data-theme="dark"]) .add-button,
+:root:not([data-theme="dark"]) .submit-button,
+:root:not([data-theme="dark"]) .subject-tab.active,
+:root:not([data-theme="dark"]) .mobile-bottom-nav-item.is-active:before{background:var(--primary)}
+:root:not([data-theme="dark"]) .add-button:hover,
+:root:not([data-theme="dark"]) .submit-button:hover{background:var(--primary-strong)}
+:root:not([data-theme="dark"]) .subject-tab,
+:root:not([data-theme="dark"]) .subject-add,
+:root:not([data-theme="dark"]) .theme-button,
+:root:not([data-theme="dark"]) .note-share-menu button,
+:root:not([data-theme="dark"]) .home-news-collapse,
+:root:not([data-theme="dark"]) .settings-theme-switch button,
+:root:not([data-theme="dark"]) .settings-accent-option{color:var(--ink);border-color:var(--line)}
+:root:not([data-theme="dark"]) .subject-tab:hover,
+:root:not([data-theme="dark"]) .subject-add:hover,
+:root:not([data-theme="dark"]) .theme-button:hover,
+:root:not([data-theme="dark"]) .note-share-menu button:hover,
+:root:not([data-theme="dark"]) .home-news-collapse:hover{background:var(--secondary-soft);color:var(--secondary-strong);border-color:var(--accent-border)}
+:root:not([data-theme="dark"]) .subject-add{border-color:var(--accent-border)}
+:root:not([data-theme="dark"]) .card-open:focus-visible,
+:root:not([data-theme="dark"]) button:focus-visible,
+:root:not([data-theme="dark"]) a:focus-visible,
+:root:not([data-theme="dark"]) input:focus-visible,
+:root:not([data-theme="dark"]) textarea:focus-visible,
+:root:not([data-theme="dark"]) select:focus-visible{outline-color:var(--focus-ring)}
+:root:not([data-theme="dark"]) .delete-note:hover,
+:root:not([data-theme="dark"]) .delete-subject:hover{background:var(--danger-soft);color:var(--danger)}
+:root:not([data-theme="dark"]) .status-dot{background:var(--primary);box-shadow:0 0 0 3px var(--secondary-soft)}
+:root:not([data-theme="dark"]) .note-card,
+:root:not([data-theme="dark"]) .hub-card,
+:root:not([data-theme="dark"]) .hub-card-featured,
+:root:not([data-theme="dark"]) .settings-section,
+:root:not([data-theme="dark"]) .home-news-card,
+:root:not([data-theme="dark"]) .html-file-card{border-color:var(--line)}
+:root:not([data-theme="dark"]) .site-navbar,
+:root:not([data-theme="dark"]) .topbar,
+:root:not([data-theme="dark"]) .stats,
+:root:not([data-theme="dark"]) .settings-section,
+:root:not([data-theme="dark"]) .settings-subject-row{border-color:var(--line)}
+:root:not([data-theme="dark"]) .reader-answer blockquote,
+:root:not([data-theme="dark"]) .study-answer blockquote,
+:root:not([data-theme="dark"]) blockquote{border-left-color:var(--secondary);color:var(--muted)}
+:root:not([data-theme="dark"]) .reader-answer a,
+:root:not([data-theme="dark"]) .study-answer a,
+:root:not([data-theme="dark"]) .answer-preview a{color:var(--primary)}
+:root:not([data-theme="dark"]) ::selection{background:var(--secondary-soft);color:var(--ink)}
+:root:not([data-theme="dark"]) hr{border-color:var(--line)}
+:root:not([data-theme="dark"]) .reader-answer table,
+:root:not([data-theme="dark"]) .study-answer table,
+:root:not([data-theme="dark"]) .answer-preview table{border-color:var(--line)}
+:root:not([data-theme="dark"]) .reader-answer th,
+:root:not([data-theme="dark"]) .study-answer th,
+:root:not([data-theme="dark"]) .answer-preview th{background:var(--wash);color:var(--ink)}
+:root:not([data-theme="dark"]) .reader-answer td,
+:root:not([data-theme="dark"]) .study-answer td,
+:root:not([data-theme="dark"]) .answer-preview td{border-color:var(--line)}
+:root:not([data-theme="dark"]) .settings-message{background:var(--secondary-soft);border-color:var(--accent-border);color:var(--ink)}
