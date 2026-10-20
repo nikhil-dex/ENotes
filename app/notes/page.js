@@ -435,8 +435,37 @@ export default function HomePage() {
     let uploadId = null;
     try {
       if (!navigator.onLine) throw new Error('Connect to the internet before saving a PDF to My Files.');
-      const PdfConstructor = window.jspdf?.jsPDF || window.jsPDF;
-      if (typeof PdfConstructor !== 'function') throw new Error('The PDF engine has not loaded. Refresh the page while online and try again.');
+      let PdfConstructor = window.jspdf?.jsPDF || window.jsPDF;
+      if (typeof PdfConstructor !== 'function') {
+        const loadPdfEngine = (src) => new Promise((resolve, reject) => {
+          const existing = document.querySelector('script[data-ogenotes-pdf-engine]');
+          if (existing) {
+            if (existing.dataset.loaded === 'true' && (window.jspdf?.jsPDF || window.jsPDF)) return resolve(window.jspdf?.jsPDF || window.jsPDF);
+            existing.addEventListener('load', () => resolve(window.jspdf?.jsPDF || window.jsPDF), { once: true });
+            existing.addEventListener('error', reject, { once: true });
+            return;
+          }
+          const script = document.createElement('script');
+          script.src = src;
+          script.async = true;
+          script.dataset.ogenotesPdfEngine = 'true';
+          script.onload = () => {
+            script.dataset.loaded = 'true';
+            const loaded = window.jspdf?.jsPDF || window.jsPDF;
+            loaded ? resolve(loaded) : reject(new Error('PDF library loaded without its constructor.'));
+          };
+          script.onerror = () => { script.remove(); reject(new Error('Could not load PDF library from ' + src)); };
+          document.head.appendChild(script);
+        });
+        const sources = [
+          'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js',
+          'https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js',
+        ];
+        for (const src of sources) {
+          try { PdfConstructor = await loadPdfEngine(src); if (typeof PdfConstructor === 'function') break; } catch {}
+        }
+      }
+      if (typeof PdfConstructor !== 'function') throw new Error('Could not load the PDF engine. Check your internet connection or content blocker, then try again.');
       const title = String(readerNote.heading || 'Untitled note');
       const subjectName = String(readerNote.subjectName || subjects.find((subject) => subject.slug === (readerNote.subject || activeSubject))?.name || active?.name || 'OgeNotes');
       const filename = (title.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 70) || 'note') + '.pdf';
