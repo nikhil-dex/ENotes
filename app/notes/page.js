@@ -54,6 +54,7 @@ export default function HomePage() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [readerNote, setReaderNote] = useState(null);
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const [savingReaderPdf, setSavingReaderPdf] = useState(false);
   const [studyOpen, setStudyOpen] = useState(false);
   const [heading, setHeading] = useState('');
   const [answer, setAnswer] = useState('');
@@ -426,6 +427,61 @@ export default function HomePage() {
     setShareMenuOpen(false);
   }
 
+
+  async function saveReaderPdfToFiles() {
+    if (!readerNote || savingReaderPdf) return;
+    setSavingReaderPdf(true);
+    setShareMenuOpen(false);
+    let uploadId = null;
+    let container = null;
+    try {
+      if (!navigator.onLine) throw new Error('Connect to the internet before saving a PDF to My Files.');
+      if (typeof window.html2pdf !== 'function') throw new Error('The PDF helper has not loaded yet. Check your internet connection and try again.');
+      const title = String(readerNote.heading || 'Untitled note');
+      const subjectName = String(readerNote.subjectName || subjects.find((subject) => subject.slug === (readerNote.subject || activeSubject))?.name || active?.name || 'OgeNotes');
+      const filename = (title.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 70) || 'note') + '.pdf';
+      const escapeText = (value) => String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+      container = document.createElement('div');
+      container.style.cssText = 'position:fixed;left:-10000px;top:0;width:760px;padding:36px;background:#fff;color:#171717;font:14px/1.65 Arial,sans-serif;overflow-wrap:anywhere;';
+      container.innerHTML = '<header style="margin-bottom:28px;border-bottom:1px solid #ddd;padding-bottom:18px"><p style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:#666;margin:0 0 8px">' + escapeText(subjectName) + ' · OgeNotes</p><h1 style="font-size:28px;line-height:1.25;margin:0">' + escapeText(title) + '</h1></header><main class="ogenotes-pdf-content">' + markdownHtml(readerNote.answer || '') + '</main><footer style="margin-top:32px;padding-top:12px;border-top:1px solid #ddd;font-size:10px;color:#777">Saved from OgeNotes</footer>';
+      const style = document.createElement('style');
+      style.textContent = '.ogenotes-pdf-content h1,.ogenotes-pdf-content h2,.ogenotes-pdf-content h3,.ogenotes-pdf-content h4{line-height:1.3;margin:1.3em 0 .55em;break-after:avoid}.ogenotes-pdf-content p,.ogenotes-pdf-content ul,.ogenotes-pdf-content ol,.ogenotes-pdf-content blockquote{margin:.65em 0}.ogenotes-pdf-content pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f3f4f6;padding:12px;border-radius:6px;font:11px/1.5 monospace}.ogenotes-pdf-content code{font: .9em monospace;background:#f3f4f6;padding:2px 4px;border-radius:3px}.ogenotes-pdf-content pre code{background:transparent;padding:0}.ogenotes-pdf-content blockquote{border-left:3px solid #bbb;padding-left:14px;color:#555}.ogenotes-pdf-content table{border-collapse:collapse;width:100%;font-size:12px}.ogenotes-pdf-content th,.ogenotes-pdf-content td{border:1px solid #ccc;padding:6px;text-align:left;vertical-align:top}.ogenotes-pdf-content img{max-width:100%;height:auto}.ogenotes-pdf-content a{color:#2458a6;text-decoration:underline}';
+      container.appendChild(style);
+      document.body.appendChild(container);
+      const pdfBlob = await window.html2pdf().set({
+        margin: [12, 12, 14, 12],
+        filename,
+        image: { type: 'jpeg', quality: 0.96 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false, windowWidth: 820 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['css', 'legacy'], avoid: ['pre', 'blockquote', 'tr', 'img'] },
+      }).from(container).outputPdf('blob');
+      const file = new File([pdfBlob], filename, { type: 'application/pdf' });
+      const started = await responseJson(await fetch('/api/media', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+        body: JSON.stringify({ action: 'start-upload', name: file.name, type: file.type, size: file.size, folderId: null }),
+      }));
+      uploadId = started.id;
+      const transfer = await fetch(started.uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
+      if (!transfer.ok) throw new Error('The PDF was generated, but upload failed. Check your private file storage connection and try again.');
+      await responseJson(await fetch('/api/media', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+        body: JSON.stringify({ action: 'complete-upload', id: uploadId }),
+      }));
+      uploadId = null;
+      window.alert('PDF saved to My Files. Open Files to preview or download it.');
+    } catch (error) {
+      if (uploadId) await fetch('/api/media', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+        body: JSON.stringify({ action: 'abort-upload', id: uploadId }),
+      }).catch(() => {});
+      window.alert(error.message || 'Could not save this note as a PDF. Please try again.');
+    } finally {
+      container?.remove();
+      setSavingReaderPdf(false);
+    }
+  }
+
   function printReaderNote() {
     if (!readerNote) return;
     setShareMenuOpen(false);
@@ -747,7 +803,7 @@ export default function HomePage() {
           {formError && <p className="form-error" role="alert">{formError}</p>}<button className="submit-button" type="submit" disabled={saving}><span>{saving ? 'Saving…' : editingNote ? 'Save changes' : 'Save note'}</span><span aria-hidden="true">→</span></button></form>
       </section></div>}
 
-      {readerNote && <div className="reader-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setReaderNote(null); }}><article className="reader-panel" role="dialog" aria-modal="true" aria-labelledby="readerTitle"><div className="reader-toolbar"><span className="reader-kicker">NOTE {String(readerNote.number).padStart(2, '0')}</span><div className="reader-toolbar-actions"><div className="note-share-wrap"><button type="button" className="note-share-button" aria-expanded={shareMenuOpen} onClick={() => setShareMenuOpen((open) => !open)}>↗ Share</button>{shareMenuOpen && <div className="note-share-menu" role="menu"><button type="button" role="menuitem" onClick={shareReaderNote}><strong>Share note</strong><small>Send text to available apps</small></button><button type="button" role="menuitem" onClick={printReaderNote}><strong>Print / Save PDF</strong><small>Keep the rendered note formatting</small></button></div>}</div><button className="close-button reader-close" onClick={() => { setShareMenuOpen(false); setReaderNote(null); }} aria-label="Close note">×</button></div></div><div className="reader-content"><p className="eyebrow">{readerNote.subjectName || subjects.find((subject) => subject.slug === (readerNote.subject || activeSubject))?.name || active?.name}</p><h2 id="readerTitle">{readerNote.heading}</h2><div className="reader-meta">Saved {readerNote.saved}</div><div className="reader-answer" dangerouslySetInnerHTML={{ __html: markdownHtml(readerNote.answer) }}/>
+      {readerNote && <div className="reader-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setReaderNote(null); }}><article className="reader-panel" role="dialog" aria-modal="true" aria-labelledby="readerTitle"><div className="reader-toolbar"><span className="reader-kicker">NOTE {String(readerNote.number).padStart(2, '0')}</span><div className="reader-toolbar-actions"><div className="note-share-wrap"><button type="button" className="note-share-button" aria-expanded={shareMenuOpen} onClick={() => setShareMenuOpen((open) => !open)}>↗ Share</button>{shareMenuOpen && <div className="note-share-menu" role="menu"><button type="button" role="menuitem" onClick={shareReaderNote}><strong>Share note</strong><small>Send text to available apps</small></button><button type="button" role="menuitem" onClick={printReaderNote}><strong>Print / Save PDF</strong><small>Keep the rendered note formatting</small></button><button type="button" role="menuitem" onClick={saveReaderPdfToFiles} disabled={savingReaderPdf}><strong>{savingReaderPdf ? 'Saving PDF…' : 'Save PDF to My Files'}</strong><small>Generate a PDF and store it in Files</small></button></div>}</div><button className="close-button reader-close" onClick={() => { setShareMenuOpen(false); setReaderNote(null); }} aria-label="Close note">×</button></div></div><div className="reader-content"><p className="eyebrow">{readerNote.subjectName || subjects.find((subject) => subject.slug === (readerNote.subject || activeSubject))?.name || active?.name}</p><h2 id="readerTitle">{readerNote.heading}</h2><div className="reader-meta">Saved {readerNote.saved}</div><div className="reader-answer" dangerouslySetInnerHTML={{ __html: markdownHtml(readerNote.answer) }}/>
           <section className="note-links-section" aria-label="Linked notes">
             <h3>Linked notes</h3>
             {notes.filter((note) => (note.subject || activeSubject) === (readerNote.subject || activeSubject) && note.number !== readerNote.number && referencesNote(readerNote.answer, note.heading)).length
