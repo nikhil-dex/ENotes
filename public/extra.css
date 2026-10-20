@@ -1593,3 +1593,15 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 :root[data-theme="dark"] .reader-backdrop{background:var(--overlay)}
 :root[data-theme="dark"] ::selection{background:var(--secondary-soft);color:var(--ink)}
 :root[data-theme="dark"] hr{border-color:var(--line)}
+
+
+/* Fix centered note reader: transformed route wrappers become containing blocks
+   for position:fixed overlays, so route transitions must not retain transforms. */
+.ios-route-stage{animation:ios-route-enter .24s ease both;transform:none!important}
+@keyframes ios-route-enter{from{opacity:.78}to{opacity:1}}
+.reader-backdrop{position:fixed;inset:0;display:grid;place-items:center;overflow-y:auto}
+.reader-panel{margin:0;align-self:center}
+@media(max-width:640px){
+  .reader-backdrop{align-items:center;justify-items:center}
+  .reader-panel{margin:0;max-height:calc(100dvh - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
+}
