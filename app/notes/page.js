@@ -439,7 +439,7 @@ export default function HomePage() {
       if (typeof PdfConstructor !== 'function') throw new Error('The PDF engine has not loaded. Refresh the page while online and try again.');
       const title = String(readerNote.heading || 'Untitled note');
       const subjectName = String(readerNote.subjectName || subjects.find((subject) => subject.slug === (readerNote.subject || activeSubject))?.name || active?.name || 'OgeNotes');
-      const filename = (title.normalize('NFKD').replace(/[\\u0300-\\u036f]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 70) || 'note') + '.pdf';
+      const filename = (title.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 70) || 'note') + '.pdf';
       const pdf = new PdfConstructor({ unit: 'pt', format: 'a4', compress: true });
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
@@ -462,9 +462,9 @@ export default function HomePage() {
         y += lines.length * lineHeight + gapAfter;
       };
       const safeText = (value) => String(value)
-        .replace(/\\r/g, '')
-        .replace(/\\u00a0/g, ' ')
-        .replace(/[\\u{1F000}-\\u{1FAFF}\\u{2600}-\\u{27BF}]/gu, '')
+        .replace(/\r/g, '')
+        .replace(/\u00a0/g, ' ')
+        .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '')
         .replace(/[“”]/g, '"').replace(/[‘’]/g, "'")
         .replace(/[—–]/g, '-').replace(/…/g, '...');
       addText(subjectName + ' · OgeNotes', { size: 9, color: [95, 105, 100], gapAfter: 8 });
@@ -472,12 +472,12 @@ export default function HomePage() {
       pdf.setDrawColor(215, 220, 217);
       pdf.line(left, y, pageWidth - right, y);
       y += 18;
-      const rawLines = String(readerNote.answer || '').replace(/\\r/g, '').split('\\n');
+      const rawLines = String(readerNote.answer || '').replace(/\r/g, '').split('\n');
       let inCodeBlock = false;
       let previousBlank = false;
       for (const rawLine of rawLines) {
         const trimmed = rawLine.trim();
-        if (/^\\s*```/.test(rawLine)) {
+        if (/^\s*```/.test(rawLine)) {
           inCodeBlock = !inCodeBlock;
           if (inCodeBlock) { ensureSpace(18); y += 3; }
           else y += 5;
@@ -493,39 +493,39 @@ export default function HomePage() {
           addText(safeText(rawLine), { size: 9, font: 'courier', indent: 10, color: [45, 55, 65], gapAfter: 2 });
           continue;
         }
-        if (/^\\s*([-*_]\\s*){3,}$/.test(trimmed)) {
+        if (/^\s*([-*_]\s*){3,}$/.test(trimmed)) {
           ensureSpace(12);
           pdf.setDrawColor(215, 220, 217);
           pdf.line(left, y, pageWidth - right, y);
           y += 12;
           continue;
         }
-        if (/^\\s*\\|?\\s*:?-{3,}/.test(trimmed) && trimmed.includes('|')) continue;
-        const headingMatch = trimmed.match(/^(#{1,6})\\s+(.+)$/);
+        if (/^\s*\|?\s*:?-{3,}/.test(trimmed) && trimmed.includes('|')) continue;
+        const headingMatch = trimmed.match(/^(#{1,6})\s+(.+)$/);
         if (headingMatch) {
           const size = [20, 17, 14, 12, 11, 10][headingMatch[1].length - 1];
-          addText(safeText(headingMatch[2].replace(/\\*\\*(.*?)\\*\\*/g, '$1')), { size, bold: true, color: [35, 65, 52], gapAfter: 5 });
+          addText(safeText(headingMatch[2].replace(/\*\*(.*?)\*\*/g, '$1')), { size, bold: true, color: [35, 65, 52], gapAfter: 5 });
           continue;
         }
         if (/^>/.test(trimmed)) {
-          addText(safeText(trimmed.replace(/^>\\s?/, '').replace(/\\*\\*(.*?)\\*\\*/g, '$1')), { size: 10, indent: 14, color: [85, 90, 95], gapAfter: 5 });
+          addText(safeText(trimmed.replace(/^>\s?/, '').replace(/\*\*(.*?)\*\*/g, '$1')), { size: 10, indent: 14, color: [85, 90, 95], gapAfter: 5 });
           continue;
         }
-        const listMatch = trimmed.match(/^([-*+]\\s+|\\d+[.)]\\s+)(.*)$/);
+        const listMatch = trimmed.match(/^([-*+]\s+|\d+[.)]\s+)(.*)$/);
         if (listMatch) {
-          const bullet = /^\\d/.test(listMatch[1]) ? listMatch[1].trim() + ' ' : '• ';
-          addText(safeText(bullet + listMatch[2].replace(/\\*\\*(.*?)\\*\\*/g, '$1').replace(/\\*(.*?)\\*/g, '$1').replace(/`([^`]+)`/g, '$1')), { size: 10.5, indent: 12, gapAfter: 4 });
+          const bullet = /^\d/.test(listMatch[1]) ? listMatch[1].trim() + ' ' : '• ';
+          addText(safeText(bullet + listMatch[2].replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1').replace(/`([^`]+)`/g, '$1')), { size: 10.5, indent: 12, gapAfter: 4 });
           continue;
         }
         if (trimmed.includes('|')) {
-          addText(safeText(trimmed.replace(/^\\|/, '').replace(/\\|$/, '').split('|').map((cell) => cell.trim()).join('   •   ')), { size: 9.5, gapAfter: 4 });
+          addText(safeText(trimmed.replace(/^\|/, '').replace(/\|$/, '').split('|').map((cell) => cell.trim()).join('   •   ')), { size: 9.5, gapAfter: 4 });
           continue;
         }
         const paragraph = safeText(trimmed
-          .replace(/!?\\[([^\\]]+)\\]\\([^)]+\\)/g, '$1')
-          .replace(/\\*\\*(.*?)\\*\\*/g, '$1')
+          .replace(/!?\[([^\]]+)\]\([^)]+\)/g, '$1')
+          .replace(/\*\*(.*?)\*\*/g, '$1')
           .replace(/__(.*?)__/g, '$1')
-          .replace(/\\*(.*?)\\*/g, '$1')
+          .replace(/\*(.*?)\*/g, '$1')
           .replace(/_(.*?)_/g, '$1')
           .replace(/`([^`]+)`/g, '$1')
           .replace(/~~(.*?)~~/g, '$1'));
