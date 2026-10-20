@@ -17,6 +17,7 @@ export default function RootLayout({ children }) {
         <meta name="theme-color" content="#40795e" />
         <link rel="stylesheet" href="/style.css" />
         <link rel="stylesheet" href="/extra.css" />
+        <link rel="stylesheet" href="/news.css" />
       </head>
       <body>{children}<MobileBottomNavigation /></body>
     </html>

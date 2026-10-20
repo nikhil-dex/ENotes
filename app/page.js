@@ -2,18 +2,14 @@ import SiteNavbar from './components/site-navbar';
 import QuickNotesPanel from './components/quick-notes-panel';
 import ThemeToggle from './components/theme-toggle';
 import HomeDashboard from './components/home-dashboard';
+import HomeNewsFeed from './components/home-news-feed';
 
 export default function HomePage() {
   return (
     <main className="shell hub-shell">
       <SiteNavbar actions={<ThemeToggle />} />
 
-      <section className="hub-hero">
-        <p className="eyebrow">YOUR PERSONAL KNOWLEDGE SPACE</p>
-        <h1>Everything you learn,<br /><span>in one place.</span></h1>
-        <p className="hub-lead">A calmer home for your notes, saved links, revision history, and learning resources. Choose where you want to go.</p>
-        <a className="add-button hub-primary" href="/notes"><span aria-hidden="true">↗</span> Open notes</a>
-      </section>
+      <HomeNewsFeed />
 
       <HomeDashboard />
 
@@ -37,7 +33,7 @@ export default function HomePage() {
         <a className="hub-card" href="/settings">
           <span className="hub-card-icon" aria-hidden="true">⚙</span>
           <span className="hub-card-kicker">03 · ORGANIZE</span>
-          <h2>Settings & backup <span aria-hidden="true">↗</span></h2>
+          <h2>Settings &amp; backup <span aria-hidden="true">↗</span></h2>
           <p>Manage subjects, download a backup, restore missing records, and choose your theme.</p>
           <span className="hub-card-link">Open settings <span aria-hidden="true">→</span></span>
         </a>
@@ -65,7 +61,7 @@ export default function HomePage() {
         <a className="hub-card" href="/files">
           <span className="hub-card-icon" aria-hidden="true">▧</span>
           <span className="hub-card-kicker">07 · COLLECT</span>
-          <h2>Image & PDF library <span aria-hidden="true">↗</span></h2>
+          <h2>Image &amp; PDF library <span aria-hidden="true">↗</span></h2>
           <p>Privately store images and PDFs, organize them into folders, preview, and download them.</p>
           <span className="hub-card-link">Open My Files <span aria-hidden="true">→</span></span>
         </a>
