@@ -1029,3 +1029,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .add-button:hover,.submit-button:hover{background:var(--primary-strong)}
 .secondary-button,.settings-secondary-button,.subject-add,.settings-muted,.stat-label,.sort-label{--secondary-current:var(--secondary);color:var(--secondary-current)}
 .count-pill,.note-mark,.subject-tab:hover,.subject-add:hover,.settings-accent-option.selected{background:var(--secondary-soft)}
+
+
+.settings-palette-group{display:flex;flex-direction:column;align-items:flex-end;gap:7px}
+.settings-palette-label{margin:0;color:var(--secondary);font:600 10px var(--mono);letter-spacing:.8px;text-transform:uppercase}
+.settings-accent-option.selected{border-color:var(--primary);box-shadow:0 0 0 1px var(--primary)}
+.settings-accent-option.selected span{outline:2px solid var(--primary);outline-offset:2px}
+.settings-theme-switch button.selected{border-color:var(--primary);color:var(--primary);background:var(--secondary-soft)}
