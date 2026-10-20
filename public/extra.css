@@ -864,21 +864,22 @@ button[aria-disabled="true"] {
 .note-share-menu button:hover{background:rgba(128,128,128,.12)}
 .note-share-menu strong{font-size:14px;font-weight:600}
 .note-share-menu small{font-size:12px;opacity:.72}
-@media print{
-  html,body{height:auto!important;min-height:0!important;overflow:visible!important;margin:0!important;padding:0!important;background:#fff!important}
-  /* body *{display:none!important;visibility:hidden!important} */
-  /* .reader-backdrop{display:block!important;visibility:visible!important;position:static!important} */
-  /* .reader-backdrop *{display:revert!important;visibility:visible!important} */
-  .reader-backdrop{position:static!important;display:block!important;overflow:visible!important;padding:0!important;margin:0!important;background:#fff!important;backdrop-filter:none!important}
-  .reader-panel{position:static!important;width:100%!important;max-width:none!important;max-height:none!important;overflow:visible!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:#fff!important;color:#111!important}
-  .reader-toolbar,.reader-close,.note-share-wrap,.note-links-section,.reader-meta{display:none!important}
-  .reader-content{overflow:visible!important;padding:0!important;margin:0!important}
-  .reader-content>.eyebrow{margin-top:0!important;color:#555!important}
-  .reader-content h2{font-size:26pt!important;color:#111!important;break-after:avoid}
-  .reader-answer{color:#111!important;font-size:11pt!important;line-height:1.65!important;overflow-wrap:anywhere!important}
-  .reader-answer pre{white-space:pre-wrap!important;overflow-wrap:anywhere!important;break-inside:avoid;background:#f3f4f6!important;color:#111!important}
-  .reader-answer table{width:100%!important;border-collapse:collapse!important}
-  .reader-answer th,.reader-answer td{border:1px solid #bbb!important;color:#111!important}
-  .reader-answer a{color:#111!important;text-decoration:underline!important}
-  .reader-answer img{max-width:100%!important}
+@media print {
+  @page { size: auto; margin: 14mm; }
+  html, body { height: auto !important; min-height: 0 !important; overflow: visible !important; margin: 0 !important; padding: 0 !important; background: #fff !important; }
+  body * { visibility: hidden !important; }
+  .reader-backdrop { display: block !important; visibility: visible !important; position: static !important; inset: auto !important; width: auto !important; height: auto !important; overflow: visible !important; margin: 0 !important; padding: 0 !important; background: #fff !important; }
+  .reader-panel, .reader-panel * { visibility: visible !important; }
+  .reader-panel { display: block !important; position: static !important; inset: auto !important; transform: none !important; width: auto !important; max-width: none !important; height: auto !important; max-height: none !important; overflow: visible !important; margin: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; background: #fff !important; color: #111 !important; }
+  .reader-toolbar, .reader-close, .note-share-wrap, .note-links-section, .reader-meta { display: none !important; }
+  .reader-content { display: block !important; height: auto !important; max-height: none !important; overflow: visible !important; padding: 0 !important; margin: 0 !important; }
+  .reader-content > .eyebrow { margin-top: 0 !important; color: #555 !important; }
+  .reader-content h2 { font-size: 26pt !important; color: #111 !important; break-after: avoid-page; }
+  .reader-answer { display: block !important; height: auto !important; max-height: none !important; overflow: visible !important; color: #111 !important; font-size: 11pt !important; line-height: 1.55 !important; overflow-wrap: anywhere !important; }
+  .reader-answer pre { white-space: pre-wrap !important; overflow-wrap: anywhere !important; break-inside: avoid; background: #f3f4f6 !important; color: #111 !important; }
+  .reader-answer table { width: 100% !important; border-collapse: collapse !important; }
+  .reader-answer th, .reader-answer td { border: 1px solid #bbb !important; color: #111 !important; }
+  .reader-answer a { color: #111 !important; text-decoration: underline !important; }
+  .reader-answer img { max-width: 100% !important; }
 }
+
