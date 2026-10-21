@@ -29,7 +29,7 @@ export default function EnglishWordExplainer() {
     setError('');
     setResult(null);
     try {
-      const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(query)}`);
+      const response = await fetch(`/api/word-meaning?word=${encodeURIComponent(query)}`, { cache: 'no-store' });
       const data = await response.json();
       if (!response.ok || !Array.isArray(data) || !data.length) {
         throw new Error('No definition found. Check the spelling or try another word.');
