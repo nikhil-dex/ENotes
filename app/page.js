@@ -3,6 +3,7 @@ import QuickNotesPanel from './components/quick-notes-panel';
 import ThemeToggle from './components/theme-toggle';
 import HomeDashboard from './components/home-dashboard';
 import HomeNewsFeed from './components/home-news-feed';
+import EnglishWordExplainer from './components/english-word-explainer';
 
 export default function HomePage() {
   return (
@@ -10,6 +11,8 @@ export default function HomePage() {
       <SiteNavbar actions={<ThemeToggle />} />
 
       <HomeNewsFeed />
+
+      <EnglishWordExplainer />
 
       <HomeDashboard />
 
