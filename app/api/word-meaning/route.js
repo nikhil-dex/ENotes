@@ -2,29 +2,22 @@ const WORD_PATTERN = /^[a-z]+(?:['-][a-z]+)*$/i;
 
 function normalizeWiktionary(word, payload) {
   if (!payload || typeof payload !== 'object') return null;
-  const entries = [];
-  for (const [partOfSpeech, definitions] of Object.entries(payload)) {
-    if (!Array.isArray(definitions)) continue;
-    const normalized = definitions.map((item) => ({
+  const groups = Array.isArray(payload) ? payload : Object.values(payload).flatMap((value) => Array.isArray(value) ? value : []);
+  const meanings = groups.map((group) => {
+    const definitions = (group.definitions || []).map((item) => ({
       definition: typeof item.definition === 'string' ? item.definition.replace(/<[^>]*>/g, '').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&') : '',
-      example: Array.isArray(item.examples) && item.examples[0]
-        ? String(item.examples[0].example || '').replace(/<[^>]*>/g, '').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&')
-        : '',
+      example: (item.parsedExamples?.[0]?.example || item.examples?.[0]?.example || (typeof item.examples?.[0] === 'string' ? item.examples[0] : '') || '')
+        .replace(/<[^>]*>/g, '').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&'),
       synonyms: Array.isArray(item.synonyms) ? item.synonyms.map((synonym) => typeof synonym === 'string' ? synonym : synonym.word).filter(Boolean) : [],
     })).filter((item) => item.definition);
-    if (normalized.length) {
-      entries.push({
-        word,
-        phonetic: '',
-        meanings: [{
-          partOfSpeech,
-          definitions: normalized.slice(0, 4),
-          synonyms: [...new Set(normalized.flatMap((item) => item.synonyms))].slice(0, 8),
-        }],
-      });
-    }
-  }
-  return entries.length ? entries : null;
+    return {
+      partOfSpeech: group.partOfSpeech || 'Meaning',
+      definitions: definitions.slice(0, 4),
+      synonyms: [...new Set(definitions.flatMap((item) => item.synonyms))].slice(0, 8),
+    };
+  }).filter((meaning) => meaning.definitions.length);
+
+  return meanings.length ? [{ word, phonetic: '', meanings }] : null;
 }
 
 async function fetchWithTimeout(url) {
