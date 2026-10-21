@@ -1627,3 +1627,14 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .pixel-settings-actions .settings-muted{margin:0}
 @media(max-width:640px){.pixel-strip-wrap{width:90%;height:54px;margin-top:9px;border-radius:6px}.pixel-settings-grid{grid-template-columns:1fr}.pixel-setting-control select{max-width:45%;min-width:108px}.pixel-settings-preview{height:60px}}
 @media(prefers-reduced-motion:reduce){.pixel-preview-dot{animation:none}}
+
+
+/* Subject-wise swipe navigation in the note reader */
+.reader-pagination{display:flex;align-items:center;gap:10px;min-width:0}
+.reader-position{font:10px var(--mono);color:var(--muted);white-space:nowrap}
+.reader-toolbar-actions{display:flex;align-items:center;gap:8px}
+.reader-step-button{width:34px;height:34px;border:1px solid var(--line);border-radius:7px;background:var(--surface, #fff);color:var(--ink);font-size:25px;line-height:1;display:grid;place-items:center;cursor:pointer;touch-action:manipulation}
+.reader-step-button:hover:not(:disabled){border-color:var(--primary);color:var(--primary)}
+.reader-step-button:disabled{opacity:.3;cursor:not-allowed}
+.reader-content{overscroll-behavior:contain;touch-action:pan-y}
+@media(max-width:640px){.reader-toolbar{padding:0 12px;gap:8px}.reader-toolbar-actions{gap:5px}.reader-step-button{width:32px;height:32px}.reader-pagination{gap:6px}.reader-position{font-size:9px}}
