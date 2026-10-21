@@ -274,7 +274,7 @@ export default function SettingsPage() {
         <div className="pixel-settings-actions"><button type="button" className="add-button" onClick={previewPixelAnimation} disabled={!pixelEnabled}>↻ Preview another animation</button><span className="settings-muted">Preferences save automatically on this device.</span></div>
       </section>
 
-      <footer><span>Built for learning, one note at a time.</span><span>SETTINGS · ENotes</span></footer>
+      <footer><span>Built for learning, one note at a time.</span><span>SETTINGS · ogenotes</span></footer>
     </main>
   );
 }
