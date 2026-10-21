@@ -31,7 +31,10 @@ export default function EnglishWordExplainer() {
     try {
       const response = await fetch(`/api/word-meaning?word=${encodeURIComponent(query)}`, { cache: 'no-store' });
       const data = await response.json();
-      if (!response.ok || !Array.isArray(data) || !data.length) {
+      if (!response.ok) {
+        throw new Error(data?.error || 'Could not look up that word right now. Please try again.');
+      }
+      if (!Array.isArray(data) || !data.length) {
         throw new Error('No definition found. Check the spelling or try another word.');
       }
 
