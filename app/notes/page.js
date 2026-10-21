@@ -79,6 +79,8 @@ export default function HomePage() {
   const initialDraftRef = useRef({ heading: '', answer: '' });
   const draftDirty = noteDialog && (heading !== initialDraftRef.current.heading || answer !== initialDraftRef.current.answer);
   const subjectNavRef = useRef(null);
+  const readerContentRef = useRef(null);
+  const swipeStartRef = useRef(null);
 
   const active = subjects.find((subject) => subject.slug === activeSubject);
   const availableTags = useMemo(() => [...new Set(notes.flatMap((note) => Array.isArray(note.tags) ? note.tags : []))].sort(), [notes]);
@@ -93,6 +95,33 @@ export default function HomePage() {
       if (sortOrder === 'title-desc') return b.heading.localeCompare(a.heading);
       return Number(b.pinned === true) - Number(a.pinned === true) || Number(b.favorite === true) - Number(a.favorite === true) || b.number - a.number;
     }), [notes, query, favoritesOnly, pinnedOnly, selectedTag, sortOrder]);
+  const readerSubjectSlug = readerNote?.subject || activeSubject;
+  const readerSequence = useMemo(() => filteredNotes.filter((note) => (note.subject || activeSubject) === readerSubjectSlug), [filteredNotes, activeSubject, readerSubjectSlug]);
+  const readerIndex = readerSequence.findIndex((note) => note.number === readerNote?.number);
+
+  function moveReaderNote(direction) {
+    if (!readerNote || !readerSequence.length) return;
+    const nextIndex = readerIndex + direction;
+    if (nextIndex < 0 || nextIndex >= readerSequence.length) return;
+    setShareMenuOpen(false);
+    setReaderNote(readerSequence[nextIndex]);
+  }
+
+  useEffect(() => {
+    if (readerContentRef.current) readerContentRef.current.scrollTop = 0;
+  }, [readerNote?.number, readerNote?.subject]);
+
+  useEffect(() => {
+    if (!readerNote) return undefined;
+    const onKeyDown = (event) => {
+      if (event.altKey || event.ctrlKey || event.metaKey || event.target?.closest?.('input, textarea, select, [contenteditable="true"]')) return;
+      if (event.key === 'ArrowLeft') { event.preventDefault(); moveReaderNote(-1); }
+      if (event.key === 'ArrowRight') { event.preventDefault(); moveReaderNote(1); }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [readerNote, readerSequence, readerIndex]);
+
   const totalPages = Math.max(1, Math.ceil(filteredNotes.length / pageSize));
   const shownNotes = useMemo(() => filteredNotes.slice((currentPage - 1) * pageSize, currentPage * pageSize), [filteredNotes, currentPage]);
 
@@ -909,7 +938,7 @@ export default function HomePage() {
           {formError && <p className="form-error" role="alert">{formError}</p>}<button className="submit-button" type="submit" disabled={saving}><span>{saving ? 'Saving…' : editingNote ? 'Save changes' : 'Save note'}</span><span aria-hidden="true">→</span></button></form>
       </section></div>}
 
-      {readerNote && <div className="reader-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setReaderNote(null); }}><article className="reader-panel" role="dialog" aria-modal="true" aria-labelledby="readerTitle"><div className="reader-toolbar"><span className="reader-kicker">NOTE {String(readerNote.number).padStart(2, '0')}</span><div className="reader-toolbar-actions"><div className="note-share-wrap"><button type="button" className="note-share-button" aria-expanded={shareMenuOpen} onClick={() => setShareMenuOpen((open) => !open)}>↗ Share</button>{shareMenuOpen && <div className="note-share-menu" role="menu"><button type="button" role="menuitem" onClick={shareReaderNote}><strong>Share note</strong><small>Send text to available apps</small></button><button type="button" role="menuitem" onClick={printReaderNote}><strong>Print / Save PDF</strong><small>Keep the rendered note formatting</small></button><button type="button" role="menuitem" onClick={saveReaderPdfToFiles} disabled={savingReaderPdf}><strong>{savingReaderPdf ? 'Saving PDF…' : 'Save PDF to My Files'}</strong><small>Generate a PDF and store it in Files</small></button></div>}</div><button className="close-button reader-close" onClick={() => { setShareMenuOpen(false); setReaderNote(null); }} aria-label="Close note">×</button></div></div><div className="reader-content"><p className="eyebrow">{readerNote.subjectName || subjects.find((subject) => subject.slug === (readerNote.subject || activeSubject))?.name || active?.name}</p><h2 id="readerTitle">{readerNote.heading}</h2><div className="reader-meta">Saved {readerNote.saved}</div><div className="reader-answer" dangerouslySetInnerHTML={{ __html: markdownHtml(readerNote.answer) }}/>
+      {readerNote && <div className="reader-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setReaderNote(null); }}><article className="reader-panel" role="dialog" aria-modal="true" aria-labelledby="readerTitle" onTouchStart={(event) => { const touch = event.touches[0]; swipeStartRef.current = { x: touch.clientX, y: touch.clientY }; }} onTouchEnd={(event) => { if (!swipeStartRef.current) return; const touch = event.changedTouches[0]; const dx = touch.clientX - swipeStartRef.current.x; const dy = touch.clientY - swipeStartRef.current.y; swipeStartRef.current = null; if (Math.abs(dx) > 65 && Math.abs(dx) > Math.abs(dy) * 1.25) moveReaderNote(dx < 0 ? 1 : -1); }}><div className="reader-toolbar"><div className="reader-pagination"><span className="reader-kicker">NOTE {String(readerNote.number).padStart(2, '0')}</span><span className="reader-position">{readerIndex >= 0 ? `${readerIndex + 1} / ${readerSequence.length}` : ''}</span></div><div className="reader-toolbar-actions"><button type="button" className="reader-step-button" onClick={() => moveReaderNote(-1)} disabled={readerIndex <= 0} aria-label="Previous note in this subject" title="Previous note">‹</button><button type="button" className="reader-step-button" onClick={() => moveReaderNote(1)} disabled={readerIndex < 0 || readerIndex >= readerSequence.length - 1} aria-label="Next note in this subject" title="Next note">›</button><div className="note-share-wrap"><button type="button" className="note-share-button" aria-expanded={shareMenuOpen} onClick={() => setShareMenuOpen((open) => !open)}>↗ Share</button>{shareMenuOpen && <div className="note-share-menu" role="menu"><button type="button" role="menuitem" onClick={shareReaderNote}><strong>Share note</strong><small>Send text to available apps</small></button><button type="button" role="menuitem" onClick={printReaderNote}><strong>Print / Save PDF</strong><small>Keep the rendered note formatting</small></button><button type="button" role="menuitem" onClick={saveReaderPdfToFiles} disabled={savingReaderPdf}><strong>{savingReaderPdf ? 'Saving PDF…' : 'Save PDF to My Files'}</strong><small>Generate a PDF and store it in Files</small></button></div>}</div><button className="close-button reader-close" onClick={() => { setShareMenuOpen(false); setReaderNote(null); }} aria-label="Close note">×</button></div></div><div className="reader-content" ref={readerContentRef}><p className="eyebrow">{readerNote.subjectName || subjects.find((subject) => subject.slug === (readerNote.subject || activeSubject))?.name || active?.name}</p><h2 id="readerTitle">{readerNote.heading}</h2><div className="reader-meta">Saved {readerNote.saved}</div><div className="reader-answer" dangerouslySetInnerHTML={{ __html: markdownHtml(readerNote.answer) }}/>
           <section className="note-links-section" aria-label="Linked notes">
             <h3>Linked notes</h3>
             {notes.filter((note) => (note.subject || activeSubject) === (readerNote.subject || activeSubject) && note.number !== readerNote.number && referencesNote(readerNote.answer, note.heading)).length
