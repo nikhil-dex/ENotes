@@ -44,6 +44,8 @@ const QuickNoteCard = memo(function QuickNoteCard({ note, content, index, title,
       <div
         className="quick-note-editor"
         contentEditable
+        dir="ltr"
+        style={{ direction: 'ltr', unicodeBidi: 'plaintext', textAlign: 'left' }}
         suppressContentEditableWarning
         role="textbox"
         aria-label={'Quick note ' + (index + 1)}
