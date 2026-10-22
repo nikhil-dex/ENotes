@@ -226,7 +226,9 @@ export default function PersonalQuickNotesPanel({ fullPage = false }) {
 
       {loading ? <p className="quick-notes-loading">Loading AirNotes…</p> : notes.length ? (
         <div className="quick-notes-grid">
-          {visibleNotes.map((note, index) => (
+          {visibleNotes.map((note, index) => fullPage ? (
+            <AirNoteLibraryCard key={note.id} note={note} index={index} onOpen={setOpenedNote} onEdit={openEditor} onDelete={deleteNote} />
+          ) : (
             <QuickNoteCard
               key={note.id}
               note={note}
