@@ -149,7 +149,7 @@ export default function PersonalQuickNotesPanel({ fullPage = false }) {
         body: JSON.stringify({ content: '' }),
       }));
       setNotes((current) => [note, ...current]);
-      setMessage('New note added. The first line becomes its heading.');
+      setMessage('AirNote created. Start with a title or your first thought.');
     } catch (err) {
       setError(err.message || 'Could not create a quick note.');
     } finally {
@@ -172,7 +172,7 @@ export default function PersonalQuickNotesPanel({ fullPage = false }) {
       setNotes((current) => current.filter((item) => item.id !== note.id));
       setDirty((current) => Object.fromEntries(Object.entries(current).filter(([id]) => id !== note.id)));
       setSaveErrors((current) => Object.fromEntries(Object.entries(current).filter(([id]) => id !== note.id)));
-      setMessage('Quick note deleted.');
+      setMessage('AirNote deleted.');
     } catch (err) {
       setError(err.message || 'Could not delete this quick note.');
     }
@@ -214,11 +214,11 @@ export default function PersonalQuickNotesPanel({ fullPage = false }) {
       {fullPage && <SiteNavbar />}
       <div className="quick-notes-heading-row">
         <div>
-          <p className="eyebrow">{fullPage ? 'CAPTURE IT BEFORE YOU FORGET' : 'THOUGHTS, REMINDERS & IDEAS'}</p>
+          <p className="eyebrow">{fullPage ? 'CAPTURE IT BEFORE YOU FORGET' : 'PERSONAL KNOWLEDGE SPACE'}</p>
           <h2 id="quick-notes-heading">{fullPage ? <>Air<span>Notes.</span></> : <>AirNotes <span className="quick-notes-count">{notes.length}</span></>}</h2>
-          <p className="quick-notes-lead">{fullPage ? 'No separate title field — your first line automatically becomes the heading, just like iPhone Notes.' : 'Capture ideas independently from Quick Notes. Your first line becomes the heading.'}</p>
+          <p className="quick-notes-lead">{fullPage ? 'A focused space for capturing ideas, keeping references, and developing thoughts.' : 'Your private workspace for ideas and drafts, separate from Quick Notes.'}</p>
         </div>
-        <button className="quick-note-add-button" type="button" onClick={addNote} disabled={creating} aria-label="Add a quick note" title="Add a quick note">
+        <button className="quick-note-add-button" type="button" onClick={addNote} disabled={creating} aria-label="Create an AirNote" title="Create an AirNote">
           <span aria-hidden="true">＋</span>{fullPage ? (creating ? 'Adding…' : 'Add note') : ''}
         </button>
       </div>
@@ -242,16 +242,16 @@ export default function PersonalQuickNotesPanel({ fullPage = false }) {
               saving={Boolean(savingIds[note.id] || dirty[note.id] !== undefined)}
             />
           ))}
-          <button className="quick-note-add-tile" type="button" onClick={addNote} disabled={creating} aria-label="Add another quick note">
-            <span aria-hidden="true">＋</span><strong>Add another note</strong><small>Create a new note section</small>
+          <button className="quick-note-add-tile" type="button" onClick={addNote} disabled={creating} aria-label="Create another AirNote">
+            <span aria-hidden="true">＋</span><strong>New AirNote</strong><small>Create a fresh note</small>
           </button>
         </div>
       ) : (
         <div className="quick-notes-empty">
           <span className="quick-notes-empty-icon" aria-hidden="true">✎</span>
-          <h3>Your thoughts, in one place.</h3>
-          <p>Create a quick note and start typing. The first line automatically becomes its heading.</p>
-          <button className="add-button" type="button" onClick={addNote} disabled={creating}><span aria-hidden="true">＋</span> Create your first note</button>
+          <h3>A clear space for your thoughts.</h3>
+          <p>Create an AirNote to start collecting ideas, notes, and references.</p>
+          <button className="add-button" type="button" onClick={addNote} disabled={creating}><span aria-hidden="true">＋</span> Create your first AirNote</button>
         </div>
       )}
       {fullPage && typeof document !== 'undefined' && createPortal(
@@ -293,7 +293,7 @@ export default function PersonalQuickNotesPanel({ fullPage = false }) {
         document.body,
       )}
       {!fullPage && <a className="quick-notes-view-all" href="/airnotes">Open AirNotes <span aria-hidden="true">→</span></a>}
-      {fullPage && <footer><span>Your ideas, saved as you write.</span><span>OGENOTES · QUICK NOTES</span></footer>}
+      {fullPage && <footer><span>Your ideas, saved as you write.</span><span>OGENOTES · AIRNOTES</span></footer>}
     </section>
   );
 }
