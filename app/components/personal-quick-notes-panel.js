@@ -1,6 +1,7 @@
 'use client';
 
 import { memo, useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import SiteNavbar from './site-navbar';
 
 async function readResponse(response) {
@@ -253,38 +254,43 @@ export default function PersonalQuickNotesPanel({ fullPage = false }) {
           <button className="add-button" type="button" onClick={addNote} disabled={creating}><span aria-hidden="true">＋</span> Create your first note</button>
         </div>
       )}
-      {fullPage && openedNote && (
-        <div className="reader-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setOpenedNote(null); }}>
-          <article className="reader-panel airnote-reader-panel" role="dialog" aria-modal="true" aria-labelledby="airnote-reader-title">
-            <div className="reader-toolbar">
-              <div className="reader-pagination"><span className="reader-kicker">AIRNOTE</span></div>
-              <div className="reader-toolbar-actions">
-                <button type="button" className="edit-note" onClick={() => openEditor(openedNote)} aria-label="Edit AirNote" title="Edit AirNote">✎ Edit</button>
-                <button className="close-button reader-close" onClick={() => setOpenedNote(null)} aria-label="Close AirNote">×</button>
+      {fullPage && typeof document !== 'undefined' && createPortal(
+        <>
+        {fullPage && openedNote && (
+          <div className="reader-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setOpenedNote(null); }}>
+            <article className="reader-panel airnote-reader-panel" role="dialog" aria-modal="true" aria-labelledby="airnote-reader-title">
+              <div className="reader-toolbar">
+                <div className="reader-pagination"><span className="reader-kicker">AIRNOTE</span></div>
+                <div className="reader-toolbar-actions">
+                  <button type="button" className="edit-note" onClick={() => openEditor(openedNote)} aria-label="Edit AirNote" title="Edit AirNote">✎ Edit</button>
+                  <button className="close-button reader-close" onClick={() => setOpenedNote(null)} aria-label="Close AirNote">×</button>
+                </div>
               </div>
-            </div>
-            <div className="reader-content">
-              <h2 id="airnote-reader-title">{titleOf(openedNote.content)}</h2>
-              <div className="reader-meta">Updated {formatDate(openedNote.updatedAt || openedNote.createdAt)}</div>
-              <div className="reader-answer airnote-reader-answer">{openedNote.content || 'This AirNote is empty. Select Edit to start writing.'}</div>
-            </div>
-          </article>
-        </div>
-      )}
-      {fullPage && editingNote && (
-        <div className="modal-backdrop editor-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !editSaving) setEditingNote(null); }}>
-          <section className="dialog editor-dialog airnote-edit-dialog" role="dialog" aria-modal="true" aria-labelledby="airnote-edit-title">
-            <button className="close-button" onClick={() => !editSaving && setEditingNote(null)} aria-label="Close editor">×</button>
-            <p className="eyebrow">AIRNOTES</p>
-            <h2 id="airnote-edit-title">Edit AirNote<span className="period">.</span></h2>
-            <p className="form-subtitle">Make your changes, then save them to AirNotes.</p>
-            <textarea autoFocus value={editContent} onChange={(event) => setEditContent(event.target.value)} aria-label="AirNote content" rows={12} />
-            <div className="editor-dialog-actions">
-              <button type="button" className="study-button" onClick={() => setEditingNote(null)} disabled={editSaving}>Cancel</button>
-              <button type="button" className="add-button" onClick={saveEditedNote} disabled={editSaving}>{editSaving ? 'Saving…' : 'Save changes'}</button>
-            </div>
-          </section>
-        </div>
+              <div className="reader-content">
+                <h2 id="airnote-reader-title">{titleOf(openedNote.content)}</h2>
+                <div className="reader-meta">Updated {formatDate(openedNote.updatedAt || openedNote.createdAt)}</div>
+                <div className="reader-answer airnote-reader-answer">{openedNote.content || 'This AirNote is empty. Select Edit to start writing.'}</div>
+              </div>
+            </article>
+          </div>
+        )}
+        {fullPage && editingNote && (
+          <div className="modal-backdrop editor-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !editSaving) setEditingNote(null); }}>
+            <section className="dialog editor-dialog airnote-edit-dialog" role="dialog" aria-modal="true" aria-labelledby="airnote-edit-title">
+              <button className="close-button" onClick={() => !editSaving && setEditingNote(null)} aria-label="Close editor">×</button>
+              <p className="eyebrow">AIRNOTES</p>
+              <h2 id="airnote-edit-title">Edit AirNote<span className="period">.</span></h2>
+              <p className="form-subtitle">Make your changes, then save them to AirNotes.</p>
+              <textarea autoFocus value={editContent} onChange={(event) => setEditContent(event.target.value)} aria-label="AirNote content" rows={12} />
+              <div className="editor-dialog-actions">
+                <button type="button" className="study-button" onClick={() => setEditingNote(null)} disabled={editSaving}>Cancel</button>
+                <button type="button" className="add-button" onClick={saveEditedNote} disabled={editSaving}>{editSaving ? 'Saving…' : 'Save changes'}</button>
+              </div>
+            </section>
+          </div>
+        )}
+        </>,
+        document.body,
       )}
       {!fullPage && <a className="quick-notes-view-all" href="/airnotes">Open AirNotes <span aria-hidden="true">→</span></a>}
       {fullPage && <footer><span>Your ideas, saved as you write.</span><span>OGENOTES · QUICK NOTES</span></footer>}
