@@ -224,7 +224,7 @@ export default function PersonalQuickNotesPanel({ fullPage = false }) {
 
       {(error || message) && <p className={'quick-notes-feedback' + (error ? ' is-error' : '')} role="status">{error || message}</p>}
 
-      {loading ? <p className="quick-notes-loading">Loading AirNotes…</p> : notes.length ? (
+      {!fullPage ? null : loading ? <p className="quick-notes-loading">Loading AirNotes…</p> : notes.length ? (
         <div className="quick-notes-grid">
           {visibleNotes.map((note, index) => fullPage ? (
             <AirNoteLibraryCard key={note.id} note={note} index={index} onOpen={setOpenedNote} onDelete={deleteNote} />
