@@ -11,6 +11,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
  if (message?.type === 'PAIR') {
   (async () => { const baseUrl = normalizeBaseUrl(message.baseUrl); const permitted = await chrome.permissions.contains({origins:[baseUrl + '/*']}); if (!permitted) throw new Error('Allow host access to your ENotes website, then try again.'); const data = await fetchJson(baseUrl + TOKEN_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:message.code})}); await chrome.storage.local.set({baseUrl,token:data.token,expiresAt:data.expiresAt}); sendResponse({ok:true,expiresAt:data.expiresAt}); })().catch(error => sendResponse({error:error.message || 'Could not connect extension.'})); return true;
  }
+ if (message?.type === 'RESET') {
+  chrome.storage.local.remove(['baseUrl','token','expiresAt','pairingCodeDraft','pairingCodeDraftAt','baseUrlDraft'])
+   .then(() => sendResponse({ok:true}))
+   .catch(error => sendResponse({error:error.message || 'Could not reset extension.'}));
+  return true;
+ }
  if (message?.type === 'CREATE_QUICK_NOTE') {
   (async () => { const {baseUrl,token} = await chrome.storage.local.get(['baseUrl','token']); if (!baseUrl || !token) throw new Error('Connect the extension from its toolbar popup first.'); const data = await fetchJson(baseUrl + QUICK_NOTES_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer ' + token},body:JSON.stringify({content:String(message.content || '')})}); sendResponse({ok:true,title:data.title}); })().catch(error => sendResponse({error:error.message || 'Could not save the quick note.'})); return true;
  }

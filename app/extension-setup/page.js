@@ -47,6 +47,8 @@ export default function ExtensionSetupPage() {
       <ol style={styles.steps}><li>Load the extension folder in Chrome using <strong>Manage extensions → Developer mode → Load unpacked</strong>.</li><li>Enter your OgeNotes website URL in the extension popup.</li><li>Generate a pairing code here, then paste it into the extension popup within five minutes.</li></ol>
       <button type="button" onClick={generateCode} disabled={loading} style={styles.primary}>{loading ? 'Generating…' : 'Generate one-time pairing code'}</button>
       {code && <div style={styles.codeBox}><code style={styles.code}>{code}</code><button type="button" onClick={copyCode} style={styles.secondary}>Copy code</button><p style={styles.expiry}>Expires: {new Date(expiresAt).toLocaleTimeString()}</p></div>}
+      <a href="https://github.com/nikhil-dex/ogenotes/archive/refs/heads/main.zip" download style={styles.download}>Download extension ZIP ↓</a>
+      <p style={styles.small}>After downloading, unzip the archive and select the <code>ogenotes_ext</code> folder in Chrome → Extensions → Developer mode → Load unpacked.</p>
       {message && <p role="status" style={styles.success}>{message}</p>}{error && <p role="alert" style={styles.error}>{error}</p>}
       <hr style={styles.hr}/><h2 style={styles.cardTitle}>Security controls</h2><p style={styles.small}>Revoke all extension tokens if you lose access to a browser or want to disconnect the extension. Pairing codes expire after five minutes and can only be used once.</p>
       <button type="button" onClick={revokeAccess} disabled={revoking} style={styles.danger}>{revoking ? 'Revoking…' : 'Revoke all extension access'}</button>
@@ -63,6 +65,7 @@ const styles = {
  steps:{paddingLeft:'22px',lineHeight:1.9,color:'var(--ink, #1e2925)',marginBottom:'22px'},
  primary:{border:0,borderRadius:'8px',background:'var(--green, #40795e)',color:'#fff',padding:'12px 16px',fontWeight:700,cursor:'pointer'},
  secondary:{border:'1px solid var(--line, #dfe6e1)',borderRadius:'7px',padding:'9px 12px',background:'transparent',cursor:'pointer'},
+ download:{display:'inline-flex',alignItems:'center',justifyContent:'center',marginTop:'12px',border:'1px solid var(--green, #40795e)',borderRadius:'8px',padding:'12px 16px',fontWeight:700,color:'var(--green, #40795e)',textDecoration:'none'},
  codeBox:{marginTop:'18px',border:'1px dashed var(--green, #40795e)',borderRadius:'9px',padding:'16px',display:'grid',gap:'12px'},
  code:{fontSize:'14px',overflowWrap:'anywhere',userSelect:'all'},
  expiry:{fontSize:'12px',color:'var(--muted, #84908a)',margin:0},
