@@ -177,6 +177,35 @@ export default function PersonalQuickNotesPanel({ fullPage = false }) {
     }
   }, []);
 
+  function openEditor(note) {
+    setEditingNote(note);
+    setEditContent(note.content || '');
+    setOpenedNote(null);
+    setError('');
+    setMessage('');
+  }
+
+  async function saveEditedNote() {
+    if (!editingNote || editSaving) return;
+    setEditSaving(true);
+    setError('');
+    try {
+      const result = await readResponse(await fetch('/api/personal-quick-notes', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: editingNote.id, content: editContent }),
+      }));
+      setNotes((current) => current.map((note) => note.id === editingNote.id ? { ...note, ...result } : note));
+      setDirty((current) => Object.fromEntries(Object.entries(current).filter(([id]) => id !== editingNote.id)));
+      setEditingNote(null);
+      setMessage('AirNote saved.');
+    } catch (err) {
+      setError(err.message || 'Could not save this AirNote.');
+    } finally {
+      setEditSaving(false);
+    }
+  }
+
   const visibleNotes = fullPage ? notes : notes.slice(0, 3);
 
   return (
