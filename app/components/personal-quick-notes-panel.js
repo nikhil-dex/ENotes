@@ -71,6 +71,10 @@ export default function PersonalQuickNotesPanel({ fullPage = false }) {
   const [message, setMessage] = useState('');
   const [saveErrors, setSaveErrors] = useState({});
   const [savingIds, setSavingIds] = useState({});
+  const [openedNote, setOpenedNote] = useState(null);
+  const [editingNote, setEditingNote] = useState(null);
+  const [editContent, setEditContent] = useState('');
+  const [editSaving, setEditSaving] = useState(false);
 
   const loadNotes = useCallback(async () => {
     setLoading(true);
