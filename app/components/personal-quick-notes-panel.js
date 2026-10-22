@@ -163,8 +163,8 @@ export default function PersonalQuickNotesPanel({ fullPage = false }) {
       <div className="quick-notes-heading-row">
         <div>
           <p className="eyebrow">{fullPage ? 'CAPTURE IT BEFORE YOU FORGET' : 'THOUGHTS, REMINDERS & IDEAS'}</p>
-          <h2 id="quick-notes-heading">{fullPage ? <>Quick <span>Notes.</span></> : <>Quick notes <span className="quick-notes-count">{notes.length}</span></>}</h2>
-          <p className="quick-notes-lead">{fullPage ? 'No separate title field — your first line automatically becomes the heading, just like iPhone Notes.' : 'Write instantly, no separate title needed. Your first line becomes the heading.'}</p>
+          <h2 id="quick-notes-heading">{fullPage ? <>Air<span>Notes.</span></> : <>AirNotes <span className="quick-notes-count">{notes.length}</span></>}</h2>
+          <p className="quick-notes-lead">{fullPage ? 'No separate title field — your first line automatically becomes the heading, just like iPhone Notes.' : 'Capture ideas independently from Quick Notes. Your first line becomes the heading.'}</p>
         </div>
         <button className="quick-note-add-button" type="button" onClick={addNote} disabled={creating} aria-label="Add a quick note" title="Add a quick note">
           <span aria-hidden="true">＋</span>{fullPage ? (creating ? 'Adding…' : 'Add note') : ''}
@@ -173,7 +173,7 @@ export default function PersonalQuickNotesPanel({ fullPage = false }) {
 
       {(error || message) && <p className={'quick-notes-feedback' + (error ? ' is-error' : '')} role="status">{error || message}</p>}
 
-      {loading ? <p className="quick-notes-loading">Loading quick notes…</p> : notes.length ? (
+      {loading ? <p className="quick-notes-loading">Loading AirNotes…</p> : notes.length ? (
         <div className="quick-notes-grid">
           {visibleNotes.map((note, index) => (
             <QuickNoteCard
@@ -200,7 +200,7 @@ export default function PersonalQuickNotesPanel({ fullPage = false }) {
           <button className="add-button" type="button" onClick={addNote} disabled={creating}><span aria-hidden="true">＋</span> Create your first note</button>
         </div>
       )}
-      {!fullPage && <a className="quick-notes-view-all" href="/quick-notes">Open Quick Notes <span aria-hidden="true">→</span></a>}
+      {!fullPage && <a className="quick-notes-view-all" href="/airnotes">Open AirNotes <span aria-hidden="true">→</span></a>}
       {fullPage && <footer><span>Your ideas, saved as you write.</span><span>OGENOTES · QUICK NOTES</span></footer>}
     </section>
   );
