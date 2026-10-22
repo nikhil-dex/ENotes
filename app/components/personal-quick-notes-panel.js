@@ -20,6 +20,24 @@ function formatDate(value) {
   return date.toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
+function AirNoteLibraryCard({ note, index, onOpen, onEdit, onDelete }) {
+  const title = titleOf(note.content);
+  return (
+    <article className="note-card airnote-library-card">
+      <button className="card-open" type="button" onClick={() => onOpen(note)} aria-label={'Open AirNote: ' + title}>
+        <span className="card-top"><span className="note-index">NOTE {String(index + 1).padStart(2, '0')}</span><span className="note-mark" aria-hidden="true">✎</span></span>
+        <span className="note-title">{title}</span>
+        <span className="note-preview">{note.content || 'Empty note — open to read or edit.'}</span>
+        <span className="card-bottom">◷ <span>{formatDate(note.updatedAt || note.createdAt)}</span></span>
+      </button>
+      <div className="note-card-actions" aria-label={'Actions for ' + title}>
+        <button type="button" className="edit-note" onClick={() => onEdit(note)} aria-label={'Edit AirNote: ' + title} title="Edit AirNote">✎</button>
+        <button type="button" className="delete-note" onClick={() => onDelete(note)} aria-label={'Delete AirNote: ' + title} title="Delete AirNote">×</button>
+      </div>
+    </article>
+  );
+}
+
 const QuickNoteCard = memo(function QuickNoteCard({ note, content, index, title, onContentChange, onDelete, saveError, saving }) {
   const [characterCount, setCharacterCount] = useState((content || '').length);
   const [copied, setCopied] = useState(false);
