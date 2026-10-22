@@ -6,7 +6,7 @@ const pairingForm = document.querySelector('#pairing-form');
 const connectedPanel = document.querySelector('#connected-panel');
 const connectedUrl = document.querySelector('#connected-url');
 const connectedExpiry = document.querySelector('#connected-expiry');
-const disconnectButton = document.querySelector('#disconnect');
+const resetButton = document.querySelector('#reset');
 
 const DRAFT_TTL_MS = 5 * 60 * 1000;
 
@@ -118,20 +118,21 @@ connectButton.addEventListener('click', async () => {
   }
 });
 
-disconnectButton.addEventListener('click', async () => {
-  if (!window.confirm('Disconnect this browser extension from OgeNotes? You will need a new pairing code to reconnect.')) return;
-  disconnectButton.disabled = true;
-  showStatus('Disconnecting extension…');
+resetButton.addEventListener('click', async () => {
+  if (!window.confirm('Reset this extension on this browser? You will need to connect it again to save notes. This does not revoke server-side access; use Revoke all extension access on the OgeNotes website for that.')) return;
+  resetButton.disabled = true;
+  showStatus('Resetting extension…');
   try {
-    const result = await chrome.runtime.sendMessage({ type: 'DISCONNECT' });
-    if (!result?.ok) throw new Error(result?.error || 'Could not disconnect extension.');
-    showPairingForm();
+    const result = await chrome.runtime.sendMessage({ type: 'RESET' });
+    if (!result?.ok) throw new Error(result?.error || 'Could not reset extension.');
+    baseUrlInput.value = '';
     codeInput.value = '';
-    showStatus('Extension disconnected. Generate a new pairing code in OgeNotes whenever you want to reconnect.');
+    showPairingForm();
+    showStatus('Extension reset. Generate a new pairing code in OgeNotes to connect again.');
   } catch (error) {
-    showStatus(error.message || 'Could not disconnect extension.', true);
+    showStatus(error.message || 'Could not reset extension.', true);
   } finally {
-    disconnectButton.disabled = false;
+    resetButton.disabled = false;
   }
 });
 
