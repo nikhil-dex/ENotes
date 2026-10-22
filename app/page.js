@@ -1,5 +1,6 @@
 import SiteNavbar from './components/site-navbar';
 import QuickNotesPanel from './components/quick-notes-panel';
+import PersonalQuickNotesPanel from './components/personal-quick-notes-panel';
 import ThemeToggle from './components/theme-toggle';
 import HomeDashboard from './components/home-dashboard';
 import HomeNewsFeed from './components/home-news-feed';
@@ -16,7 +17,7 @@ export default function HomePage() {
 
       <HomeDashboard />
 
-      <QuickNotesPanel />
+      <PersonalQuickNotesPanel />
 
       <section className="hub-grid" aria-label="OgeNotes destinations">
         <a className="hub-card hub-card-featured" href="/notes">
@@ -76,6 +77,8 @@ export default function HomePage() {
           <span className="hub-card-link">Set up extension <span aria-hidden="true">→</span></span>
         </a>
       </section>
+
+      <QuickNotesPanel />
 
       <footer><span>Built for learning, one note at a time.</span><span>OGENOTES · YOUR PRIVATE WORKSPACE</span></footer>
     </main>
