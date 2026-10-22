@@ -262,7 +262,7 @@ export default function PersonalQuickNotesPanel({ fullPage = false }) {
               <div className="reader-toolbar">
                 <div className="reader-pagination"><span className="reader-kicker">AIRNOTE</span></div>
                 <div className="reader-toolbar-actions">
-                  <button type="button" className="edit-note" onClick={() => openEditor(openedNote)} aria-label="Edit AirNote" title="Edit AirNote">✎ Edit</button>
+                  <button type="button" className="note-share-button airnote-reader-edit-button" onClick={() => openEditor(openedNote)} aria-label="Edit AirNote" title="Edit AirNote">✎ Edit</button>
                   <button className="close-button reader-close" onClick={() => setOpenedNote(null)} aria-label="Close AirNote">×</button>
                 </div>
               </div>
