@@ -1944,3 +1944,44 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   .quick-notes-full-page .quick-note-add-tile { min-height: 120px; }
   .airnote-edit-dialog textarea { min-height: 240px; }
 }
+
+/* Match Notes card action placement: one delete control on the card;
+   editing is available only after opening the AirNote. */
+.quick-notes-full-page .airnote-library-card .card-open {
+  padding-right: 42px;
+}
+.quick-notes-full-page .airnote-library-card .note-card-actions {
+  position: static;
+  display: contents;
+  opacity: 1;
+}
+.quick-notes-full-page .airnote-library-card .note-card-actions .delete-note {
+  position: absolute;
+  right: 12px;
+  top: 13px;
+  width: 27px;
+  height: 27px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #9ba69f;
+  cursor: pointer;
+  opacity: .72;
+  font-size: 20px;
+  line-height: 1;
+}
+.quick-notes-full-page .airnote-library-card .note-card-actions .delete-note:hover,
+.quick-notes-full-page .airnote-library-card .note-card-actions .delete-note:focus-visible {
+  background: #f8e9e8;
+  color: #b94e46;
+  opacity: 1;
+}
+[data-theme="dark"] .quick-notes-full-page .airnote-library-card .note-card-actions .delete-note:hover,
+[data-theme="dark"] .quick-notes-full-page .airnote-library-card .note-card-actions .delete-note:focus-visible {
+  background: #392b2a;
+  color: #e7a29d;
+}
+@media (max-width: 620px) {
+  .quick-notes-full-page .airnote-library-card .card-open { padding-right: 42px; }
+}
