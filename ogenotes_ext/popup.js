@@ -6,6 +6,7 @@ const pairingForm = document.querySelector('#pairing-form');
 const connectedPanel = document.querySelector('#connected-panel');
 const connectedUrl = document.querySelector('#connected-url');
 const connectedExpiry = document.querySelector('#connected-expiry');
+const disconnectButton = document.querySelector('#disconnect');
 
 const DRAFT_TTL_MS = 5 * 60 * 1000;
 
@@ -114,6 +115,23 @@ connectButton.addEventListener('click', async () => {
     showStatus(error.message || 'Could not connect extension.', true);
   } finally {
     connectButton.disabled = false;
+  }
+});
+
+disconnectButton.addEventListener('click', async () => {
+  if (!window.confirm('Disconnect this browser extension from OgeNotes? You will need a new pairing code to reconnect.')) return;
+  disconnectButton.disabled = true;
+  showStatus('Disconnecting extension…');
+  try {
+    const result = await chrome.runtime.sendMessage({ type: 'DISCONNECT' });
+    if (!result?.ok) throw new Error(result?.error || 'Could not disconnect extension.');
+    showPairingForm();
+    codeInput.value = '';
+    showStatus('Extension disconnected. Generate a new pairing code in OgeNotes whenever you want to reconnect.');
+  } catch (error) {
+    showStatus(error.message || 'Could not disconnect extension.', true);
+  } finally {
+    disconnectButton.disabled = false;
   }
 });
 
