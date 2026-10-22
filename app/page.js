@@ -16,8 +16,6 @@ export default function HomePage() {
 
       <HomeDashboard />
 
-      <QuickNotesPanel />
-
       <section className="hub-grid" aria-label="OgeNotes destinations">
         <a className="hub-card hub-card-featured" href="/notes">
           <span className="hub-card-icon" aria-hidden="true">▤</span>
@@ -76,6 +74,8 @@ export default function HomePage() {
           <span className="hub-card-link">Set up extension <span aria-hidden="true">→</span></span>
         </a>
       </section>
+
+      <QuickNotesPanel />
 
       <footer><span>Built for learning, one note at a time.</span><span>OGENOTES · YOUR PRIVATE WORKSPACE</span></footer>
     </main>
