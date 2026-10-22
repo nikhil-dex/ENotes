@@ -32,8 +32,8 @@ export async function GET() {
       .toArray();
     return json(notes.map((note) => ({ ...note, id: String(note._id), _id: undefined })));
   } catch (error) {
-    console.error('GET /api/quick-notes failed:', error);
-    return json({ error: 'Could not load personal personal quick notes. Check the database connection settings.' }, 500);
+    console.error('GET /api/personal-quick-notes failed:', error);
+    return json({ error: 'Could not load personal quick notes. Check the database connection settings.' }, 500);
   }
 }
 
@@ -50,7 +50,7 @@ export async function POST(request) {
     await db.collection('personalQuickNotes').insertOne(note);
     return json({ ...note, id: note._id, _id: undefined }, 201);
   } catch (error) {
-    console.error('POST /api/quick-notes failed:', error);
+    console.error('POST /api/personal-quick-notes failed:', error);
     return json({ error: 'Could not create a personal quick note. Please try again.' }, 500);
   }
 }
@@ -74,7 +74,7 @@ export async function PUT(request) {
     if (!result) return json({ error: 'Quick note not found. Refresh and try again.' }, 404);
     return json({ ...result, id: String(result._id), _id: undefined });
   } catch (error) {
-    console.error('PUT /api/quick-notes failed:', error);
+    console.error('PUT /api/personal-quick-notes failed:', error);
     return json({ error: 'Could not save this personal quick note. Please try again.' }, 500);
   }
 }
@@ -88,7 +88,7 @@ export async function DELETE(request) {
     if (!result.deletedCount) return json({ error: 'Quick note not found.' }, 404);
     return json({ deleted: id });
   } catch (error) {
-    console.error('DELETE /api/quick-notes failed:', error);
+    console.error('DELETE /api/personal-quick-notes failed:', error);
     return json({ error: 'Could not delete this personal quick note. Please try again.' }, 500);
   }
 }
